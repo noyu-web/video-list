@@ -486,22 +486,34 @@ function openDetailModal(item){
   if(tracks.length){
     const distLabel={ok:'配布可',ng:'配布不可',none:''};
     const distBg={ok:'background:#dcfce7;color:#166534',ng:'background:#fee2e2;color:#991b1b',none:''};
-    tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容</div>'+
-    '<div style="background:var(--gray-light);border-radius:8px;padding:6px 10px">'+
-    tracks.map(t=>{
+    // セクションごとにグループ化
+    let sectionsHtml = '';
+    let currentSec = null;
+    let secItems = [];
+    const flushSec = () => {
+      if(secItems.length===0) return;
+      const secHeader = currentSec ? `<div style="font-size:11px;font-weight:700;color:var(--pink-dark);margin:8px 0 4px;border-bottom:1px solid var(--pink-light);padding-bottom:2px">${esc(currentSec)}</div>` : '';
+      sectionsHtml += secHeader + secItems.join('');
+      secItems = [];
+    };
+    tracks.forEach(t=>{
       const title=typeof t==='string'?t:t.title;
       const dist=typeof t==='string'?'none':t.dist||'none';
       const tdate=typeof t==='string'?'':t.date||'';
       const tmembers=typeof t==='string'?[]:(t.members||[]);
+      const sec=typeof t==='string'?'':t.section||'';
+      if(sec !== currentSec) { flushSec(); currentSec=sec; }
       const badge=dist&&dist!=='none'?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;${distBg[dist]};font-weight:600;margin-left:6px">${distLabel[dist]}</span>`:'';
       const dateBadge=tdate?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:#eff6ff;color:#1e40af;margin-left:6px">${esc(tdate)}</span>`:'';
       const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
-      return`<div style="padding:6px 0;border-bottom:1px solid var(--border)">
+      secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
         <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
-        ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${memberBadges}</div>`:''}
-      </div>`;
-    }).join('')+
-    '</div>';
+        ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
+      </div>`);
+    });
+    flushSec();
+    tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容</div>'+
+    `<div style="background:var(--gray-light);border-radius:8px;padding:6px 10px">${sectionsHtml}</div>`;
     document.getElementById('detailNote').before(tracksDiv);
   }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
 
