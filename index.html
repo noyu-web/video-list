@@ -111,8 +111,7 @@
     <span class="mode-badge view" id="modeBadge">閲覧モード</span>
     <button class="btn-icon" id="settingsBtn" style="display:none">⚙️</button>
     <button class="btn-icon" id="authBtn">🔑</button>
-    <button class="btn-icon" id="guideBtn" title="使い方">❓</button>
-    <button class="btn-icon" id="userBtn" title="ニックネーム登録">👤</button>
+
   </div>
 </header>
 <div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
@@ -191,35 +190,6 @@
     <div class="modal-footer">
       <button class="btn-save" id="settingsCloseBtn">閉じる</button>
     </div>
-  </div>
-</div>
-
-<!-- Guide Modal -->
-<div class="modal-overlay hidden" id="guideModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">使い方・説明</h2>
-      <button class="modal-close" onclick="document.getElementById('guideModal').classList.add('hidden')">×</button>
-    </div>
-    <div id="guideTextView" style="font-size:13px;line-height:1.9;padding:4px 0"></div>
-    <div id="guideEditWrap" style="display:none;margin-top:12px">
-      <textarea id="guideEditArea" class="form-textarea" style="font-size:13px;min-height:160px"></textarea>
-      <button class="btn-save" id="guideSaveBtn" style="margin-top:8px;width:100%">保存</button>
-    </div>
-  </div>
-</div>
-
-<!-- User Modal -->
-<div class="modal-overlay hidden" id="userModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 class="modal-title">ニックネーム登録</h2>
-      <button class="modal-close" onclick="document.getElementById('userModal').classList.add('hidden')">×</button>
-    </div>
-    <p style="font-size:13px;color:var(--gray);margin-bottom:12px">ニックネームを登録すると、お気に入りが使えます。同じ端末・ブラウザでのみ保持されます。</p>
-    <input class="form-input" id="usernameInput" placeholder="ニックネームを入力" style="margin-bottom:8px">
-    <button class="btn-save" id="userSaveBtn" style="width:100%">登録</button>
-    <p style="margin-top:8px;font-size:11px;color:var(--gray)">※このサイトで所持リストを作ることはできません</p>
   </div>
 </div>
 
@@ -463,10 +433,7 @@ async function renderList(){
       return`<span class="tag tag-date">${esc(s.date)}</span>${timeTags}`;
     }).join('');
     return`<div class="card" data-detail="${item.id}"><div class="card-main"><div class="card-info">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div class="card-title" style="flex:1">${esc(item.title)}</div>
-        <span class="fav-btn" data-id="${item.id}" style="font-size:18px;cursor:pointer;padding:0 0 0 8px;flex-shrink:0">${getFavs().includes(item.id)?'❤️':'🤍'}</span>
-      </div>
+      <div class="card-title">${esc(item.title)}</div>
 
       <div class="card-meta">
         ${scheduleTags}
