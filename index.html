@@ -333,7 +333,7 @@ function jsonp(params){
     const name='_cb'+cbIdx++;const s=document.createElement('script');
     window[name]=(d)=>{delete window[name];s.remove();resolve(d);};
     s.onerror=()=>{delete window[name];s.remove();reject();};
-    s.src=GAS_URL+'?'+new URLSearchParams({...params,callback:name});
+    s.src=GAS_URL+'?'+new URLSearchParams({...params,callback:name,t:Date.now()});
     document.head.appendChild(s);
     setTimeout(()=>{if(window[name]){delete window[name];s.remove();reject();}},15000);
   });
