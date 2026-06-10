@@ -48,6 +48,14 @@
   .tag-member{background:#fce7f3;color:#9d174d}
   .tag-date{background:#eff6ff;color:#1e40af;font-family:monospace}
   .tag-note{background:var(--gray-light);color:var(--gray)}
+  .tag-jesse{background:#e53e3e;color:white}
+  .tag-kyomo{background:#ed64a6;color:white}
+  .tag-matsu{background:#1a202c;color:white}
+  .tag-kochi{background:#d69e2e;color:white}
+  .tag-mori{background:#38a169;color:white}
+  .tag-juri{background:#3182ce;color:white}
+  .tag-sixtones{background:#718096;color:white}
+  .tag-all{background:#fce7f3;color:#9d174d}
   .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
   .exchange-ok{background:#dcfce7;color:#166534}
   .exchange-ng{background:#fee2e2;color:#991b1b}
@@ -283,6 +291,17 @@ async function loadVideos(force=false){
   cachedVideos=await jsonp({action:'getVideos'});
   if(!Array.isArray(cachedVideos))cachedVideos=[];
   return cachedVideos;
+}
+
+function memberClass(m){
+  if(m==='ジェシー')return'tag-jesse';
+  if(m==='京本大我')return'tag-kyomo';
+  if(m==='松村北斗')return'tag-matsu';
+  if(m==='髙地優吾')return'tag-kochi';
+  if(m==='森本慎太郎')return'tag-mori';
+  if(m==='田中樹')return'tag-juri';
+  if(m==='SixTONES')return'tag-sixtones';
+  return'tag-all';
 }
 
 function renderTabs(){
