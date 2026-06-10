@@ -369,7 +369,6 @@ async function renderList(){
       <div class="card-meta">
         ${(item.members||[]).map(m=>`<span class="tag tag-member">${esc(m)}</span>`).join('')}
         ${scheduleTags}
-        ${item.note?`<span class="tag tag-note">${esc(item.note)}</span>`:''}
       </div>
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${item.exchange==='ok'?'交換可':'交換不可'}</span></div>`:''}
     </div><span class="exchange-badge ${item.exchange==='ok'?'exchange-ok':'exchange-ng'}">${item.exchange==='ok'?'交換可':'交換不可'}</span></div>
