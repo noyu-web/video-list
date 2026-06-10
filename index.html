@@ -485,14 +485,21 @@ function openDetailModal(item){
   const tracks=item.tracks?JSON.parse(item.tracks||'[]'):[];
   if(tracks.length){
     const distLabel={ok:'配布可',ng:'配布不可',none:''};
-    const distColor={ok:'#dcfce7;color:#166534',ng:'#fee2e2;color:#991b1b',none:''};
+    const distBg={ok:'background:#dcfce7;color:#166534',ng:'background:#fee2e2;color:#991b1b',none:''};
     tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容</div>'+
-    '<div style="background:var(--gray-light);border-radius:8px;padding:8px 10px">'+
+    '<div style="background:var(--gray-light);border-radius:8px;padding:6px 10px">'+
     tracks.map(t=>{
       const title=typeof t==='string'?t:t.title;
       const dist=typeof t==='string'?'none':t.dist||'none';
-      const badge=dist&&dist!=='none'?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${distColor[dist]};font-weight:600;margin-left:6px">${distLabel[dist]}</span>`:'';
-      return`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;align-items:center">${esc(title)}${badge}</div>`;
+      const tdate=typeof t==='string'?'':t.date||'';
+      const tmembers=typeof t==='string'?[]:(t.members||[]);
+      const badge=dist&&dist!=='none'?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;${distBg[dist]};font-weight:600;margin-left:6px">${distLabel[dist]}</span>`:'';
+      const dateBadge=tdate?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:#eff6ff;color:#1e40af;margin-left:6px">${esc(tdate)}</span>`:'';
+      const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
+      return`<div style="padding:6px 0;border-bottom:1px solid var(--border)">
+        <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
+        ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">${memberBadges}</div>`:''}
+      </div>`;
     }).join('')+
     '</div>';
     document.getElementById('detailNote').before(tracksDiv);
@@ -677,31 +684,45 @@ async function openEditModal(id=null){
   // 収録内容
   document.getElementById('tracksWrap').innerHTML='';
   const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-  tracks.forEach(t=>typeof t==='string'?addTrackRow(t):addTrackRow(t.title||t,t.dist||'none'));
+  tracks.forEach(t=>typeof t==='string'?addTrackRow(t):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[]));
   document.getElementById('editModal').classList.remove('hidden');
   setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
 
-function addTrackRow(val='',dist='none'){
+function addTrackRow(val='',dist='none',date='',members=[]){
+  cfg=loadConfig();
   const wrap=document.getElementById('tracksWrap');
-  const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:4px';
-  row.innerHTML=`<input class="form-input track-input" type="text" placeholder="例: 第1話 / SixTONES LIVE 2021" value="${esc(val)}" style="flex:1">
-    <select class="track-dist form-select" style="width:90px;padding:9px 6px;font-size:11px">
-      <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
-      <option value="ok" ${dist==='ok'?'selected':''}>配布可</option>
-      <option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
-    </select>
-    <button class="btn-remove tr-rm" type="button">✕</button>`;
+  const row=document.createElement('div');
+  row.style.cssText='background:var(--pink-pale);border-radius:8px;padding:8px;margin-bottom:8px;border:1px solid var(--pink-light)';
+  const allMembers=[...cfg.members,...Object.values(cfg.otherMembers||{}).flat()].filter((m,i,a)=>a.indexOf(m)===i);
+  const memberOptions=allMembers.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('');
+  row.innerHTML=`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input class="form-input track-input" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
+      <button class="btn-remove tr-rm" type="button">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px">
+      <select class="track-dist form-select" style="width:100px;padding:7px 6px;font-size:12px">
+        <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
+        <option value="ok" ${dist==='ok'?'selected':''}>配布可</option>
+        <option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
+      </select>
+    </div>
+    <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
   row.querySelector('.tr-rm').addEventListener('click',()=>row.remove());
+  row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
   wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
 function getTracks(){
-  return[...document.getElementById('tracksWrap').querySelectorAll('div')].map(row=>{
+  return[...document.getElementById('tracksWrap').querySelectorAll('div[style*="pink-pale"]')].map(row=>{
     const input=row.querySelector('.track-input');
-    const dist=row.querySelector('.track-dist');
     if(!input||!input.value.trim())return null;
-    return{title:input.value.trim(),dist:dist?dist.value:'none'};
+    const dist=row.querySelector('.track-dist');
+    const date=row.querySelector('.track-date');
+    const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
+    return{title:input.value.trim(),dist:dist?dist.value:'none',date:date?date.value:'',members};
   }).filter(Boolean);
 }
 
