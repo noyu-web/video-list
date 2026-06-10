@@ -360,8 +360,16 @@ function jsonp(params){
 async function gasGet(params){return jsonp(params);}
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
+  // sessionStorageにキャッシュ（タブを閉じるまで維持）
+  if(!force){
+    try{
+      const cached=sessionStorage.getItem('videos_cache');
+      if(cached){cachedVideos=JSON.parse(cached);return cachedVideos;}
+    }catch{}
+  }
   cachedVideos=await gasGet({action:'getVideos'});
   if(!Array.isArray(cachedVideos))cachedVideos=[];
+  try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
   return cachedVideos;
 }
 
