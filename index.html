@@ -220,7 +220,7 @@
 </div>
 
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbzDuTozdhFRKI74Lmsvs8aQ8NkgVM34YnnUdkpy9yte_5EQhwwNm_f2yuD7CB1EDHGJ/exec';
+const GAS_URL='https://script.google.com/macros/s/AKfycbyfXkPgeyIvBHplsEKOC0bfLBuNEocXi5QjZeFXCKQ88T-U6ta1KY85O1fR-8XT-yHZ/exec';
 const ADMIN_PW='0703clarinet';
 
 // デフォルト設定
@@ -260,8 +260,7 @@ function jsonp(params){
   });
 }
 async function gasPost(data){
-  const r=await fetch(GAS_URL,{method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'text/plain'}});
-  return r.json();
+  return jsonp({action: data.action, data: encodeURIComponent(JSON.stringify(data)), id: data.id||''});
 }
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
