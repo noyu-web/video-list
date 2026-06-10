@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>所持リスト</title>
+<style>
+  :root {
+    --pink: #e8749a;
+    --pink-light: #f5c6d8;
+    --pink-pale: #fdf0f5;
+    --pink-dark: #c45580;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --text: #1f2937;
+    --border: #e5e7eb;
+    --white: #ffffff;
+    --shadow: 0 2px 8px rgba(232,116,154,0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif; background: var(--pink-pale); color: var(--text); min-height: 100vh; }
+  header { background: var(--white); border-bottom: 2px solid var(--pink-light); padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .header-title { font-size: 17px; font-weight: 700; color: var(--pink-dark); }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .mode-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .mode-badge.admin { background: var(--pink); color: white; }
+  .mode-badge.view { background: var(--gray-light); color: var(--gray); }
+  .btn-icon { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; color: var(--gray); font-size: 18px; }
+  .tabs-wrap { background: var(--white); border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs-wrap::-webkit-scrollbar { display: none; }
+  .tabs { display: flex; padding: 0 12px; min-width: max-content; }
+  .tab { padding: 11px 14px; font-size: 13px; font-weight: 600; color: var(--gray); cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+  .tab.active { color: var(--pink); border-bottom-color: var(--pink); }
+  .subtabs-wrap { background: var(--pink-pale); border-bottom: 1px solid var(--pink-light); overflow-x: auto; scrollbar-width: none; display: none; }
+  .subtabs-wrap.visible { display: block; }
+  .subtabs { display: flex; padding: 6px 12px; gap: 6px; min-width: max-content; }
+  .subtab { padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--gray); cursor: pointer; border: 1.5px solid var(--border); border-radius: 20px; background: var(--white); white-space: nowrap; }
+  .subtab.active { color: var(--pink-dark); border-color: var(--pink); background: var(--pink-light); }
+  .toolbar { padding: 10px 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn { padding: 8px 16px; border-radius: 20px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-primary { background: var(--pink); color: white; }
+  .search-input { padding: 8px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; outline: none; background: var(--white); flex: 1; min-width: 150px; }
+  .search-input:focus { border-color: var(--pink); }
+  .filter-bar { padding: 0 14px 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-chip { padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); font-size: 12px; cursor: pointer; color: var(--gray); }
+  .filter-chip.active { background: var(--pink-light); border-color: var(--pink); color: var(--pink-dark); font-weight: 600; }
+  .list-wrap { padding: 0 14px 40px; }
+  .list-count { font-size: 12px; color: var(--gray); padding: 4px 0 10px; }
+  .card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 8px; overflow: hidden; }
+  .card-main { padding: 12px 13px; display: flex; align-items: flex-start; gap: 8px; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-title { font-size: 14px; font-weight: 600; line-height: 1.4; word-break: break-all; }
+  .card-sub { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .tag-member { background: #fce7f3; color: #9d174d; }
+  .tag-date { background: #eff6ff; color: #1e40af; }
+  .tag-size { background: var(--gray-light); color: var(--gray); }
+  .tag-note { background: var(--gray-light); color: var(--gray); }
+  .exchange-badge { font-size: 11px; padding: 3px 9px; border-radius: 10px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+  .exchange-ok { background: #dcfce7; color: #166534; }
+  .exchange-ng { background: #fee2e2; color: #991b1b; }
+  .toggle-wrap { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+  .toggle { position: relative; width: 36px; height: 20px; cursor: pointer; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: #d1d5db; border-radius: 20px; transition: .2s; }
+  .toggle-slider::before { content:''; position:absolute; width:14px; height:14px; left:3px; top:3px; background:white; border-radius:50%; transition:.2s; }
+  .toggle input:checked + .toggle-slider { background: #22c55e; }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+  .toggle-label { font-size: 12px; color: var(--gray); }
+  .card-actions { display: flex; gap: 6px; padding: 0 13px 10px; justify-content: flex-end; }
+  .btn-sm { padding: 4px 12px; font-size: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+  .btn-edit { background: var(--pink-pale); color: var(--pink-dark); }
+  .btn-delete { background: #fee2e2; color: #991b1b; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 440px; padding: 22px; box-shadow: 0 8px 32px rgba(0,0,0,.18); max-height: 90vh; overflow-y: auto; }
+  .modal-title { font-size: 16px; font-weight: 700; color: var(--pink-dark); margin-bottom: 18px; }
+  .form-group { margin-bottom: 13px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--gray); margin-bottom: 4px; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; font-family: inherit; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--pink); }
+  .form-textarea { resize: vertical; min-height: 60px; }
+  .members-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .member-chip { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); font-size: 12px; cursor: pointer; background: var(--white); color: var(--gray); }
+  .member-chip.selected { background: var(--pink-light); border-color: var(--pink); color: var(--pink-dark); font-weight: 600; }
+  .dates-wrap { display: flex; flex-direction: column; gap: 6px; }
+  .date-row { display: flex; gap: 6px; align-items: center; }
+  .date-row input { flex: 1; }
+  .btn-add-date { background: var(--pink-pale); color: var(--pink-dark); border: none; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 4px; }
+  .btn-remove-date { background: #fee2e2; color: #991b1b; border: none; border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .btn-cancel { background: var(--gray-light); color: var(--gray); padding: 9px 18px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-save { background: var(--pink); color: white; padding: 9px 18px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .err-msg { color: #991b1b; font-size: 12px; margin-bottom: 8px; }
+  .empty { text-align: center; padding: 48px 0; color: var(--gray); }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+  .loading { text-align: center; padding: 40px; color: var(--gray); font-size: 14px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">💎 所持リスト</div>
+  <div class="header-right">
+    <span class="mode-badge view" id="modeBadge">閲覧モード</span>
+    <button class="btn-icon" id="authBtn">🔑</button>
+  </div>
+</header>
+
+<div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
+<div class="subtabs-wrap" id="subtabsWrap"><div class="subtabs" id="subtabs"></div></div>
+
+<div id="adminToolbar" class="toolbar hidden">
+  <button class="btn btn-primary" id="addBtn">＋ 追加</button>
+</div>
+
+<div class="toolbar" style="padding-top:8px;">
+  <input class="search-input" type="search" placeholder="タイトルで検索…" id="searchInput">
+</div>
+
+<div class="filter-bar" id="filterBar"></div>
+
+<div class="list-wrap">
+  <div class="list-count" id="listCount"></div>
+  <div id="cardList"><div class="loading">読み込み中…</div></div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay hidden" id="authModal">
+  <div class="modal">
+    <div class="modal-title">管理者ログイン</div>
+    <div class="form-group"><input class="form-input" type="password" id="authInput" placeholder="パスワード"></div>
+    <div class="err-msg hidden" id="authError">パスワードが違います</div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="authCancelBtn">キャンセル</button>
+      <button class="btn-save" id="authSubmitBtn">ログイン</button>
+    </div>
+  </div>
+</div>
+
+<!-- Set Password Modal -->
+<div class="modal-overlay hidden" id="pwModal">
+  <div class="modal">
+    <div class="modal-title">管理者パスワードを設定</div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:14px;">初回のみ設定できます。</p>
+    <div class="form-group"><input class="form-input" type="password" id="pwInput" placeholder="新しいパスワード"></div>
+    <div class="form-group"><input class="form-input" type="password" id="pwConfirm" placeholder="確認用"></div>
+    <div class="err-msg hidden" id="pwError"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="pwCancelBtn">キャンセル</button>
+      <button class="btn-save" id="pwSaveBtn">設定する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal-overlay hidden" id="editModal">
+  <div class="modal">
+    <div class="modal-title" id="editModalTitle">動画を追加</div>
+    <div class="form-group">
+      <label class="form-label">ジャンル</label>
+      <select class="form-select" id="editGenre"></select>
+    </div>
+    <div class="form-group hidden" id="subgenreGroup">
+      <label class="form-label">小ジャンル</label>
+      <select class="form-select" id="editSubgenre"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">タイトル</label>
+      <input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力">
+    </div>
+    <div class="form-group">
+      <label class="form-label">出演者</label>
+      <div class="members-grid" id="memberChips"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">交換</label>
+      <select class="form-select" id="editExchange">
+        <option value="ok">可</option>
+        <option value="ng">不可</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">公演日</label>
+      <div class="dates-wrap" id="datesWrap"></div>
+      <button class="btn-add-date" id="addDateBtn">＋ 日付を追加</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">サイズ</label>
+      <input class="form-input" type="text" id="editSize" placeholder="例: L">
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-textarea" id="editNote" placeholder="任意"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="editCancelBtn">キャンセル</button>
+      <button class="btn-save" id="editSaveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbysmpf0AHI3Y2h1vE71aJs6CeqUgDlqYpWOiq21RWHryRbFygl6aOKUGM16CGq1R_p2/exec';
+
+const GENRES = ['配信関連','円盤','バラエティー番組','ドラマ・映画','Radio','FC・FCweb','SixTONES以外'];
+const SUBGENRES = {
+  '配信関連': ['すべて','ISLAND TV','Johnnys online・FAMILY CLUB online','Hulu・FOD・TELASA・Netflix','WOWWOW','Instagram Live','X SPACE','滝CHANnel','other'],
+  '円盤': ['すべて','Jr時代円盤','SixTONES CD円盤','SixTONES Live DVD円盤','ART-PUT'],
+  'バラエティー番組': ['すべて','Jr時代 レギュラー・準レギュラー番組','レギュラー番組','バラエティー'],
+  'ドラマ・映画': [],
+  'Radio': ['すべて','ANN','らじらー','その他'],
+  'FC・FCweb': ['すべて','情報局','SixTONES...','FC web'],
+  'SixTONES以外': ['すべて','DOMOTO(KinKi kids)','V6','嵐','KAT-TUN','NEWS','SUPER EIGHT','Hey! Say! JUMP','Kis-My-Ft2','Sexy Zone','WEST.','King&Prince','Snow Man','なにわ男子','Travis Japan','Aえ！group','HiHi Jets','美少年','7 MEN 侍','少年忍者','Lilかんさい','ふぉ〜ゆ〜＆俳優部＆無所']
+};
+const MEMBERS = ['全員','京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
+
+let isAdmin = false;
+let currentGenre = '配信関連';
+let currentSubgenre = 'すべて';
+let currentFilter = 'すべて';
+let searchQuery = '';
+let editingId = null;
+let cachedVideos = null;
+let adminPassword = null;
+let cbIndex = 0;
+
+// JSONP
+function jsonp(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_cb' + (cbIndex++);
+    const script = document.createElement('script');
+    const p = new URLSearchParams({...params, callback: cbName});
+    window[cbName] = (data) => { delete window[cbName]; script.remove(); resolve(data); };
+    script.onerror = reject;
+    script.src = GAS_URL + '?' + p.toString();
+    document.head.appendChild(script);
+  });
+}
+
+async function apiPost(data) {
+  const r = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {'Content-Type': 'text/plain'}
+  });
+  return r.json();
+}
+
+async function loadVideos(force=false) {
+  if (cachedVideos && !force) return cachedVideos;
+  cachedVideos = await jsonp({action:'getVideos'});
+  return cachedVideos;
+}
+
+async function loadPassword() {
+  if (adminPassword !== null) return adminPassword;
+  const r = await jsonp({action:'getConfig'});
+  adminPassword = r.password;
+  return adminPassword;
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = GENRES.map(g =>
+    `<button class="tab ${currentGenre===g?'active':''}" data-genre="${g}">${g}</button>`
+  ).join('');
+  tabs.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    currentGenre = t.dataset.genre; currentSubgenre = 'すべて';
+    renderTabs(); renderSubtabs(); renderList();
+  }));
+}
+
+function renderSubtabs() {
+  const wrap = document.getElementById('subtabsWrap');
+  const subs = SUBGENRES[currentGenre];
+  if (!subs || subs.length === 0) { wrap.classList.remove('visible'); return; }
+  wrap.classList.add('visible');
+  document.getElementById('subtabs').innerHTML = subs.map(s =>
+    `<button class="subtab ${currentSubgenre===s?'active':''}" data-sub="${s}">${s}</button>`
+  ).join('');
+  document.getElementById('subtabs').querySelectorAll('.subtab').forEach(b => b.addEventListener('click', () => {
+    currentSubgenre = b.dataset.sub; renderSubtabs(); renderList();
+  }));
+}
+
+function renderFilterBar() {
+  const bar = document.getElementById('filterBar');
+  bar.innerHTML = '';
+  ['すべて','交換可','交換不可'].forEach(f => {
+    const c = document.createElement('button');
+    c.className = 'filter-chip' + (currentFilter===f?' active':'');
+    c.textContent = f;
+    c.addEventListener('click', () => { currentFilter = f; renderFilterBar(); renderList(); });
+    bar.appendChild(c);
+  });
+}
+
+async function renderList() {
+  const list = document.getElementById('cardList');
+  list.innerHTML = '<div class="loading">読み込み中…</div>';
+  let data = await loadVideos();
+  data = data.filter(d => d.genre === currentGenre);
+  const subs = SUBGENRES[currentGenre];
+  if (subs && subs.length > 0 && currentSubgenre !== 'すべて') data = data.filter(d => d.subgenre === currentSubgenre);
+  if (currentFilter === '交換可') data = data.filter(d => d.exchange === 'ok');
+  if (currentFilter === '交換不可') data = data.filter(d => d.exchange === 'ng');
+  if (searchQuery) { const q = searchQuery.toLowerCase(); data = data.filter(d => d.title.toLowerCase().includes(q)); }
+  document.getElementById('listCount').textContent = data.length + ' 件';
+  if (data.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px;">該当する動画がありません</div></div>`;
+    return;
+  }
+  list.innerHTML = data.map(item => `
+    <div class="card">
+      <div class="card-main">
+        <div class="card-info">
+          <div class="card-title">${esc(item.title)}</div>
+          ${item.subgenre ? `<div class="card-sub">${esc(item.subgenre)}</div>` : ''}
+          <div class="card-meta">
+            ${(item.members||[]).map(m=>`<span class="tag tag-member">${esc(m)}</span>`).join('')}
+            ${(item.dates||[]).map(d=>`<span class="tag tag-date">${esc(d)}</span>`).join('')}
+            ${item.size?`<span class="tag tag-size">${esc(item.size)}</span>`:''}
+            ${item.note?`<span class="tag tag-note">${esc(item.note)}</span>`:''}
+          </div>
+          ${isAdmin?`<div class="toggle-wrap">
+            <label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label>
+            <span class="toggle-label">${item.exchange==='ok'?'交換可':'交換不可'}</span>
+          </div>`:''}
+        </div>
+        <span class="exchange-badge ${item.exchange==='ok'?'exchange-ok':'exchange-ng'}">${item.exchange==='ok'?'交換可':'交換不可'}</span>
+      </div>
+      ${isAdmin?`<div class="card-actions">
+        <button class="btn-sm btn-edit" data-edit="${item.id}">編集</button>
+        <button class="btn-sm btn-delete" data-delete="${item.id}">削除</button>
+      </div>`:''}
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-toggle]').forEach(inp => inp.addEventListener('change', async () => {
+    const all = await loadVideos(); const item = all.find(d=>d.id===inp.dataset.toggle);
+    if (item) { item.exchange = inp.checked?'ok':'ng'; await apiPost({action:'saveVideo',video:item,isNew:false}); cachedVideos=null; renderList(); }
+  }));
+  list.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openEditModal(b.dataset.edit)));
+  list.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', () => deleteItem(b.dataset.delete)));
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function updateAdminUI() {
+  document.getElementById('modeBadge').textContent = isAdmin?'管理者モード':'閲覧モード';
+  document.getElementById('modeBadge').className = 'mode-badge '+(isAdmin?'admin':'view');
+  document.getElementById('authBtn').textContent = isAdmin?'🔓':'🔑';
+  document.getElementById('adminToolbar').classList.toggle('hidden',!isAdmin);
+  renderList();
+}
+
+document.getElementById('authBtn').addEventListener('click', async () => {
+  if (isAdmin) { isAdmin=false; updateAdminUI(); return; }
+  const pw = await loadPassword();
+  pw ? openAuthModal() : openPwModal();
+});
+
+function openAuthModal() {
+  document.getElementById('authInput').value='';
+  document.getElementById('authError').classList.add('hidden');
+  document.getElementById('authModal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('authInput').focus(),50);
+}
+document.getElementById('authCancelBtn').addEventListener('click',()=>document.getElementById('authModal').classList.add('hidden'));
+document.getElementById('authSubmitBtn').addEventListener('click', async ()=>{
+  const pw = await loadPassword();
+  if (document.getElementById('authInput').value===pw) { isAdmin=true; document.getElementById('authModal').classList.add('hidden'); updateAdminUI(); }
+  else document.getElementById('authError').classList.remove('hidden');
+});
+document.getElementById('authInput').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('authSubmitBtn').click(); });
+
+function openPwModal() {
+  document.getElementById('pwInput').value=''; document.getElementById('pwConfirm').value='';
+  document.getElementById('pwError').classList.add('hidden');
+  document.getElementById('pwModal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('pwInput').focus(),50);
+}
+document.getElementById('pwCancelBtn').addEventListener('click',()=>document.getElementById('pwModal').classList.add('hidden'));
+document.getElementById('pwSaveBtn').addEventListener('click', async ()=>{
+  const pw=document.getElementById('pwInput').value.trim();
+  const pw2=document.getElementById('pwConfirm').value.trim();
+  const err=document.getElementById('pwError');
+  if(!pw){err.textContent='パスワードを入力してください';err.classList.remove('hidden');return;}
+  if(pw!==pw2){err.textContent='パスワードが一致しません';err.classList.remove('hidden');return;}
+  await apiPost({action:'setPassword',password:pw});
+  adminPassword=pw;
+  document.getElementById('pwModal').classList.add('hidden');
+  isAdmin=true; updateAdminUI();
+});
+
+function renderGenreSelect() {
+  const sel = document.getElementById('editGenre');
+  sel.innerHTML = GENRES.map(g=>`<option value="${g}">${g}</option>`).join('');
+  sel.addEventListener('change', () => renderSubgenreSelect(sel.value));
+}
+function renderSubgenreSelect(genre) {
+  const group = document.getElementById('subgenreGroup');
+  const sel = document.getElementById('editSubgenre');
+  const subs = (SUBGENRES[genre]||[]).filter(s=>s!=='すべて');
+  if (!subs.length) { group.classList.add('hidden'); return; }
+  group.classList.remove('hidden');
+  sel.innerHTML = subs.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+function renderDates(dates=[]) {
+  const wrap = document.getElementById('datesWrap');
+  wrap.innerHTML = '';
+  (dates.length ? dates : ['']).forEach(d => addDateRow(d));
+}
+function addDateRow(val='') {
+  const wrap = document.getElementById('datesWrap');
+  const row = document.createElement('div');
+  row.className = 'date-row';
+  row.innerHTML = `<input class="form-input date-input" type="text" placeholder="例: 19/03/23" value="${esc(val)}">
+    <button class="btn-remove-date" type="button">✕</button>`;
+  row.querySelector('.btn-remove-date').addEventListener('click', () => row.remove());
+  wrap.appendChild(row);
+}
+document.getElementById('addDateBtn').addEventListener('click', () => addDateRow());
+
+async function openEditModal(id=null) {
+  editingId=id;
+  const data=await loadVideos();
+  const item=id?data.find(d=>d.id===id):null;
+  document.getElementById('editModalTitle').textContent=item?'動画を編集':'動画を追加';
+  renderGenreSelect();
+  const genre=item?item.genre:currentGenre;
+  document.getElementById('editGenre').value=genre;
+  renderSubgenreSelect(genre);
+  if (item&&item.subgenre) document.getElementById('editSubgenre').value=item.subgenre;
+  document.getElementById('editTitle').value=item?item.title:'';
+  document.getElementById('editExchange').value=item?item.exchange:'ok';
+  document.getElementById('editSize').value=item?(item.size||''):'';
+  document.getElementById('editNote').value=item?(item.note||''):'';
+  renderDates(item?item.dates:[]);
+  const sel=item?item.members:[];
+  document.getElementById('memberChips').innerHTML=MEMBERS.map(m=>
+    `<button type="button" class="member-chip${sel.includes(m)?' selected':''}" data-member="${m}">${m}</button>`
+  ).join('');
+  document.getElementById('memberChips').querySelectorAll('.member-chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
+  document.getElementById('editModal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('editTitle').focus(),50);
+}
+document.getElementById('addBtn').addEventListener('click',()=>openEditModal());
+document.getElementById('editCancelBtn').addEventListener('click',()=>document.getElementById('editModal').classList.add('hidden'));
+document.getElementById('editSaveBtn').addEventListener('click', async ()=>{
+  const title=document.getElementById('editTitle').value.trim();
+  if(!title){alert('タイトルを入力してください');return;}
+  const genre=document.getElementById('editGenre').value;
+  const subs=(SUBGENRES[genre]||[]).filter(s=>s!=='すべて');
+  const subgenre=subs.length?document.getElementById('editSubgenre').value:'';
+  const exchange=document.getElementById('editExchange').value;
+  const size=document.getElementById('editSize').value.trim();
+  const note=document.getElementById('editNote').value.trim();
+  const members=[...document.getElementById('memberChips').querySelectorAll('.member-chip.selected')].map(c=>c.dataset.member);
+  const dates=[...document.getElementById('datesWrap').querySelectorAll('.date-input')].map(i=>i.value.trim()).filter(Boolean);
+  const video={id:editingId||Date.now().toString(),title,genre,subgenre,exchange,size,note,members,dates};
+  await apiPost({action:'saveVideo',video,isNew:!editingId});
+  cachedVideos=null; document.getElementById('editModal').classList.add('hidden'); renderList();
+});
+
+async function deleteItem(id){
+  if(!confirm('削除しますか？'))return;
+  await apiPost({action:'deleteVideo',id});
+  cachedVideos=null; renderList();
+}
+
+document.getElementById('searchInput').addEventListener('input',e=>{ searchQuery=e.target.value.trim(); renderList(); });
+
+renderTabs(); renderSubtabs(); renderFilterBar(); renderList();
+</script>
+</body>
+</html>
