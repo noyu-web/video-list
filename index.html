@@ -339,31 +339,10 @@ function jsonp(params){
   });
 }
 async function gasGet(params){return jsonp(params);}
-const CACHE_VERSION='v7';
-// 起動時に古いキャッシュを全クリア
-try{
-  if(sessionStorage.getItem('videos_cache_ver')!==CACHE_VERSION){
-    sessionStorage.removeItem('videos_cache');
-    sessionStorage.removeItem('videos_cache_ver');
-    localStorage.removeItem('videos_cache');
-  }
-}catch{}
-
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
-  if(!force){
-    try{
-      const ver=sessionStorage.getItem('videos_cache_ver');
-      const cached=sessionStorage.getItem('videos_cache');
-      if(ver===CACHE_VERSION&&cached){cachedVideos=JSON.parse(cached);return cachedVideos;}
-    }catch{}
-  }
   cachedVideos=await gasGet({action:'getVideos'});
   if(!Array.isArray(cachedVideos))cachedVideos=[];
-  try{
-    sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));
-    sessionStorage.setItem('videos_cache_ver',CACHE_VERSION);
-  }catch{}
   return cachedVideos;
 }
 
@@ -820,7 +799,6 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
     if(!cachedVideos)cachedVideos=[];
     cachedVideos.push(video);
   }
-  try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
   document.getElementById('editModal').classList.add('hidden');
   renderYearTabs(cachedVideos);renderList();
   // バックグラウンドでGASに保存
@@ -831,7 +809,6 @@ async function deleteItem(id){
   if(!confirm('削除しますか？'))return;
   // 楽観的更新
   if(cachedVideos)cachedVideos=cachedVideos.filter(v=>v.id!==id);
-  try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
   renderYearTabs(cachedVideos||[]);renderList();
   gasGet({action:'deleteVideo',data:'',id}).catch(()=>{});
 }
