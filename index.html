@@ -339,7 +339,16 @@ function jsonp(params){
   });
 }
 async function gasGet(params){return jsonp(params);}
-const CACHE_VERSION='v6';
+const CACHE_VERSION='v7';
+// 起動時に古いキャッシュを全クリア
+try{
+  if(sessionStorage.getItem('videos_cache_ver')!==CACHE_VERSION){
+    sessionStorage.removeItem('videos_cache');
+    sessionStorage.removeItem('videos_cache_ver');
+    localStorage.removeItem('videos_cache');
+  }
+}catch{}
+
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
   if(!force){
