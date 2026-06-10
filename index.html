@@ -215,8 +215,9 @@
       <label class="form-label">タイトル</label>
       <input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力">
     </div>
+    <div style="border-top:2px solid var(--pink-light);margin:16px 0"></div>
     <div class="form-group">
-      <label class="form-label">出演者（SixTONES）</label>
+      <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700">👥 出演者（SixTONES）</label>
       <div class="chips-grid" id="memberChips"></div>
     </div>
     <div class="form-group" id="otherMemberGroup">
@@ -607,7 +608,7 @@ function getSelectedGenres(){
 function addDateGroup(dateVal='',times=[]){
   const wrap=document.getElementById('dateGroupsWrap');
   const div=document.createElement('div');div.className='date-group';
-  div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" type="text" placeholder="例: 2019/03/02" value="${esc(dateVal)}"><button class="btn-remove dg-remove" type="button">✕</button></div>
+  div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" type="date" value="${esc(dateVal)}" style="flex:1"><button class="btn-remove dg-remove" type="button">✕</button></div>
   <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
   <button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>`;
   div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
