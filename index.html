@@ -416,8 +416,10 @@ async function renderList(){
       <div class="card-title">${esc(item.title)}</div>
 
       <div class="card-meta">
-        ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')}
         ${scheduleTags}
+      </div>
+      <div class="card-meta" style="margin-top:3px">
+        ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px">${esc(m)}</span>`).join('')}
       </div>
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
     </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
