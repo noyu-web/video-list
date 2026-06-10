@@ -56,6 +56,16 @@
   .tag-juri{background:#3182ce;color:white}
   .tag-sixtones{background:#718096;color:white}
   .tag-all{background:#fce7f3;color:#9d174d}
+  .exchange-partial{background:#fef3c7;color:#92400e}
+  .exchange-consult{background:#ede9fe;color:#5b21b6}
+  .tag-jesse{background:#e53e3e;color:white}
+  .tag-kyomo{background:#ed64a6;color:white}
+  .tag-matsu{background:#1a202c;color:white}
+  .tag-kochi{background:#d69e2e;color:white}
+  .tag-mori{background:#38a169;color:white}
+  .tag-juri{background:#3182ce;color:white}
+  .tag-sixtones{background:#718096;color:white}
+  .tag-all{background:#fce7f3;color:#9d174d}
   .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
   .exchange-ok{background:#dcfce7;color:#166534}
   .exchange-ng{background:#fee2e2;color:#991b1b}
@@ -222,6 +232,8 @@
       <label class="form-label">交換</label>
       <select class="form-select" id="editExchange">
         <option value="ok">可</option>
+        <option value="partial">一部交換可</option>
+        <option value="consult">要相談</option>
         <option value="ng">不可</option>
       </select>
     </div>
@@ -304,6 +316,17 @@ function memberClass(m){
   return'tag-all';
 }
 
+function memberClass(m){
+  if(m==='ジェシー')return'tag-jesse';
+  if(m==='京本大我')return'tag-kyomo';
+  if(m==='松村北斗')return'tag-matsu';
+  if(m==='髙地優吾')return'tag-kochi';
+  if(m==='森本慎太郎')return'tag-mori';
+  if(m==='田中樹')return'tag-juri';
+  if(m==='SixTONES')return'tag-sixtones';
+  return'tag-all';
+}
+
 function renderTabs(){
   cfg=loadConfig();
   const t=document.getElementById('tabs');
@@ -367,10 +390,10 @@ async function renderList(){
       <div class="card-title">${esc(item.title)}</div>
       ${item.subgenre?`<div class="card-sub">${esc(item.subgenre)}</div>`:''}
       <div class="card-meta">
-        ${(item.members||[]).map(m=>`<span class="tag tag-member">${esc(m)}</span>`).join('')}
+        ${(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')}
         ${scheduleTags}
       </div>
-      ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${item.exchange==='ok'?'交換可':'交換不可'}</span></div>`:''}
+      ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${item.exchange==='ok'?'交換可':item.exchange==='partial'?'一部交換可':item.exchange==='consult'?'要相談':'交換不可'}</span></div>`:''}
     </div><span class="exchange-badge ${item.exchange==='ok'?'exchange-ok':'exchange-ng'}">${item.exchange==='ok'?'交換可':'交換不可'}</span></div>
     ${isAdmin?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
   }).join('');
@@ -567,10 +590,10 @@ function openDetailModal(item){
   document.getElementById('detailSubgenre').textContent=item.subgenre||'';
   
   const members=document.getElementById('detailMembers');
-  members.innerHTML=(item.members||[]).map(m=>`<span class="tag tag-member">${esc(m)}</span>`).join('');
+  members.innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('');
   
   const ex=document.getElementById('detailExchange');
-  ex.innerHTML=`<span class="exchange-badge ${item.exchange==='ok'?'exchange-ok':'exchange-ng'}">${item.exchange==='ok'?'交換可':'交換不可'}</span>`;
+  ex.innerHTML=`<span class="exchange-badge ${item.exchange==='ok'?'exchange-ok':item.exchange==='partial'?'exchange-partial':item.exchange==='consult'?'exchange-consult':'exchange-ng'}">${item.exchange==='ok'?'交換可':item.exchange==='partial'?'一部交換可':item.exchange==='consult'?'要相談':'交換不可'}</span>`;
   
   const schedules=formatSchedules(item.dates);
   const schDiv=document.getElementById('detailSchedules');
