@@ -51,7 +51,8 @@
   .tag-juri{background:#b3d4ff;color:#003d7a}
   .tag-sixtones{background:#e0e0e0;color:#555}
   .tag-all{background:#fce7f3;color:#9d174d}
-  .tag-date{background:#eff6ff;color:#1e40af;font-family:monospace}
+  .tag-date{background:#eff6ff;color:#1e40af;font-family:monospace;font-size:12px;padding:3px 10px}
+  .tag-time{background:#e0f2fe;color:#0369a1;font-family:monospace;font-size:10px;padding:2px 7px}
   .tag-genre{background:#f3e8ff;color:#6b21a8;font-size:10px}
   .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
   .exchange-ok{background:#dcfce7;color:#166534}
@@ -286,6 +287,9 @@ function saveConfig(cfg){
 let isAdmin=false,currentGenre='すべて',currentSubgenre='すべて',currentFilter='すべて',searchQuery='',editingId=null,cachedVideos=null,cbIdx=0;
 let cfg=loadConfig();
 
+const SIXTONES_MEMBERS=['全員','京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
+function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
+
 function memberClass(m){
   if(m==='ジェシー')return'tag-jesse';
   if(m==='京本大我')return'tag-kyomo';
@@ -404,14 +408,14 @@ async function renderList(){
     const schedules=formatSchedules(item.dates);
     const genreTags=genres.map(g=>`<span class="tag tag-genre">${esc(g.genre)}${g.subgenre?' / '+g.subgenre:''}</span>`).join('');
     const scheduleTags=schedules.filter(s=>s.date&&s.date.trim()).map(s=>{
-      const times=s.times&&s.times.length?' '+s.times.join(' / '):'';
-      return`<span class="tag tag-date">${esc(s.date)}${times}</span>`;
+      const timeTags=s.times&&s.times.length?s.times.map(t=>`<span class="tag tag-time">${esc(t)}</span>`).join(''):'';
+      return`<span class="tag tag-date">${esc(s.date)}</span>${timeTags}`;
     }).join('');
     return`<div class="card" data-detail="${item.id}"><div class="card-main"><div class="card-info">
       <div class="card-title">${esc(item.title)}</div>
 
       <div class="card-meta">
-        ${(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')}
+        ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')}
         ${scheduleTags}
       </div>
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
@@ -477,9 +481,16 @@ function openDetailModal(item){
   tracksDiv.id='detailTracks';
   const tracks=item.tracks?JSON.parse(item.tracks||'[]'):[];
   if(tracks.length){
+    const distLabel={ok:'配布可',ng:'配布不可',none:''};
+    const distColor={ok:'#dcfce7;color:#166534',ng:'#fee2e2;color:#991b1b',none:''};
     tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容</div>'+
     '<div style="background:var(--gray-light);border-radius:8px;padding:8px 10px">'+
-    tracks.map(t=>`<div style="font-size:13px;padding:3px 0;border-bottom:1px solid var(--border)">${esc(t)}</div>`).join('')+
+    tracks.map(t=>{
+      const title=typeof t==='string'?t:t.title;
+      const dist=typeof t==='string'?'none':t.dist||'none';
+      const badge=dist&&dist!=='none'?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:${distColor[dist]};font-weight:600;margin-left:6px">${distLabel[dist]}</span>`:'';
+      return`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;align-items:center">${esc(title)}${badge}</div>`;
+    }).join('')+
     '</div>';
     document.getElementById('detailNote').before(tracksDiv);
   }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
@@ -602,7 +613,7 @@ function addDateGroup(dateVal='',times=[]){
   div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
   div.querySelector('.dg-add-time').addEventListener('click',()=>{
     const tr=document.createElement('div');tr.className='time-row';
-    tr.innerHTML=`<input class="form-input" type="text" placeholder="例: 12:00" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button>`;
+    tr.innerHTML=`<input class="form-input" type="time" style="width:110px"><button class="btn-remove tr-remove" type="button">✕</button>`;
     tr.querySelector('.tr-remove').addEventListener('click',()=>tr.remove());
     div.querySelector('.dg-times').appendChild(tr);
   });
@@ -663,20 +674,33 @@ async function openEditModal(id=null){
   // 収録内容
   document.getElementById('tracksWrap').innerHTML='';
   const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-  tracks.forEach(t=>addTrackRow(t));
+  tracks.forEach(t=>typeof t==='string'?addTrackRow(t):addTrackRow(t.title||t,t.dist||'none'));
   document.getElementById('editModal').classList.remove('hidden');
   setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
 
-function addTrackRow(val=''){
+function addTrackRow(val='',dist='none'){
   const wrap=document.getElementById('tracksWrap');
-  const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center';
-  row.innerHTML=`<input class="form-input track-input" type="text" placeholder="例: 第1話 / SixTONES LIVE 2021" value="${esc(val)}" style="flex:1"><button class="btn-remove tr-rm" type="button">✕</button>`;
+  const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:4px';
+  row.innerHTML=`<input class="form-input track-input" type="text" placeholder="例: 第1話 / SixTONES LIVE 2021" value="${esc(val)}" style="flex:1">
+    <select class="track-dist form-select" style="width:90px;padding:9px 6px;font-size:11px">
+      <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
+      <option value="ok" ${dist==='ok'?'selected':''}>配布可</option>
+      <option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
+    </select>
+    <button class="btn-remove tr-rm" type="button">✕</button>`;
   row.querySelector('.tr-rm').addEventListener('click',()=>row.remove());
   wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
-function getTracks(){return[...document.getElementById('tracksWrap').querySelectorAll('.track-input')].map(i=>i.value.trim()).filter(Boolean);}
+function getTracks(){
+  return[...document.getElementById('tracksWrap').querySelectorAll('div')].map(row=>{
+    const input=row.querySelector('.track-input');
+    const dist=row.querySelector('.track-dist');
+    if(!input||!input.value.trim())return null;
+    return{title:input.value.trim(),dist:dist?dist.value:'none'};
+  }).filter(Boolean);
+}
 
 document.getElementById('addBtn').addEventListener('click',()=>openEditModal());
 document.getElementById('editCancelBtn').addEventListener('click',()=>document.getElementById('editModal').classList.add('hidden'));
