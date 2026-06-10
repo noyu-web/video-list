@@ -192,6 +192,46 @@
   </div>
 </div>
 
+<!-- Guide Modal -->
+<div class="modal-overlay hidden" id="guideModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">使い方・説明</h2>
+      <button class="modal-close" onclick="document.getElementById('guideModal').classList.add('hidden')">×</button>
+    </div>
+    <div id="guideTextView" style="font-size:13px;line-height:1.9;padding:4px 0"></div>
+    <div id="guideEditWrap" style="display:none;margin-top:12px">
+      <textarea id="guideEditArea" class="form-textarea" style="font-size:13px;min-height:160px"></textarea>
+      <button class="btn-save" id="guideSaveBtn" style="margin-top:8px;width:100%">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay hidden" id="userModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">ニックネーム登録</h2>
+      <button class="modal-close" onclick="document.getElementById('userModal').classList.add('hidden')">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:12px">ニックネームを登録すると、お気に入りが使えます。同じ端末・ブラウザでのみ保持されます。</p>
+    <input class="form-input" id="usernameInput" placeholder="ニックネームを入力" style="margin-bottom:8px">
+    <button class="btn-save" id="userSaveBtn" style="width:100%">登録</button>
+    <p style="margin-top:8px;font-size:11px;color:var(--gray)">※このサイトで所持リストを作ることはできません</p>
+  </div>
+</div>
+
+<!-- Cross Search Modal -->
+<div class="modal-overlay hidden" id="crossModal">
+  <div class="modal-content" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-header">
+      <h2 class="modal-title" id="crossModalTitle"></h2>
+      <button class="modal-close" onclick="document.getElementById('crossModal').classList.add('hidden')">×</button>
+    </div>
+    <div id="crossModalList" style="padding:8px 0"></div>
+  </div>
+</div>
+
 <!-- Subgenre Modal -->
 <div class="modal-overlay hidden" id="subgenreModal">
   <div class="modal">
@@ -413,13 +453,16 @@ async function renderList(){
       return`<span class="tag tag-date">${esc(s.date)}</span>${timeTags}`;
     }).join('');
     return`<div class="card" data-detail="${item.id}"><div class="card-main"><div class="card-info">
-      <div class="card-title">${esc(item.title)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="card-title" style="flex:1">${esc(item.title)}</div>
+        <span class="fav-btn" data-id="${item.id}" style="font-size:18px;cursor:pointer;padding:0 0 0 8px;flex-shrink:0">${getFavs().includes(item.id)?'❤️':'🤍'}</span>
+      </div>
 
       <div class="card-meta">
         ${scheduleTags}
       </div>
       <div class="card-meta" style="margin-top:3px">
-        ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px">${esc(m)}</span>`).join('')}
+        ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
       </div>
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
     </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
@@ -696,20 +739,23 @@ async function openEditModal(id=null){
   // 収録内容
   document.getElementById('tracksWrap').innerHTML='';
   const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-  tracks.forEach(t=>typeof t==='string'?addTrackRow(t):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[]));
+  tracks.forEach(t=>typeof t==='string'?addTrackRow(t):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||''));
   document.getElementById('editModal').classList.remove('hidden');
   setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
 
-function addTrackRow(val='',dist='none',date='',members=[]){
+function addTrackRow(val='',dist='none',date='',members=[],section=''){
   cfg=loadConfig();
   const wrap=document.getElementById('tracksWrap');
   const row=document.createElement('div');
   row.style.cssText='background:var(--pink-pale);border-radius:8px;padding:8px;margin-bottom:8px;border:1px solid var(--pink-light)';
   const allMembers=[...cfg.members,...Object.values(cfg.otherMembers||{}).flat()].filter((m,i,a)=>a.indexOf(m)===i);
   const memberOptions=allMembers.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('');
+  const sections=['','音源','映像','特典映像','ドキュメント','メイキング','その他'];
+  const sectionOptions=sections.map(s=>`<option value="${s}" ${section===s?'selected':''}>${s||'セクションなし'}</option>`).join('');
   row.innerHTML=`
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <select class="track-section form-select" style="width:110px;padding:7px 6px;font-size:12px">${sectionOptions}</select>
       <input class="form-input track-input" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
       <button class="btn-remove tr-rm" type="button">✕</button>
     </div>
@@ -733,8 +779,9 @@ function getTracks(){
     if(!input||!input.value.trim())return null;
     const dist=row.querySelector('.track-dist');
     const date=row.querySelector('.track-date');
+    const sec=row.querySelector('.track-section');
     const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
-    return{title:input.value.trim(),dist:dist?dist.value:'none',date:date?date.value:'',members};
+    return{title:input.value.trim(),dist:dist?dist.value:'none',date:date?date.value:'',members,section:sec?sec.value:''};
   }).filter(Boolean);
 }
 
