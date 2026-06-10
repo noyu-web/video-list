@@ -461,7 +461,12 @@ async function renderList(){
   list.querySelectorAll('[data-toggle]').forEach(inp=>inp.addEventListener('change',async(e)=>{
     e.stopPropagation();
     const all=await loadVideos();const item=all.find(d=>d.id===inp.dataset.toggle);
-    if(item){item.exchange=inp.checked?'ok':'ng';await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video:item,isNew:false})),id:''});cachedVideos=null;renderList();}
+    if(item){
+      item.exchange=inp.checked?'ok':'ng';
+      try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
+      renderList();
+      gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video:item,isNew:false})),id:''}).catch(()=>{});
+    }
   }));
   list.querySelectorAll('label.toggle').forEach(l=>l.addEventListener('click',e=>e.stopPropagation()));
   list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();openEditModal(b.dataset.edit);}));
@@ -789,13 +794,28 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   const schedules=getSchedules();
   const tracks=getTracks();
   const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks)};
-  await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
-  cachedVideos=null;document.getElementById('editModal').classList.add('hidden');renderList();
+  // 楽観的更新（画面をすぐ反映）
+  if(editingId){
+    const idx=cachedVideos.findIndex(v=>v.id===editingId);
+    if(idx>=0)cachedVideos[idx]=video;
+  }else{
+    if(!cachedVideos)cachedVideos=[];
+    cachedVideos.push(video);
+  }
+  try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
+  document.getElementById('editModal').classList.add('hidden');
+  renderYearTabs(cachedVideos);renderList();
+  // バックグラウンドでGASに保存
+  gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''}).catch(()=>{});
 });
 
 async function deleteItem(id){
   if(!confirm('削除しますか？'))return;
-  await gasGet({action:'deleteVideo',data:'',id});cachedVideos=null;renderList();
+  // 楽観的更新
+  if(cachedVideos)cachedVideos=cachedVideos.filter(v=>v.id!==id);
+  try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
+  renderYearTabs(cachedVideos||[]);renderList();
+  gasGet({action:'deleteVideo',data:'',id}).catch(()=>{});
 }
 
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
