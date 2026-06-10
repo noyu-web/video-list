@@ -48,23 +48,23 @@
   .tag-member{background:#fce7f3;color:#9d174d}
   .tag-date{background:#eff6ff;color:#1e40af;font-family:monospace}
   .tag-note{background:var(--gray-light);color:var(--gray)}
-  .tag-jesse{background:#e53e3e;color:white}
-  .tag-kyomo{background:#ed64a6;color:white}
-  .tag-matsu{background:#1a202c;color:white}
-  .tag-kochi{background:#d69e2e;color:white}
-  .tag-mori{background:#38a169;color:white}
-  .tag-juri{background:#3182ce;color:white}
-  .tag-sixtones{background:#718096;color:white}
+  .tag-jesse{background:#ffb3b3;color:#7b0000}
+  .tag-kyomo{background:#ffb3d9;color:#7b0044}
+  .tag-matsu{background:#4a4a4a;color:white}
+  .tag-kochi{background:#fff0b3;color:#7a5c00}
+  .tag-mori{background:#b3f0c8;color:#1a5c35}
+  .tag-juri{background:#b3d4ff;color:#003d7a}
+  .tag-sixtones{background:#e0e0e0;color:#555}
   .tag-all{background:#fce7f3;color:#9d174d}
   .exchange-partial{background:#fef3c7;color:#92400e}
   .exchange-consult{background:#ede9fe;color:#5b21b6}
-  .tag-jesse{background:#e53e3e;color:white}
-  .tag-kyomo{background:#ed64a6;color:white}
-  .tag-matsu{background:#1a202c;color:white}
-  .tag-kochi{background:#d69e2e;color:white}
-  .tag-mori{background:#38a169;color:white}
-  .tag-juri{background:#3182ce;color:white}
-  .tag-sixtones{background:#718096;color:white}
+  .tag-jesse{background:#ffb3b3;color:#7b0000}
+  .tag-kyomo{background:#ffb3d9;color:#7b0044}
+  .tag-matsu{background:#4a4a4a;color:white}
+  .tag-kochi{background:#fff0b3;color:#7a5c00}
+  .tag-mori{background:#b3f0c8;color:#1a5c35}
+  .tag-juri{background:#b3d4ff;color:#003d7a}
+  .tag-sixtones{background:#e0e0e0;color:#555}
   .tag-all{background:#fce7f3;color:#9d174d}
   .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
   .exchange-ok{background:#dcfce7;color:#166534}
@@ -130,7 +130,7 @@
   <button class="btn btn-primary" id="addBtn">＋ 追加</button>
 </div>
 <div class="toolbar" style="padding-top:8px">
-  <input class="search-input" type="search" placeholder="タイトルで検索…" id="searchInput">
+  <input class="search-input" type="search" placeholder="タイトル・出演者・メモで検索…" id="searchInput">
 </div>
 <div class="filter-bar" id="filterBar"></div>
 <div class="list-wrap">
@@ -375,7 +375,12 @@ async function renderList(){
   if(subs.length&&currentSubgenre!=='すべて')data=data.filter(d=>d.subgenre===currentSubgenre);
   if(currentFilter==='交換可')data=data.filter(d=>d.exchange==='ok');
   if(currentFilter==='交換不可')data=data.filter(d=>d.exchange==='ng');
-  if(searchQuery){const q=searchQuery.toLowerCase();data=data.filter(d=>d.title.toLowerCase().includes(q));}
+  if(searchQuery){const q=searchQuery.toLowerCase();data=data.filter(d=>
+    d.title.toLowerCase().includes(q)||
+    (d.members||[]).some(m=>m.toLowerCase().includes(q))||
+    (d.note||'').toLowerCase().includes(q)||
+    (d.subgenre||'').toLowerCase().includes(q)
+  );}
   document.getElementById('listCount').textContent=data.length+' 件';
   if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
   
