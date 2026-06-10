@@ -106,11 +106,11 @@
 </head>
 <body>
 <header>
-  <div class="header-title">💎 所持リスト</div>
+  <div class="header-title" id="headerTitle" style="cursor:default">💎 所持リスト</div>
   <div class="header-right">
     <span class="mode-badge view" id="modeBadge">閲覧モード</span>
     <button class="btn-icon" id="settingsBtn" style="display:none">⚙️</button>
-    <button id="authBtn" style="background:none;border:none;cursor:pointer;opacity:0.3;font-size:12px;padding:2px 6px;color:var(--gray)">●●●</button>
+    <button id="authBtn" style="background:none;border:none;cursor:default;opacity:0;font-size:1px;padding:2px;width:20px;height:20px"></button>
 
   </div>
 </header>
@@ -339,18 +339,22 @@ function jsonp(params){
   });
 }
 async function gasGet(params){return jsonp(params);}
+const CACHE_VERSION='v6';
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
-  // sessionStorageにキャッシュ（タブを閉じるまで維持）
   if(!force){
     try{
+      const ver=sessionStorage.getItem('videos_cache_ver');
       const cached=sessionStorage.getItem('videos_cache');
-      if(cached){cachedVideos=JSON.parse(cached);return cachedVideos;}
+      if(ver===CACHE_VERSION&&cached){cachedVideos=JSON.parse(cached);return cachedVideos;}
     }catch{}
   }
   cachedVideos=await gasGet({action:'getVideos'});
   if(!Array.isArray(cachedVideos))cachedVideos=[];
-  try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
+  try{
+    sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));
+    sessionStorage.setItem('videos_cache_ver',CACHE_VERSION);
+  }catch{}
   return cachedVideos;
 }
 
@@ -485,6 +489,14 @@ function updateAdminUI(){
 }
 
 // Auth
+// タイトル5回タップでログイン
+let _tapCount=0,_tapTimer=null;
+document.getElementById('headerTitle').addEventListener('click',()=>{
+  _tapCount++;
+  clearTimeout(_tapTimer);
+  _tapTimer=setTimeout(()=>{_tapCount=0;},1500);
+  if(_tapCount>=5){_tapCount=0;document.getElementById('authModal').classList.remove('hidden');}
+});
 document.getElementById('authBtn').addEventListener('click',()=>{
   if(isAdmin){isAdmin=false;updateAdminUI();return;}
   document.getElementById('authInput').value='';document.getElementById('authError').classList.add('hidden');
