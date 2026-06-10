@@ -215,8 +215,12 @@
       <input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力">
     </div>
     <div class="form-group">
-      <label class="form-label">出演者</label>
+      <label class="form-label">出演者（SixTONES）</label>
       <div class="chips-grid" id="memberChips"></div>
+    </div>
+    <div class="form-group" id="otherMemberGroup">
+      <label class="form-label">出演者（SixTONES以外）</label>
+      <div class="chips-grid" id="otherMemberChips"></div>
     </div>
     <div class="form-group">
       <label class="form-label">交換</label>
@@ -232,8 +236,8 @@
       <div id="genreSections"></div>
     </div>
     <div class="form-group">
-      <label class="form-label">公演日・時間</label>
-      <div class="dates-section">
+      <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">📅 公演日・時間</label>
+      <div class="dates-section" style="margin-top:6px">
         <div id="dateGroupsWrap"></div>
         <button class="btn-add-small" id="addDateGroupBtn">＋ 日付を追加</button>
       </div>
@@ -623,22 +627,31 @@ async function openEditModal(id=null){
   document.getElementById('editExchange').value=item?item.exchange:'ok';
   document.getElementById('editNote').value=item?(item.note||''):'';
   const sel=item?item.members:[];
-  const currentSelected=[];
   function renderMemberChips(){
     cfg=loadConfig();
+    // SixTONESメンバー
+    const nowSel=[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
+    const effectiveSel=nowSel.length?nowSel:sel;
+    document.getElementById('memberChips').innerHTML=cfg.members.map(m=>`<button type="button" class="chip${effectiveSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
+    document.getElementById('memberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
+    // SixTONES以外メンバー
     const selectedGenres2=getSelectedGenres();
     const otherSubs=selectedGenres2.filter(g=>g.genre==='SixTONES以外').map(g=>g.subgenre);
     let extraMembers=[];
-    otherSubs.forEach(sub=>{if(cfg.otherMembers[sub])extraMembers=[...extraMembers,...cfg.otherMembers[sub]];});
-    const allMembers=[...cfg.members,...extraMembers.filter(m=>!cfg.members.includes(m))];
-    // 現在選択中のメンバーを保持
-    const nowSelected=[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
-    const effectiveSel=nowSelected.length?nowSelected:sel;
-    document.getElementById('memberChips').innerHTML=allMembers.map(m=>`<button type="button" class="chip${effectiveSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
-    document.getElementById('memberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
+    otherSubs.forEach(sub=>{if(cfg.otherMembers[sub])extraMembers=[...new Set([...extraMembers,...(cfg.otherMembers[sub]||[])])];});
+    const otherGroup=document.getElementById('otherMemberGroup');
+    if(extraMembers.length){
+      otherGroup.classList.remove('hidden');
+      const nowOtherSel=[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
+      const effectiveOtherSel=nowOtherSel.length?nowOtherSel:sel;
+      document.getElementById('otherMemberChips').innerHTML=extraMembers.map(m=>`<button type="button" class="chip${effectiveOtherSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
+      document.getElementById('otherMemberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
+    }else{
+      otherGroup.classList.add('hidden');
+      document.getElementById('otherMemberChips').innerHTML='';
+    }
   }
   renderMemberChips();
-  // ジャンルセクションのチップクリック時にメンバーリストを更新
   setTimeout(()=>{
     document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(renderMemberChips,50)));
   },100);
@@ -672,7 +685,10 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   if(!title){alert('タイトルを入力してください');return;}
   const exchange=document.getElementById('editExchange').value;
   const note=document.getElementById('editNote').value.trim();
-  const members=[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
+  const members=[
+    ...[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member),
+    ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
+  ];
   const genres=getSelectedGenres();
   const schedules=getSchedules();
   const tracks=getTracks();
