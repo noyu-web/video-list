@@ -120,6 +120,22 @@
   <div id="cardList"><div class="loading">読み込み中…</div></div>
 </div>
 
+
+<!-- Detail Modal -->
+<div class="modal-overlay hidden" id="detailModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="modal-title" id="detailTitle" style="margin-bottom:0"></div>
+      <button class="btn-icon" id="detailCloseBtn" style="font-size:20px">✕</button>
+    </div>
+    <div id="detailSubgenre" style="font-size:12px;color:var(--gray);margin-bottom:12px"></div>
+    <div id="detailMembers" class="card-meta" style="margin-bottom:12px"></div>
+    <div id="detailExchange" style="margin-bottom:12px"></div>
+    <div id="detailSchedules" style="margin-bottom:12px"></div>
+    <div id="detailNote" style="margin-bottom:4px"></div>
+  </div>
+</div>
+
 <!-- Auth Modal -->
 <div class="modal-overlay hidden" id="authModal">
   <div class="modal">
@@ -328,7 +344,7 @@ async function renderList(){
       return `<span class="tag tag-date">${esc(s.date)}${times?' '+times:''}</span>`;
     }).join('');
     
-    return `<div class="card"><div class="card-main"><div class="card-info">
+    return `<div class="card" style="cursor:pointer" data-detail="${item.id}"><div class="card-main"><div class="card-info">
       <div class="card-title">${esc(item.title)}</div>
       ${item.subgenre?`<div class="card-sub">${esc(item.subgenre)}</div>`:''}
       <div class="card-meta">
@@ -345,8 +361,14 @@ async function renderList(){
     const all=await loadVideos();const item=all.find(d=>d.id===inp.dataset.toggle);
     if(item){item.exchange=inp.checked?'ok':'ng';await gasPost({action:'saveVideo',video:item,isNew:false});cachedVideos=null;renderList();}
   }));
-  list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEditModal(b.dataset.edit)));
-  list.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',()=>deleteItem(b.dataset.delete)));
+  list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();openEditModal(b.dataset.edit);}));
+  list.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();deleteItem(b.dataset.delete);}));
+  list.querySelectorAll('[data-toggle]').length&&list.querySelectorAll('label.toggle').forEach(l=>l.addEventListener('click',(e)=>e.stopPropagation()));
+  list.querySelectorAll('[data-detail]').forEach(card=>card.addEventListener('click',async()=>{
+    const data=await loadVideos();
+    const item=data.find(d=>d.id===card.dataset.detail);
+    if(item)openDetailModal(item);
+  }));
 }
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -522,12 +544,43 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   cachedVideos=null;document.getElementById('editModal').classList.add('hidden');renderList();
 });
 
+function openDetailModal(item){
+  document.getElementById('detailTitle').textContent=item.title;
+  document.getElementById('detailSubgenre').textContent=item.subgenre||'';
+  
+  const members=document.getElementById('detailMembers');
+  members.innerHTML=(item.members||[]).map(m=>`<span class="tag tag-member">${esc(m)}</span>`).join('');
+  
+  const ex=document.getElementById('detailExchange');
+  ex.innerHTML=`<span class="exchange-badge ${item.exchange==='ok'?'exchange-ok':'exchange-ng'}">${item.exchange==='ok'?'交換可':'交換不可'}</span>`;
+  
+  const schedules=formatSchedules(item.dates);
+  const schDiv=document.getElementById('detailSchedules');
+  if(schedules.length){
+    schDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">公演日・時間</div>'+
+    schedules.map(s=>`<div style="background:var(--pink-pale);border-radius:8px;padding:8px 10px;margin-bottom:6px">
+      <div style="font-size:13px;font-weight:600;color:var(--pink-dark)">${esc(s.date)}</div>
+      ${s.times&&s.times.length?`<div style="font-size:12px;color:var(--gray);margin-top:3px">${s.times.map(t=>esc(t)).join('　/　')}</div>`:''}
+    </div>`).join('');
+  }else{schDiv.innerHTML='';}
+  
+  const note=document.getElementById('detailNote');
+  if(item.note){
+    note.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:4px">メモ</div>
+    <div style="font-size:13px;background:var(--gray-light);border-radius:8px;padding:8px 10px">${esc(item.note)}</div>`;
+  }else{note.innerHTML='';}
+  
+  document.getElementById('detailModal').classList.remove('hidden');
+}
+
 async function deleteItem(id){
   if(!confirm('削除しますか？'))return;
   await gasPost({action:'deleteVideo',id});cachedVideos=null;renderList();
 }
 
 document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();renderList();});
+document.getElementById('detailCloseBtn').addEventListener('click',()=>document.getElementById('detailModal').classList.add('hidden'));
+document.getElementById('detailModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
 
 cfg=loadConfig();
 if(cfg.genres.length)currentGenre=cfg.genres[0];
