@@ -122,7 +122,18 @@
 <div class="toolbar" style="padding-top:8px">
   <input class="search-input" type="search" placeholder="タイトル・出演者・メモで検索…" id="searchInput">
 </div>
-<div class="filter-bar" id="filterBar"></div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 16px 6px">
+    <span style="font-size:12px;color:var(--gray)">並び替え</span>
+    <select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
+      <option value="default">登録順</option>
+      <option value="date_new">公演日（新しい順）</option>
+      <option value="date_old">公演日（古い順）</option>
+      <option value="title">タイトル（50音順）</option>
+      <option value="exchange">交換可優先</option>
+    </select>
+  </div>
+  <div id="yearTabsWrap" style="display:flex;gap:6px;overflow-x:auto;padding:0 16px 8px;scrollbar-width:none"></div>
+  <div class="filter-bar" id="filterBar"></div>
 <div class="list-wrap">
   <div class="list-count" id="listCount"></div>
   <div id="cardList"><div class="loading">読み込み中…</div></div>
@@ -367,7 +378,8 @@ function renderTabs(){
   cfg=loadConfig();
   const t=document.getElementById('tabs');
   t.innerHTML=cfg.genres.map(g=>`<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
-  t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();}));
+  t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderYearTabs(cachedVideos||[]);
+renderList();}));
 }
 
 function renderSubtabs(){
@@ -786,7 +798,8 @@ async function deleteItem(id){
   await gasGet({action:'deleteVideo',data:'',id});cachedVideos=null;renderList();
 }
 
-document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();renderList();});
+document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
+  document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();renderList();});
 
 cfg=loadConfig();
 renderTabs();renderSubtabs();renderFilterBar();renderList();
