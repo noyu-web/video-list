@@ -339,15 +339,6 @@ function jsonp(params){
   });
 }
 async function gasGet(params){return jsonp(params);}
-async function gasPost(action,body,extraParams){
-  if(action==='saveVideo'){
-    return gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify(body)),id:''});
-  }
-  if(action==='deleteVideo'){
-    return gasGet({action:'deleteVideo',data:'',id:(extraParams&&extraParams.id)||''});
-  }
-  return {ok:true};
-}
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
   cachedVideos=await gasGet({action:'getVideos'});
@@ -461,9 +452,8 @@ async function renderList(){
     const all=await loadVideos();const item=all.find(d=>d.id===inp.dataset.toggle);
     if(item){
       item.exchange=inp.checked?'ok':'ng';
-      try{sessionStorage.setItem('videos_cache',JSON.stringify(cachedVideos));}catch{}
       renderList();
-      gasPost('saveVideo',{video:item,isNew:false}).catch(()=>{});
+      try{await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video:item,isNew:false})),id:''});}catch(e){}
     }
   }));
   list.querySelectorAll('label.toggle').forEach(l=>l.addEventListener('click',e=>e.stopPropagation()));
@@ -801,27 +791,25 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   const tracks=getTracks();
   const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks)};
   // 楽観的更新（画面をすぐ反映）
-  if(!cachedVideos)cachedVideos=[];
-  if(editingId){
-    const idx=cachedVideos.findIndex(v=>String(v.id)===String(editingId));
-    if(idx>=0)cachedVideos[idx]=video;else cachedVideos.push(video);
-  }else{
-    cachedVideos.push(video);
-  }
   document.getElementById('editModal').classList.add('hidden');
+  document.getElementById('cardList').innerHTML='<div class="loading">保存中…</div>';
+  try{
+    await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
+  }catch(e){}
+  cachedVideos=null;
+  await loadVideos(true);
   renderYearTabs(cachedVideos);renderList();
-  // バックグラウンドでGASに保存
-  gasPost('saveVideo',{video,isNew:!editingId})
-    .catch(()=>{alert('サーバーへの保存に失敗しました。通信状況を確認して、もう一度保存してください。');});
 });
 
 async function deleteItem(id){
   if(!confirm('削除しますか？'))return;
-  // 楽観的更新
-  if(cachedVideos)cachedVideos=cachedVideos.filter(v=>v.id!==id);
-  renderYearTabs(cachedVideos||[]);renderList();
-  gasPost('deleteVideo',{},{id})
-    .catch(()=>{alert('サーバーでの削除に失敗しました。通信状況を確認して、もう一度試してください。');});
+  document.getElementById('cardList').innerHTML='<div class="loading">削除中…</div>';
+  try{
+    await gasGet({action:'deleteVideo',data:'',id});
+  }catch(e){}
+  cachedVideos=null;
+  await loadVideos(true);
+  renderYearTabs(cachedVideos);renderList();
 }
 
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
