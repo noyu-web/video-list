@@ -418,7 +418,7 @@ async function renderList(){
   if(searchQuery){
     const q=searchQuery.toLowerCase();
     data=data.filter(d=>
-      d.title.toLowerCase().includes(q)||
+      String(d.title).toLowerCase().includes(q)||
       (d.members||[]).some(m=>m.toLowerCase().includes(q))||
       (d.note||'').toLowerCase().includes(q)||
       parseGenres(d.genres||d.genre||'').some(g=>g.genre.toLowerCase().includes(q)||g.subgenre.toLowerCase().includes(q))
