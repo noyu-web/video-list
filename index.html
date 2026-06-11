@@ -406,6 +406,12 @@ function renderYearTabs(items){
     formatSchedules(item.dates).forEach(s=>{
       if(s.date){const y=s.date.substring(0,4);if(/^[0-9]{4}$/.test(y))years.add(y);}
     });
+    try{
+      const tracks=JSON.parse(item.tracks||'[]');
+      tracks.forEach(t=>{
+        if(t.date){const y=String(t.date).substring(0,4);if(/^[0-9]{4}$/.test(y))years.add(y);}
+      });
+    }catch{}
   });
   const sorted=['all',...[...years].sort()];
   wrap.innerHTML=sorted.map(y=>`<button class="chip-filter${yearFilter===y?' selected':''}" data-year="${y}" style="white-space:nowrap;font-size:12px;padding:4px 12px;border:1px solid var(--border);border-radius:14px;background:${yearFilter===y?'var(--pink)':'var(--white)'};color:${yearFilter===y?'#fff':'inherit'}">${y==='all'?'すべて':y}</button>`).join('');
@@ -460,7 +466,11 @@ async function renderList(){
   if(yearFilter!=='all'){
     data=data.filter(item=>{
       const dd=formatSchedules(item.dates);
-      return dd.some(s=>s.date&&s.date.substring(0,4)===yearFilter);
+      if(dd.some(s=>s.date&&s.date.substring(0,4)===yearFilter))return true;
+      try{
+        const tracks=JSON.parse(item.tracks||'[]');
+        return tracks.some(t=>t.date&&String(t.date).substring(0,4)===yearFilter);
+      }catch{return false;}
     });
   }
 
