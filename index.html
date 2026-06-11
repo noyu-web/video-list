@@ -261,16 +261,16 @@
       <div id="genreSections"></div>
     </div>
     <div class="form-group">
-      <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">📅 公演日・時間</label>
+      <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">📅 配信,放送日</label>
       <div class="dates-section" style="margin-top:6px">
         <div id="dateGroupsWrap"></div>
         <button class="btn-add-small" id="addDateGroupBtn">＋ 日付を追加</button>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">収録内容</label>
+      <label class="form-label">収録内容,詳細</label>
       <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
-      <button class="btn-add-small" id="addTrackBtn">＋ 収録内容を追加</button>
+      <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
     </div>
     <div class="form-group">
       <label class="form-label">メモ</label>
@@ -289,7 +289,7 @@ const ADMIN_PW='0703clarinet';
 
 const DEFAULT_GENRES=['すべて','配信関連','円盤','バラエティー番組','ドラマ・映画','Radio','FC・FCweb','SixTONES以外'];
 const DEFAULT_SUBGENRES={'配信関連':['ISLAND TV','Johnnys online・FAMILY CLUB online','Hulu・FOD・TELASA・Netflix','WOWWOW','Instagram Live','X SPACE','滝CHANnel','other'],'円盤':['Jr時代円盤','SixTONES CD円盤','SixTONES Live DVD円盤','ART-PUT'],'バラエティー番組':['Jr時代 レギュラー・準レギュラー番組','レギュラー番組','バラエティー'],'ドラマ・映画':[],'Radio':['ANN','らじらー','その他'],'FC・FCweb':['情報局','SixTONES...','FC web'],'SixTONES以外':['DOMOTO(KinKi kids)','V6','嵐','KAT-TUN','NEWS','SUPER EIGHT','Hey! Say! JUMP','Kis-My-Ft2','Sexy Zone','WEST.','King&Prince','Snow Man','なにわ男子','Travis Japan','Aえ！group','HiHi Jets','美少年','7 MEN 侍','少年忍者','Lilかんさい','ふぉ〜ゆ〜＆俳優部＆無所']};
-const DEFAULT_MEMBERS=['全員','京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
+const DEFAULT_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 const DEFAULT_OTHER_MEMBERS={'DOMOTO(KinKi kids)':['堂本光一','堂本剛'],'V6':['坂本昌行','長野博','井ノ原快彦','森田剛','三宅健','岡田准一'],'嵐':['大野智','櫻井翔','相葉雅紀','二宮和也','松本潤'],'Snow Man':['ラウール','向井康二','目黒蓮','渡辺翔太','岩本照','深澤辰哉','阿部亮平','宮舘涼太','佐久間大介'],'なにわ男子':['道枝駿佑','高橋恭平','西畑大吾','大橋和也','藤原丈一郎','長尾謙杜','小島健']};
 
 function loadConfig(){
@@ -308,10 +308,10 @@ function saveConfig(cfg){
   localStorage.setItem('cfg_other_members',JSON.stringify(cfg.otherMembers));
 }
 
-let isAdmin=false,currentGenre='すべて',currentSubgenre='すべて',currentFilter='すべて',searchQuery='',editingId=null,cachedVideos=null,cbIdx=0;
+let isAdmin=false,currentGenre='すべて',currentSubgenre='すべて',currentFilter='すべて',searchQuery='',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default',yearFilter='all';
 let cfg=loadConfig();
 
-const SIXTONES_MEMBERS=['全員','京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
+const SIXTONES_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 
 function memberClass(m){
@@ -397,10 +397,52 @@ function renderFilterBar(){
   });
 }
 
+
+function renderYearTabs(items){
+  const wrap=document.getElementById('yearTabsWrap');
+  if(!wrap)return;
+  const years=new Set();
+  items.forEach(item=>{
+    formatSchedules(item.dates).forEach(s=>{
+      if(s.date){const y=s.date.substring(0,4);if(/^[0-9]{4}$/.test(y))years.add(y);}
+    });
+  });
+  const sorted=['all',...[...years].sort()];
+  wrap.innerHTML=sorted.map(y=>`<button class="chip-filter${yearFilter===y?' selected':''}" data-year="${y}" style="white-space:nowrap;font-size:12px;padding:4px 12px;border:1px solid var(--border);border-radius:14px;background:${yearFilter===y?'var(--pink)':'var(--white)'};color:${yearFilter===y?'#fff':'inherit'}">${y==='all'?'すべて':y}</button>`).join('');
+  wrap.querySelectorAll('[data-year]').forEach(b=>b.addEventListener('click',()=>{
+    yearFilter=b.dataset.year;renderList();
+  }));
+}
+
+function crossSearch(member){
+  const modal=document.getElementById('crossModal');
+  const title=document.getElementById('crossModalTitle');
+  const list=document.getElementById('crossModalList');
+  title.textContent=member+' の出演作品';
+  loadVideos().then(videos=>{
+    const matched=videos.filter(v=>(v.members||[]).includes(member));
+    if(!matched.length){list.innerHTML='<p style="color:var(--gray);font-size:13px">該当なし</p>';modal.classList.remove('hidden');return;}
+    const grouped={};
+    matched.forEach(v=>{
+      const genres=parseGenres(v.genres||v.genre||'');
+      const g=genres.length?(genres[0].genre+(genres[0].subgenre?' / '+genres[0].subgenre:'')):'その他';
+      if(!grouped[g])grouped[g]=[];
+      grouped[g].push(v);
+    });
+    list.innerHTML=Object.entries(grouped).map(([g,items])=>`
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;border-bottom:1px solid var(--pink-light);padding-bottom:4px">${esc(g)}</div>
+        ${items.map(v=>`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">${esc(v.title)}</div>`).join('')}
+      </div>`).join('');
+    modal.classList.remove('hidden');
+  });
+}
+
 async function renderList(){
   const list=document.getElementById('cardList');
   if(!cachedVideos){list.innerHTML='<div class="loading">読み込み中…</div>';}
   let data=cachedVideos||await loadVideos();
+  renderYearTabs(data);
 
   // ジャンルフィルター
   if(currentGenre!=='すべて'){
@@ -414,6 +456,14 @@ async function renderList(){
   const filterMap={'交換可':'ok','一部交換可':'partial','要相談':'consult','交換不可':'ng'};
   if(currentFilter!=='すべて')data=data.filter(d=>d.exchange===filterMap[currentFilter]);
 
+  // 年絞込
+  if(yearFilter!=='all'){
+    data=data.filter(item=>{
+      const dd=formatSchedules(item.dates);
+      return dd.some(s=>s.date&&s.date.substring(0,4)===yearFilter);
+    });
+  }
+
   // 検索
   if(searchQuery){
     const q=searchQuery.toLowerCase();
@@ -423,6 +473,19 @@ async function renderList(){
       (d.note||'').toLowerCase().includes(q)||
       parseGenres(d.genres||d.genre||'').some(g=>g.genre.toLowerCase().includes(q)||g.subgenre.toLowerCase().includes(q))
     );
+  }
+
+  // 並び替え
+  const gd=item=>{const dd=formatSchedules(item.dates).map(s=>s.date).filter(Boolean).sort();return dd.length?dd[0]:'';};
+  if(sortOrder==='date_new'){
+    data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return db.localeCompare(da);});
+  }else if(sortOrder==='date_old'){
+    data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return da.localeCompare(db);});
+  }else if(sortOrder==='title'){
+    data=[...data].sort((a,b)=>String(a.title).localeCompare(String(b.title),'ja'));
+  }else if(sortOrder==='exchange'){
+    const o={ok:0,partial:1,consult:2,ng:3};
+    data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
   }
 
   document.getElementById('listCount').textContent=data.length+' 件';
@@ -441,7 +504,9 @@ async function renderList(){
 
       <div class="card-meta" style="margin-top:3px">
         ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
+        ${(item.members||[]).filter(m=>!isSixTONESMember(m)).map(m=>`<span class="tag" style="font-size:10px;padding:1px 7px;cursor:pointer;background:#e5e7eb;color:#374151" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
       </div>
+      ${genres.length&&genres[0].genre==='SixTONES以外'?`<div style="margin-top:3px">${genreTags}</div>`:''}
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
     </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
     ${isAdmin?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
@@ -506,7 +571,7 @@ function openDetailModal(item){
   const schedules=formatSchedules(item.dates);
   const schDiv=document.getElementById('detailSchedules');
   if(schedules.length){
-    schDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">公演日・時間</div>'+
+    schDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">配信,放送日</div>'+
     schedules.map(s=>`<div style="background:var(--pink-pale);border-radius:8px;padding:8px 10px;margin-bottom:6px">
       <div style="font-size:13px;font-weight:600;color:var(--pink-dark)">${esc(s.date)}</div>
       ${s.times&&s.times.length?`<div style="font-size:12px;color:var(--gray);margin-top:3px">${s.times.map(t=>esc(t)).join('　/　')}</div>`:''}
@@ -545,7 +610,7 @@ function openDetailModal(item){
       </div>`);
     });
     flushSec();
-    tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容</div>'+
+    tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容,詳細</div>'+
     `<div style="background:var(--gray-light);border-radius:8px;padding:6px 10px">${sectionsHtml}</div>`;
     document.getElementById('detailNote').before(tracksDiv);
   }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
