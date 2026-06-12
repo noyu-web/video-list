@@ -514,7 +514,6 @@ async function renderList(){
 
       <div class="card-meta" style="margin-top:3px">
         ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
-        ${(item.members||[]).filter(m=>!isSixTONESMember(m)).map(m=>`<span class="tag" style="font-size:10px;padding:1px 7px;cursor:pointer;background:#e5e7eb;color:#374151" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
       </div>
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
     </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
@@ -574,7 +573,7 @@ document.getElementById('authInput').addEventListener('keydown',e=>{if(e.key==='
 function openDetailModal(item){
   document.getElementById('detailTitle').textContent=item.title;
   const genres=parseGenres(item.genres||item.genre||'');
-  document.getElementById('detailGenres').innerHTML=genres.map(g=>`<span class="tag tag-genre">${esc(g.genre)}${g.subgenre?' / '+esc(g.subgenre):''}</span>`).join('');
+  document.getElementById('detailGenres').innerHTML=genres.map(g=>`<span class="tag tag-genre">${esc(g.genre)}</span>`).join('');
   document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('');
   document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
   const schedules=formatSchedules(item.dates);
