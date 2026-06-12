@@ -573,7 +573,7 @@ document.getElementById('authInput').addEventListener('keydown',e=>{if(e.key==='
 function openDetailModal(item){
   document.getElementById('detailTitle').textContent=item.title;
   const genres=parseGenres(item.genres||item.genre||'');
-  document.getElementById('detailGenres').innerHTML=genres.map(g=>`<span class="tag tag-genre">${esc(g.genre)}</span>`).join('');
+  document.getElementById('detailGenres').innerHTML='';
   document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('');
   document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
   const schedules=formatSchedules(item.dates);
