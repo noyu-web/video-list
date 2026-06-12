@@ -206,7 +206,7 @@
 
 <!-- Cross Search Modal -->
 <div class="modal-overlay hidden" id="crossModal">
-  <div class="modal-content" style="max-height:80vh;overflow-y:auto">
+  <div class="modal" style="max-height:80vh;overflow-y:auto">
     <div class="modal-header">
       <h2 class="modal-title" id="crossModalTitle"></h2>
       <button class="modal-close" onclick="document.getElementById('crossModal').classList.add('hidden')">×</button>
@@ -516,7 +516,6 @@ async function renderList(){
         ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
         ${(item.members||[]).filter(m=>!isSixTONESMember(m)).map(m=>`<span class="tag" style="font-size:10px;padding:1px 7px;cursor:pointer;background:#e5e7eb;color:#374151" onclick="crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
       </div>
-      ${genres.length&&genres[0].genre==='SixTONES以外'?`<div style="margin-top:3px">${genreTags}</div>`:''}
       ${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
     </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
     ${isAdmin?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
@@ -575,7 +574,7 @@ document.getElementById('authInput').addEventListener('keydown',e=>{if(e.key==='
 function openDetailModal(item){
   document.getElementById('detailTitle').textContent=item.title;
   const genres=parseGenres(item.genres||item.genre||'');
-  document.getElementById('detailGenres').innerHTML='';
+  document.getElementById('detailGenres').innerHTML=genres.map(g=>`<span class="tag tag-genre">${esc(g.genre)}${g.subgenre?' / '+esc(g.subgenre):''}</span>`).join('');
   document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('');
   document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
   const schedules=formatSchedules(item.dates);
