@@ -292,20 +292,53 @@ const DEFAULT_SUBGENRES={'配信関連':['ISLAND TV','Johnnys online・FAMILY CL
 const DEFAULT_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 const DEFAULT_OTHER_MEMBERS={'DOMOTO(KinKi kids)':['堂本光一','堂本剛'],'V6':['坂本昌行','長野博','井ノ原快彦','森田剛','三宅健','岡田准一'],'嵐':['大野智','櫻井翔','相葉雅紀','二宮和也','松本潤'],'Snow Man':['ラウール','向井康二','目黒蓮','渡辺翔太','岩本照','深澤辰哉','阿部亮平','宮舘涼太','佐久間大介'],'なにわ男子':['道枝駿佑','高橋恭平','西畑大吾','大橋和也','藤原丈一郎','長尾謙杜','小島健']};
 
-function loadConfig(){
-  try{return{
-    genres:JSON.parse(localStorage.getItem('cfg_genres'))||DEFAULT_GENRES,
-    subgenres:JSON.parse(localStorage.getItem('cfg_subgenres'))||DEFAULT_SUBGENRES,
-    members:JSON.parse(localStorage.getItem('cfg_members'))||DEFAULT_MEMBERS,
-    otherMembers:JSON.parse(localStorage.getItem('cfg_other_members'))||DEFAULT_OTHER_MEMBERS
-  };}
-  catch{return{genres:DEFAULT_GENRES,subgenres:DEFAULT_SUBGENRES,members:DEFAULT_MEMBERS,otherMembers:DEFAULT_OTHER_MEMBERS};}
+let _cfg=null;
+
+async function loadFullConfigFromServer(){
+  try{
+    const data=await gasGet({action:'getFullConfig'});
+    if(data&&data.genres){
+      _cfg={
+        genres:data.genres||DEFAULT_GENRES,
+        subgenres:data.subgenres||DEFAULT_SUBGENRES,
+        members:data.members||DEFAULT_MEMBERS,
+        otherMembers:data.otherMembers||DEFAULT_OTHER_MEMBERS
+      };
+      // localStorageにもキャッシュ
+      try{
+        localStorage.setItem('cfg_genres',JSON.stringify(_cfg.genres));
+        localStorage.setItem('cfg_subgenres',JSON.stringify(_cfg.subgenres));
+        localStorage.setItem('cfg_members',JSON.stringify(_cfg.members));
+        localStorage.setItem('cfg_other_members',JSON.stringify(_cfg.otherMembers));
+      }catch{}
+    }
+  }catch{}
 }
+
+function loadConfig(){
+  if(_cfg)return _cfg;
+  try{
+    const cfg={
+      genres:JSON.parse(localStorage.getItem('cfg_genres'))||DEFAULT_GENRES,
+      subgenres:JSON.parse(localStorage.getItem('cfg_subgenres'))||DEFAULT_SUBGENRES,
+      members:JSON.parse(localStorage.getItem('cfg_members'))||DEFAULT_MEMBERS,
+      otherMembers:JSON.parse(localStorage.getItem('cfg_other_members'))||DEFAULT_OTHER_MEMBERS
+    };
+    _cfg=cfg;
+    return cfg;
+  }catch{return{genres:DEFAULT_GENRES,subgenres:DEFAULT_SUBGENRES,members:DEFAULT_MEMBERS,otherMembers:DEFAULT_OTHER_MEMBERS};}
+}
+
 function saveConfig(cfg){
-  localStorage.setItem('cfg_genres',JSON.stringify(cfg.genres));
-  localStorage.setItem('cfg_subgenres',JSON.stringify(cfg.subgenres));
-  localStorage.setItem('cfg_members',JSON.stringify(cfg.members));
-  localStorage.setItem('cfg_other_members',JSON.stringify(cfg.otherMembers));
+  _cfg=cfg;
+  try{
+    localStorage.setItem('cfg_genres',JSON.stringify(cfg.genres));
+    localStorage.setItem('cfg_subgenres',JSON.stringify(cfg.subgenres));
+    localStorage.setItem('cfg_members',JSON.stringify(cfg.members));
+    localStorage.setItem('cfg_other_members',JSON.stringify(cfg.otherMembers));
+  }catch{}
+  // バックグラウンドでGASにも保存
+  gasGet({action:'saveFullConfig',data:encodeURIComponent(JSON.stringify(cfg))}).catch(()=>{});
 }
 
 let isAdmin=false,currentGenre='すべて',currentSubgenre='すべて',currentFilter='すべて',searchQuery='',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default',yearFilter='all';
