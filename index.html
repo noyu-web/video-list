@@ -939,7 +939,10 @@ document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.
   document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();renderList();});
 
 cfg=loadConfig();
-renderTabs();renderSubtabs();renderFilterBar();renderList();
+(async()=>{
+  await loadFullConfigFromServer();
+  renderTabs();renderSubtabs();renderFilterBar();renderList();
+})();
 </script>
 </body>
 </html>
