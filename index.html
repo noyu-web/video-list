@@ -412,7 +412,7 @@ function renderSubtabs(){
   const wrap=document.getElementById('subtabsWrap');
   if(currentGenre==='すべて'){wrap.classList.remove('visible');return;}
   const subs=cfg.subgenres[currentGenre]||[];
-  if(!subs.length){wrap.classList.remove('visible');return;}
+  if(!subs.length&&!isAdmin){wrap.classList.remove('visible');return;}
   wrap.classList.add('visible');
   let html=`<button class="subtab ${currentSubgenre==='すべて'?'active':''}" data-s="すべて">すべて</button>`;
   html+=subs.map(s=>`<button class="subtab ${currentSubgenre===s?'active':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('');
