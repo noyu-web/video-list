@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メモ</title>
+<style>
+:root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--gray:#999;--border:#eee;--white:#fff;--bg:#fff8fb;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:#333;padding-bottom:80px;}
+header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;}
+.header-title{font-size:17px;font-weight:700;color:var(--pink-dark);cursor:default;}
+.btn-icon{background:none;border:none;font-size:20px;cursor:pointer;padding:4px;}
+.hidden{display:none!important;}
+
+/* メモ一覧 */
+#listView{padding:14px;}
+.memo-card{background:var(--white);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,.06);cursor:pointer;position:relative;}
+.memo-card-title{font-size:14px;font-weight:700;margin-bottom:4px;color:#333;}
+.memo-card-preview{font-size:12px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.memo-card-date{font-size:10px;color:#ccc;margin-top:6px;}
+.memo-card-delete{position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;color:#ccc;cursor:pointer;display:none;}
+.memo-card:hover .memo-card-delete{display:block;}
+.empty{text-align:center;color:var(--gray);font-size:13px;padding:40px 0;}
+.fab{position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--pink);color:#fff;border:none;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,.2);cursor:pointer;z-index:60;}
+
+/* 編集画面 */
+#editView{display:none;flex-direction:column;height:100vh;}
+#editView.active{display:flex;}
+.edit-header{background:var(--white);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;}
+.btn-back{background:none;border:none;font-size:16px;color:var(--pink-dark);cursor:pointer;font-weight:700;padding:4px 8px;}
+.edit-save{background:var(--pink);color:#fff;border:none;border-radius:10px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;margin-left:auto;}
+.edit-title{font-size:18px;font-weight:700;border:none;outline:none;background:none;width:100%;padding:14px 16px 6px;color:#333;}
+.edit-title::placeholder{color:#ccc;}
+.toolbar{display:flex;gap:6px;padding:6px 12px;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;background:var(--white);}
+.toolbar::-webkit-scrollbar{display:none;}
+.tool-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;color:#555;}
+.tool-btn:hover{background:var(--pink-light);}
+.edit-body{flex:1;overflow-y:auto;}
+#editor{min-height:60vh;padding:10px 16px 40px;font-size:15px;line-height:1.85;outline:none;word-break:break-all;}
+#editor a{color:var(--pink-dark);text-decoration:underline;}
+#editor[data-placeholder]:empty::before{content:attr(data-placeholder);color:#ccc;}
+
+/* リンク追加モーダル */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.hidden{display:none;}
+.modal{background:var(--white);border-radius:16px;width:100%;max-width:400px;padding:20px;}
+.modal-title{font-size:15px;font-weight:700;color:var(--pink-dark);margin-bottom:14px;}
+.form-input{width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;margin-bottom:10px;font-family:inherit;}
+.form-input:focus{border-color:var(--pink);}
+.modal-btns{display:flex;gap:8px;margin-top:4px;}
+.modal-btns button{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:600;border:none;cursor:pointer;}
+.btn-ok{background:var(--pink);color:#fff;}
+.btn-cancel{background:#f0f0f0;color:#666;}
+
+/* 認証モーダル */
+#authModal .modal-title{margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<!-- 一覧画面 -->
+<div id="listView">
+  <header>
+    <div class="header-title" id="headerTitle">📝 メモ</div>
+    <button class="btn-icon hidden" id="editModeBtn" title="削除モード">🗑️</button>
+    <button class="btn-icon" id="authBtn" style="opacity:0;pointer-events:none;width:20px"></button>
+  </header>
+  <div id="memoList"></div>
+</div>
+<button class="fab hidden" id="addBtn">＋</button>
+
+<!-- 編集画面 -->
+<div id="editView">
+  <div class="edit-header">
+    <button class="btn-back" id="backBtn">＜ 戻る</button>
+    <button class="edit-save" id="saveBtn">保存</button>
+  </div>
+  <input class="edit-title" id="editTitle" placeholder="タイトル" maxlength="100">
+  <div class="toolbar">
+    <button class="tool-btn" id="linkBtn">🔗 リンク</button>
+    <button class="tool-btn" id="boldBtn"><b>太字</b></button>
+    <button class="tool-btn" id="hrBtn">── 区切り線</button>
+    <button class="tool-btn" id="clearFormatBtn">Tクリア</button>
+  </div>
+  <div class="edit-body">
+    <div id="editor" contenteditable="true" data-placeholder="ここにメモを入力…"></div>
+  </div>
+</div>
+
+<!-- リンク追加モーダル -->
+<div class="modal-overlay hidden" id="linkModal">
+  <div class="modal">
+    <div class="modal-title">🔗 リンクを追加</div>
+    <input class="form-input" id="linkText" placeholder="表示テキスト(省略可)">
+    <input class="form-input" id="linkUrl" placeholder="URL (https://...)">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="linkCancelBtn">キャンセル</button>
+      <button class="btn-ok" id="linkOkBtn">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 認証モーダル -->
+<div class="modal-overlay hidden" id="authModal">
+  <div class="modal">
+    <div class="modal-title">ログイン</div>
+    <input class="form-input" id="authPassword" type="password" placeholder="パスワード">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="authCancelBtn">キャンセル</button>
+      <button class="btn-ok" id="authLoginBtn">ログイン</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbzcQk2qXHLkun0bAgOYsFJiATESW-eju6s8ZqplZwvxXr94hpmZKmzLqIu5UaHRDTzU/exec';
+const ADMIN_PASSWORD='0703clarinet';
+let cbIdx=0;
+function jsonp(params){
+  return new Promise((resolve,reject)=>{
+    const name='_cb'+cbIdx++;const s=document.createElement('script');
+    const timer=setTimeout(()=>{delete window[name];s.remove();reject(new Error('timeout'));},15000);
+    window[name]=(d)=>{clearTimeout(timer);delete window[name];s.remove();resolve(d);};
+    s.onerror=()=>{clearTimeout(timer);delete window[name];s.remove();reject();};
+    s.src=GAS_URL+'?'+new URLSearchParams({...params,callback:name});
+    document.body.appendChild(s);
+  });
+}
+
+let memos=[];
+let editingId=null;
+let isAdmin=false;
+let deleteMode=false;
+let savedRange=null;
+
+// === 認証 ===
+function loadAdmin(){try{isAdmin=sessionStorage.getItem('memo_admin')==='1';}catch{}}
+function applyAdmin(){
+  document.getElementById('addBtn').classList.toggle('hidden',!isAdmin);
+  document.getElementById('editModeBtn').classList.toggle('hidden',!isAdmin);
+}
+let _tapCount=0,_tapTimer=null;
+document.getElementById('headerTitle').addEventListener('click',()=>{
+  _tapCount++;
+  clearTimeout(_tapTimer);
+  _tapTimer=setTimeout(()=>{_tapCount=0;},1500);
+  if(_tapCount>=5){
+    _tapCount=0;
+    if(isAdmin){
+      isAdmin=false;
+      try{sessionStorage.removeItem('memo_admin');}catch{}
+      applyAdmin();renderList();
+    }else{
+      document.getElementById('authModal').classList.remove('hidden');
+      document.getElementById('authPassword').value='';
+    }
+  }
+});
+document.getElementById('authCancelBtn').addEventListener('click',()=>document.getElementById('authModal').classList.add('hidden'));
+document.getElementById('authLoginBtn').addEventListener('click',()=>{
+  if(document.getElementById('authPassword').value===ADMIN_PASSWORD){
+    isAdmin=true;try{sessionStorage.setItem('memo_admin','1');}catch{}
+    document.getElementById('authModal').classList.add('hidden');
+    applyAdmin();renderList();
+  }else{alert('パスワードが違います');}
+});
+
+// === データ ===
+async function loadMemos(){
+  try{
+    const data=await jsonp({action:'getMemos'});
+    memos=Array.isArray(data)?data:[];
+  }catch{memos=[];}
+}
+async function saveMemoToServer(memo,isNew){
+  try{await jsonp({action:'saveMemo',data:encodeURIComponent(JSON.stringify({memo,isNew}))});}catch{}
+}
+async function deleteMemoFromServer(id){
+  try{await jsonp({action:'deleteMemo',id});}catch{}
+}
+
+// === 一覧 ===
+function renderList(){
+  const list=document.getElementById('memoList');
+  if(!memos.length){
+    list.innerHTML='<div class="empty">メモがありません<br><span style="font-size:12px">右下の＋ボタンで追加</span></div>';
+    return;
+  }
+  list.innerHTML=[...memos].reverse().map(m=>`
+    <div class="memo-card" data-id="${m.id}">
+      <div class="memo-card-title">${esc(m.title||'無題')}</div>
+      <div class="memo-card-preview">${stripHtml(m.body||'')}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <div class="memo-card-date">${formatDate(m.updatedAt)}</div>
+        <button class="memo-share-btn" data-share="${m.id}" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--gray)" title="URLをコピー">🔗</button>
+      </div>
+      ${isAdmin&&deleteMode?`<button class="memo-card-delete" data-del="${m.id}" style="display:block">🗑️</button>`:''}
+    </div>
+  `).join('');
+  list.querySelectorAll('.memo-card').forEach(c=>c.addEventListener('click',e=>{
+    if(e.target.dataset.del)return;
+    if(isAdmin)openEdit(c.dataset.id);
+    else openReadOnly(c.dataset.id);
+  }));
+  list.querySelectorAll('.memo-share-btn').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const id=b.dataset.share;
+    const url=location.href.split('?')[0]+'?id='+id;
+    navigator.clipboard.writeText(url).then(()=>alert('URLをコピーしました！\n\n'+url)).catch(()=>{
+      prompt('このURLをコピーしてください',url);
+    });
+  }));
+  list.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async(e)=>{
+    e.stopPropagation();
+    if(!confirm('削除しますか？'))return;
+    const id=b.dataset.del;
+    memos=memos.filter(m=>m.id!==id);
+    renderList();
+    await deleteMemoFromServer(id);
+  }));
+}
+
+function openReadOnly(id){
+  const m=memos.find(x=>x.id===id);if(!m)return;
+  document.getElementById('editTitle').value=m.title||'';
+  document.getElementById('editor').innerHTML=m.body||'';
+  document.getElementById('editor').contentEditable='false';
+  document.getElementById('saveBtn').classList.add('hidden');
+  document.querySelector('.toolbar').classList.add('hidden');
+  editingId=id;
+  showEdit();
+}
+
+function openEdit(id=null){
+  editingId=id;
+  const m=id?memos.find(x=>x.id===id):null;
+  document.getElementById('editTitle').value=m?m.title:'';
+  document.getElementById('editor').innerHTML=m?m.body:'';
+  document.getElementById('editor').contentEditable='true';
+  document.getElementById('saveBtn').classList.remove('hidden');
+  document.querySelector('.toolbar').classList.remove('hidden');
+  showEdit();
+}
+
+function showEdit(){
+  document.getElementById('listView').style.display='none';
+  document.getElementById('editView').classList.add('active');
+  document.getElementById('addBtn').classList.add('hidden');
+}
+function showList(){
+  document.getElementById('listView').style.display='';
+  document.getElementById('editView').classList.remove('active');
+  if(isAdmin)document.getElementById('addBtn').classList.remove('hidden');
+}
+
+document.getElementById('addBtn').addEventListener('click',()=>openEdit());
+document.getElementById('editModeBtn').addEventListener('click',()=>{
+  deleteMode=!deleteMode;
+  document.getElementById('editModeBtn').textContent=deleteMode?'✅':'🗑️';
+  renderList();
+});
+
+document.getElementById('backBtn').addEventListener('click',()=>showList());
+
+document.getElementById('saveBtn').addEventListener('click',async()=>{
+  const title=document.getElementById('editTitle').value.trim()||'無題';
+  const body=document.getElementById('editor').innerHTML;
+  let memo,isNew=false;
+  if(editingId){
+    memo=memos.find(x=>x.id===editingId);
+    Object.assign(memo,{title,body,updatedAt:Date.now()});
+  }else{
+    memo={id:Date.now().toString(),title,body,createdAt:Date.now(),updatedAt:Date.now()};
+    memos.push(memo);
+    isNew=true;
+  }
+  showList();renderList();
+  await saveMemoToServer(memo,isNew);
+});
+
+// === ツールバー ===
+function saveRange(){
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount)savedRange=sel.getRangeAt(0).cloneRange();
+}
+function restoreRange(){
+  if(!savedRange)return;
+  const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);
+}
+document.getElementById('editor').addEventListener('mouseup',saveRange);
+document.getElementById('editor').addEventListener('keyup',saveRange);
+
+document.getElementById('boldBtn').addEventListener('click',()=>{
+  document.getElementById('editor').focus();
+  document.execCommand('bold');
+});
+document.getElementById('hrBtn').addEventListener('click',()=>{
+  document.getElementById('editor').focus();
+  document.execCommand('insertHTML','<hr style="border:none;border-top:1px solid #eee;margin:10px 0">');
+});
+document.getElementById('clearFormatBtn').addEventListener('click',()=>{
+  document.getElementById('editor').focus();
+  document.execCommand('removeFormat');
+});
+
+// リンク
+document.getElementById('linkBtn').addEventListener('click',()=>{
+  saveRange();
+  const sel=window.getSelection();
+  const selectedText=sel?sel.toString():'';
+  document.getElementById('linkText').value=selectedText;
+  document.getElementById('linkUrl').value='https://';
+  document.getElementById('linkModal').classList.remove('hidden');
+  setTimeout(()=>document.getElementById(selectedText?'linkUrl':'linkText').focus(),100);
+});
+document.getElementById('linkCancelBtn').addEventListener('click',()=>document.getElementById('linkModal').classList.add('hidden'));
+document.getElementById('linkOkBtn').addEventListener('click',()=>{
+  const url=document.getElementById('linkUrl').value.trim();
+  const text=document.getElementById('linkText').value.trim()||url;
+  if(!url||url==='https://')return;
+  document.getElementById('linkModal').classList.add('hidden');
+  document.getElementById('editor').focus();
+  restoreRange();
+  document.execCommand('insertHTML',false,`<a href="${esc(url)}" target="_blank">${esc(text)}</a>`);
+});
+
+// === ユーティリティ ===
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function stripHtml(h){return h.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();}
+function formatDate(ts){
+  if(!ts)return '';
+  const d=new Date(ts);
+  return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// === init ===
+(async()=>{
+  loadAdmin();
+  applyAdmin();
+  await loadMemos();
+  // URLパラメータにidがあれば直接そのメモを表示
+  const params=new URLSearchParams(location.search);
+  const sharedId=params.get('id');
+  if(sharedId){
+    const m=memos.find(x=>x.id===sharedId);
+    if(m){openReadOnly(sharedId);return;}
+  }
+  renderList();
+})();
+</script>
+</body>
+</html>
