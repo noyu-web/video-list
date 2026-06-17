@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>見方ガイド</title>
+<style>
+:root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--gray:#999;--border:#eee;--white:#fff;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;color:#333;overflow:hidden;}
+.scroller{height:100vh;width:100vw;display:flex;overflow-x:scroll;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;}
+.scroller::-webkit-scrollbar{display:none;}
+.slide{flex:0 0 100vw;height:100vh;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;position:relative;}
+.slide:nth-child(odd){background:#fff8fb;}
+.slide:nth-child(even){background:#ffffff;}
+.emoji{font-size:48px;margin-bottom:14px;}
+.emoji.small{font-size:30px;margin-bottom:6px;}
+h1{font-size:22px;color:var(--pink-dark);margin:0 0 6px;}
+h2{font-size:16px;color:var(--pink-dark);margin:0 0 10px;font-weight:700;}
+p{font-size:14px;line-height:1.85;color:#555;max-width:340px;margin:0;}
+.compact p{font-size:12.5px;line-height:1.7;max-width:320px;}
+.sub{font-size:12px;color:var(--gray);margin-top:6px;}
+
+/* サンプルUI */
+.demo{margin-top:14px;width:100%;max-width:340px;}
+.demo.small{margin-top:8px;margin-bottom:14px;}
+.demo-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;}
+.demo-tab{padding:6px 14px;border-radius:16px;font-size:12px;background:var(--white);border:1.5px solid var(--border);}
+.demo-tab.active{background:var(--pink);color:#fff;border-color:var(--pink);}
+.demo-card{background:var(--white);border-radius:12px;padding:10px 12px;box-shadow:0 1px 6px rgba(0,0,0,.06);text-align:left;}
+.demo-card.small{padding:8px 10px;}
+.demo-card-title{font-size:13px;font-weight:700;margin-bottom:6px;}
+.demo-card.small .demo-card-title{font-size:12px;margin-bottom:4px;}
+.demo-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.demo-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--pink-light);color:var(--pink-dark);}
+.demo-tag.gray{background:#f0f0f0;color:#666;}
+.demo-list{font-size:11.5px;color:var(--gray);text-align:left;line-height:1.8;}
+
+/* ページインジケーター(下中央・横並び) */
+.dots{position:fixed;bottom:16px;left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:10;pointer-events:none;}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--border);transition:.2s;}
+.dots span.active{background:var(--pink);width:8px;height:8px;}
+
+.scroll-hint{position:absolute;bottom:34px;font-size:11px;color:var(--gray);display:flex;align-items:center;gap:5px;}
+.scroll-hint .arrow{animation:bob 1.4s infinite;display:inline-block;}
+@keyframes bob{0%,100%{transform:translateX(0);}50%{transform:translateX(-6px);}}
+
+.link-btn{display:inline-block;margin-top:18px;background:var(--pink);color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:24px;box-shadow:0 4px 12px rgba(244,167,192,.4);}
+</style>
+</head>
+<body>
+
+<div class="dots" id="dots"></div>
+
+<div class="scroller" id="scroller">
+
+  <div class="slide">
+    <div class="emoji">💎</div>
+    <h1>所持リストの見方</h1>
+    <p>使い方を簡単にご紹介します。</p>
+    <div class="scroll-hint"><span class="arrow">←</span>スワイプして進む</div>
+  </div>
+
+  <div class="slide">
+    <div class="emoji">📂</div>
+    <h2>ジャンルタブで切り替え</h2>
+    <p>画面上部のタブでジャンルを切り替えられます。一番右には「SixTONES以外」(Snow Manなど他グループの動画)もあります。</p>
+    <div class="demo">
+      <div class="demo-tabs">
+        <div class="demo-tab active">配信関連</div>
+        <div class="demo-tab">円盤</div>
+        <div class="demo-tab">バラエティー</div>
+        <div class="demo-tab">…</div>
+        <div class="demo-tab">SixTONES以外</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="emoji">🗂️</div>
+    <h2>カードの見方</h2>
+    <p>1件ずつのカードには、タイトルと出演者タグが表示されます。カードをタップすると詳細(日付・収録内容など)が見られます。</p>
+    <div class="demo">
+      <div class="demo-card">
+        <div class="demo-card-title">こっから</div>
+        <div class="demo-tags">
+          <span class="demo-tag">SixTONES</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="emoji">🔍</div>
+    <h2>出演者タグでまたぎ表示</h2>
+    <p>出演者タグをタップすると、その人が出演している作品をジャンルをまたいで一覧表示できます。</p>
+    <div class="demo">
+      <div class="demo-card">
+        <div class="demo-card-title">田中樹 の出演作品</div>
+        <div class="demo-list">
+          円盤 / こっから<br>
+          バラエティー番組 / しゃべくり7<br>
+          Radio / ANN
+        </div>
+      </div>
+    </div>
+    <a class="link-btn" href="https://noyu-web.github.io/video-list/" style="margin-top:20px">💎 所持リストを見る</a>
+  </div>
+
+</div>
+
+<script>
+const slides=document.querySelectorAll('.slide');
+const dotsWrap=document.getElementById('dots');
+slides.forEach((_,i)=>{
+  const d=document.createElement('span');
+  if(i===0)d.classList.add('active');
+  dotsWrap.appendChild(d);
+});
+const dots=dotsWrap.querySelectorAll('span');
+const scroller=document.getElementById('scroller');
+scroller.addEventListener('scroll',()=>{
+  const idx=Math.round(scroller.scrollLeft/window.innerWidth);
+  dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+});
+</script>
+</body>
+</html>
