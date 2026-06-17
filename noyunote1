@@ -1,0 +1,16 @@
+/
+├─ app/
+│  ├─ layout.tsx
+│  ├─ page.tsx
+│  ├─ new/
+│  │   └─ page.tsx
+│  └─ note/
+│      └─ [id]/
+│          └─ page.tsx
+├─ lib/
+│  └─ kv.ts
+├─ package.json
+├─ tsconfig.json
+├─ tailwind.config.js
+├─ postcss.config.js
+├─ globals.css
