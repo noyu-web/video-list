@@ -374,8 +374,26 @@ function jsonp(params){
 async function gasGet(params){return jsonp(params);}
 async function loadVideos(force=false){
   if(cachedVideos&&!force)return cachedVideos;
+  // localStorageキャッシュを先に返す
+  if(!force){
+    try{
+      const cached=localStorage.getItem('videos_ls_cache');
+      if(cached){
+        cachedVideos=JSON.parse(cached);
+        // バックグラウンドで最新データを取得してキャッシュ更新
+        gasGet({action:'getVideos'}).then(data=>{
+          if(Array.isArray(data)){
+            cachedVideos=data;
+            try{localStorage.setItem('videos_ls_cache',JSON.stringify(data));}catch{}
+          }
+        }).catch(()=>{});
+        return cachedVideos;
+      }
+    }catch{}
+  }
   cachedVideos=await gasGet({action:'getVideos'});
   if(!Array.isArray(cachedVideos))cachedVideos=[];
+  try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
   return cachedVideos;
 }
 
@@ -903,6 +921,10 @@ function addTrackRow(val='',dist='none',date='',members=[],section=''){
   const sectionOptions=sections.map(s=>`<option value="${s}" ${section===s?'selected':''}>${s||'セクションなし'}</option>`).join('');
   row.innerHTML=`
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tr-up" type="button" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;cursor:pointer;line-height:1">↑</button>
+        <button class="tr-down" type="button" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;cursor:pointer;line-height:1">↓</button>
+      </div>
       <select class="track-section form-select" style="width:110px;padding:7px 6px;font-size:12px">${sectionOptions}</select>
       <input class="form-input track-input" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
       <button class="btn-remove tr-rm" type="button">✕</button>
@@ -917,6 +939,14 @@ function addTrackRow(val='',dist='none',date='',members=[],section=''){
     </div>
     <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
   row.querySelector('.tr-rm').addEventListener('click',()=>row.remove());
+  row.querySelector('.tr-up').addEventListener('click',()=>{
+    const prev=row.previousElementSibling;
+    if(prev)row.parentNode.insertBefore(row,prev);
+  });
+  row.querySelector('.tr-down').addEventListener('click',()=>{
+    const next=row.nextElementSibling;
+    if(next)row.parentNode.insertBefore(next,row);
+  });
   row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
   wrap.appendChild(row);
 }
@@ -955,7 +985,9 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
     await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
   }catch(e){}
   cachedVideos=null;
+  try{localStorage.removeItem('videos_ls_cache');}catch{}
   await loadVideos(true);
+  try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
   renderYearTabs(cachedVideos);renderList();
 });
 
@@ -966,7 +998,9 @@ async function deleteItem(id){
     await gasGet({action:'deleteVideo',data:'',id});
   }catch(e){}
   cachedVideos=null;
+  try{localStorage.removeItem('videos_ls_cache');}catch{}
   await loadVideos(true);
+  try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
   renderYearTabs(cachedVideos);renderList();
 }
 
