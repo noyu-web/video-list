@@ -982,12 +982,12 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   document.getElementById('editModal').classList.add('hidden');
   document.getElementById('cardList').innerHTML='<div class="loading">保存中…</div>';
   try{
-    // tracksを除いたデータを先に保存（URL長さ制限対策）
-    const videoWithoutTracks={...video,tracks:'[]'};
-    const videoTracksOnly={id:video.id,tracks:video.tracks};
-    await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video:videoWithoutTracks,isNew:!editingId})),id:''});
-    if(video.tracks&&video.tracks!=='[]'){
-      await gasGet({action:'saveTracks',data:encodeURIComponent(JSON.stringify(videoTracksOnly))});
+    // データが大きい場合はfetch、小さい場合はJSONP
+    const payload=JSON.stringify({video,isNew:!editingId});
+    if(payload.length>3000){
+      fetch(GAS_URL+'?action=saveVideo',{method:'POST',mode:'no-cors',body:payload,headers:{'Content-Type':'text/plain'}}).catch(()=>{});
+    }else{
+      gasGet({action:'saveVideo',data:encodeURIComponent(payload),id:''}).catch(()=>{});
     }
   }catch(e){}
   cachedVideos=null;
