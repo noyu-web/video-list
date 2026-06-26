@@ -982,7 +982,13 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   document.getElementById('editModal').classList.add('hidden');
   document.getElementById('cardList').innerHTML='<div class="loading">保存中…</div>';
   try{
-    await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
+    // tracksを除いたデータを先に保存（URL長さ制限対策）
+    const videoWithoutTracks={...video,tracks:'[]'};
+    const videoTracksOnly={id:video.id,tracks:video.tracks};
+    await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video:videoWithoutTracks,isNew:!editingId})),id:''});
+    if(video.tracks&&video.tracks!=='[]'){
+      await gasGet({action:'saveTracks',data:encodeURIComponent(JSON.stringify(videoTracksOnly))});
+    }
   }catch(e){}
   cachedVideos=null;
   try{localStorage.removeItem('videos_ls_cache');}catch{}
