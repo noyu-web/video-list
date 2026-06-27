@@ -982,12 +982,17 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   document.getElementById('editModal').classList.add('hidden');
   document.getElementById('cardList').innerHTML='<div class="loading">保存中…</div>';
   try{
-    // データが大きい場合はfetch、小さい場合はJSONP
-    const payload=JSON.stringify({video,isNew:!editingId});
-    if(payload.length>3000){
-      fetch(GAS_URL+'?action=saveVideo',{method:'POST',mode:'no-cors',body:payload,headers:{'Content-Type':'text/plain'}}).catch(()=>{});
-    }else{
-      gasGet({action:'saveVideo',data:encodeURIComponent(payload),id:''}).catch(()=>{});
+    // tracksを1件ずつ送る（URL長さ制限対策）
+    const tracksArr=JSON.parse(video.tracks||'[]');
+    const videoMain={...video,tracks:'[]'};
+    // 本体を先に保存
+    await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video:videoMain,isNew:!editingId})),id:''});
+    // tracksをクリアしてから1件ずつ追加
+    if(tracksArr.length>0){
+      await gasGet({action:'clearTracks',id:video.id});
+      for(const track of tracksArr){
+        await gasGet({action:'appendTrack',id:video.id,track:encodeURIComponent(JSON.stringify(track))});
+      }
     }
   }catch(e){}
   cachedVideos=null;
