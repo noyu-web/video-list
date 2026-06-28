@@ -982,19 +982,7 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
   document.getElementById('editModal').classList.add('hidden');
   document.getElementById('cardList').innerHTML='<div class="loading">保存中…</div>';
   try{
-    // 本体とtracksを同時に保存。tracksが大きい場合はsaveTracksで別送
-    const tracksJson=video.tracks||'[]';
-    const videoMain={...video};
-    const fullPayload=encodeURIComponent(JSON.stringify({video:videoMain,isNew:!editingId}));
-    if(fullPayload.length<=4000){
-      await gasGet({action:'saveVideo',data:fullPayload,id:''});
-    }else{
-      // tracksを除いた本体を保存してからtracksだけ上書き保存
-      videoMain.tracks=tracksJson; // tracksは含めたまま
-      const smallPayload=encodeURIComponent(JSON.stringify({video:{...videoMain,tracks:'[]'},isNew:!editingId}));
-      await gasGet({action:'saveVideo',data:smallPayload,id:''});
-      await gasGet({action:'saveTracks',data:encodeURIComponent(JSON.stringify({id:video.id,tracks:tracksJson}))});
-    }
+    await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
   }catch(e){}
   cachedVideos=null;
   try{localStorage.removeItem('videos_ls_cache');}catch{}
