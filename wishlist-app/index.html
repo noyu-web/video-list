@@ -10,10 +10,10 @@
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:#333;padding-bottom:80px;}
 header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
 .header-title{font-size:17px;font-weight:700;color:var(--pink-dark);}
-.tabbar{display:flex;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:49px;z-index:49;}
-.tabbar button{flex:1;padding:12px;border:none;background:none;font-size:14px;font-weight:600;color:var(--gray);cursor:pointer;border-bottom:3px solid transparent;}
-.tabbar button.active{color:var(--pink-dark);border-bottom-color:var(--pink);}
-.tab-edit{display:none;margin-left:4px;font-size:12px;}
+
+
+
+
 .page{display:none;padding:14px;}
 .page.active{display:block;}
 
@@ -72,29 +72,20 @@ header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--b
   <div class="header-title" id="headerTitle" style="cursor:default">📋 リスト＆ガイド</div>
   <button id="authBtn" style="background:none;border:none;cursor:default;opacity:0;font-size:1px;padding:2px;width:20px;height:20px"></button>
 </header>
-<div class="tabbar">
-  <button class="tab-btn active" data-tab="list"><span id="tabLabel1" style="visibility:hidden">求めリスト</span><span class="tab-edit" data-tabkey="tab1">✏️</span></button>
-  <button class="tab-btn" data-tab="guide"><span id="tabLabel2" style="visibility:hidden">使い方</span><span class="tab-edit" data-tabkey="tab2">✏️</span></button>
-</div>
+
 
 <!-- 欲しいものリスト -->
-<div class="page active" id="page-list">
+<div id="page-list">
   <input class="search-input" id="searchInput" type="search" placeholder="タイトル・出演者・メモで検索…">
   <div class="filter-bar" id="genreFilterBar"></div>
   <div class="filter-bar" id="statusFilterBar">
     <button class="filter-chip selected" data-status="all">すべて</button>
     <button class="filter-chip" data-status="active">探し中</button>
     <button class="filter-chip" data-status="trading">取引中</button>
-    <button class="filter-chip" data-status="done">入手済み</button>
   </div>
   <div id="cardList"></div>
 </div>
 
-<!-- 使い方ガイド -->
-<div class="page" id="page-guide">
-  <div class="guide-section">
-    <h3><span id="guideHeading">📖 動画リストアプリの使い方</span><button id="guideHeadingEditBtn" style="display:none;margin-left:8px;background:none;border:none;font-size:12px;cursor:pointer;color:var(--gray)">✏️</button></h3>
-    <div id="guideView"></div>
     <div id="guideEditWrap" style="display:none;margin-top:10px">
       <textarea class="guide-edit-area" id="guideEditArea"></textarea>
       <div class="modal-btns">
@@ -215,12 +206,6 @@ async function load(){
     try{localStorage.setItem('wishlist_ls_cache',JSON.stringify(items));}catch{}
   }catch{items=[];}
 }
-async function saveItemToServer(item,isNew){
-  try{
-    await jsonp({action:'saveWishlistItem',data:encodeURIComponent(JSON.stringify({item,isNew}))});
-    try{localStorage.setItem('wishlist_ls_cache',JSON.stringify(items));}catch{}
-  }catch{}
-}
 async function deleteItemFromServer(id){
   try{
     await jsonp({action:'deleteWishlistItem',id});
@@ -267,7 +252,7 @@ function renderList(){
   }
 
   // 並び順: 探し中/取引中を優先、優先度高い順、新しい順
-  const statusOrder={active:0,trading:0,done:1};
+  const statusOrder={active:0,trading:0};
   const prioOrder={high:0,mid:1,low:2,'':3};
   data.sort((a,b)=>{
     const sd=(statusOrder[a.status||'active']??0)-(statusOrder[b.status||'active']??0);
@@ -295,7 +280,7 @@ function renderList(){
       ${it.note?`<div class="card-date">📝 ${esc(it.note)}</div>`:''}
       ${isAdmin?`<div class="card-actions">
         <button class="btn-sm" data-edit="${it.id}">編集</button>
-        <button class="btn-sm primary" data-toggle="${it.id}">${it.status==='done'?'未入手に戻す':'入手済みにする'}</button>
+
       </div>`:''}
     </div>
   `).join('');
@@ -392,132 +377,6 @@ document.getElementById('searchInput').addEventListener('input',e=>{
 });
 
 // === タブ切り替え ===
-// === ガイド見出し編集 ===
-const DEFAULT_GUIDE_HEADING='📖 動画リストアプリの使い方';
-let guideHeadingText=DEFAULT_GUIDE_HEADING;
-async function loadGuideHeading(){
-  try{
-    const data=await jsonp({action:'getTabLabels'});
-    if(data&&data.guideHeading){
-      guideHeadingText=data.guideHeading;
-      document.getElementById('guideHeading').textContent=guideHeadingText;
-    }
-  }catch{}
-}
-document.getElementById('guideHeadingEditBtn').addEventListener('click',async()=>{
-  const newText=prompt('新しい見出し',guideHeadingText);
-  if(!newText||newText===guideHeadingText)return;
-  guideHeadingText=newText;
-  document.getElementById('guideHeading').textContent=newText;
-  tabLabels.guideHeading=newText;
-  try{await jsonp({action:'saveTabLabels',data:encodeURIComponent(JSON.stringify(tabLabels))});}catch{}
-});
-
-// === タブ名編集 ===
-const DEFAULT_TAB_LABELS={tab1:'求めリスト',tab2:'使い方'};
-let tabLabels={...DEFAULT_TAB_LABELS};
-async function loadTabLabels(){
-  try{
-    const data=await jsonp({action:'getTabLabels'});
-    if(data&&(data.tab1||data.tab2)){
-      tabLabels={...DEFAULT_TAB_LABELS,...data};
-    }
-  }catch{}
-  document.getElementById('tabLabel1').textContent=tabLabels.tab1;
-  document.getElementById('tabLabel2').textContent=tabLabels.tab2;
-  document.getElementById('tabLabel1').style.visibility='visible';
-  document.getElementById('tabLabel2').style.visibility='visible';
-}
-document.querySelectorAll('.tab-edit').forEach(el=>el.addEventListener('click',async(e)=>{
-  e.stopPropagation();
-  const key=el.dataset.tabkey;
-  const newName=prompt('新しいタブ名',tabLabels[key]);
-  if(!newName||newName===tabLabels[key])return;
-  tabLabels[key]=newName;
-  document.getElementById(key==='tab1'?'tabLabel1':'tabLabel2').textContent=newName;
-  try{await jsonp({action:'saveTabLabels',data:encodeURIComponent(JSON.stringify(tabLabels))});}catch{}
-}));
-
-document.querySelectorAll('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  b.classList.add('active');
-  document.getElementById('page-'+b.dataset.tab).classList.add('active');
-}));
-
-// === 使い方ガイド ===
-const DEFAULT_GUIDE=`■ 動画リストアプリについて
-SixTONESの所持動画を、ジャンル別に一覧できるアプリです。
-
-■ 見方
-・上部のタブでジャンルを切り替えられます
-・「年タブ」で公演年ごとに絞り込めます
-・並び替えで「公演日が新しい順」などに変更できます
-・出演者タグをタップすると、その人が出ている作品を全ジャンルから一覧できます
-
-■ 交換可否について
-・交換可：交換できます
-・一部交換可：一部のみ交換可能
-・要相談：内容により応相談
-・交換不可：交換できません
-
-■ 注意事項
-このサイトで所持リストを作ることはできません。`;
-
-let _guideText=null;
-async function getGuide(){
-  if(_guideText!==null)return _guideText;
-  // localStorageキャッシュで先に返す
-  try{
-    const cached=localStorage.getItem('guide_ls_cache');
-    if(cached){
-      _guideText=cached;
-      // バックグラウンドで最新取得
-      jsonp({action:'getGuideText'}).then(res=>{
-        if(res&&res.text){
-          _guideText=res.text;
-          try{localStorage.setItem('guide_ls_cache',res.text);}catch{}
-          document.getElementById('guideView').innerHTML=esc(_guideText).replace(/\n/g,'<br>');
-        }
-      }).catch(()=>{});
-      return _guideText;
-    }
-  }catch{}
-  try{
-    const res=await jsonp({action:'getGuideText'});
-    _guideText=(res&&res.text)?res.text:DEFAULT_GUIDE;
-    try{localStorage.setItem('guide_ls_cache',_guideText);}catch{}
-  }catch{
-    _guideText=DEFAULT_GUIDE;
-  }
-  return _guideText;
-}
-async function renderGuide(){
-  // まずDEFAULT or キャッシュを即表示
-  const cached=_guideText||(()=>{try{return localStorage.getItem('guide_ls_cache');}catch{return null;}})();
-  const immediate=cached||DEFAULT_GUIDE;
-  document.getElementById('guideView').innerHTML=esc(immediate).replace(/\n/g,'<br>');
-  // バックグラウンドでGASから取得して更新
-  const t=await getGuide();
-  document.getElementById('guideView').innerHTML=esc(t).replace(/\n/g,'<br>');
-}
-document.getElementById('guideEditToggle').addEventListener('click',async()=>{
-  const ew=document.getElementById('guideEditWrap');
-  const isHidden=ew.style.display==='none';
-  ew.style.display=isHidden?'block':'none';
-  if(isHidden)document.getElementById('guideEditArea').value=await getGuide();
-  document.getElementById('guideEditToggle').textContent=isHidden?'閉じる':'編集';
-});
-document.getElementById('guideSaveBtn').addEventListener('click',async()=>{
-  const t=document.getElementById('guideEditArea').value;
-  _guideText=t;
-  try{localStorage.setItem('guide_ls_cache',t);}catch{}
-  renderGuide();
-  try{await jsonp({action:'saveGuideText',data:encodeURIComponent(t)});}catch{}
-  alert('保存しました');
-});
-
-
 // === 管理者モード ===
 const ADMIN_PASSWORD='0703clarinet';
 let isAdmin=false;
@@ -569,7 +428,6 @@ document.getElementById('authLoginBtn').addEventListener('click',()=>{
   renderGenreFilterBar();
   renderList();
   applyAdminUI();
-  await renderGuide();
 })();
 </script>
 <div style="text-align:center;color:#ccc;font-size:10px;padding:10px 0">build: 0614b</div>
