@@ -3,16 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>欲しいものリスト</title>
+<title>求めリスト</title>
 <style>
 :root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--gray:#999;--border:#eee;--white:#fff;--bg:#fff8fb;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:#333;padding-bottom:80px;}
 header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
 .header-title{font-size:17px;font-weight:700;color:var(--pink-dark);}
-
-
-
 
 .page{display:none;padding:14px;}
 .page.active{display:block;}
@@ -21,8 +18,6 @@ header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--b
 .filter-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;}
 .filter-chip{padding:5px 12px;border:1.5px solid var(--border);border-radius:16px;font-size:12px;background:var(--white);white-space:nowrap;cursor:pointer;}
 .filter-chip.selected{background:var(--pink);color:#fff;border-color:var(--pink);}
-.search-input{width:100%;padding:9px 14px;border:1.5px solid var(--border);border-radius:20px;font-size:13px;outline:none;background:var(--white);margin-bottom:10px;}
-.search-input:focus{border-color:var(--pink);}
 .card{background:var(--white);border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);position:relative;}
 .card.done{opacity:.55;}
 .card-title{font-size:14px;font-weight:700;margin-bottom:4px;}
@@ -69,14 +64,11 @@ header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--b
 <body>
 
 <header style="display:flex;justify-content:space-between;align-items:center">
-  <div class="header-title" id="headerTitle" style="cursor:default">📋 リスト＆ガイド</div>
+  <div class="header-title" id="headerTitle" style="cursor:default">求めリスト</div>
   <button id="authBtn" style="background:none;border:none;cursor:default;opacity:0;font-size:1px;padding:2px;width:20px;height:20px"></button>
 </header>
 
-
-<!-- 欲しいものリスト -->
 <div id="page-list">
-  <input class="search-input" id="searchInput" type="search" placeholder="タイトル・出演者・メモで検索…">
   <div class="filter-bar" id="genreFilterBar"></div>
   <div class="filter-bar" id="statusFilterBar">
     <button class="filter-chip selected" data-status="all">すべて</button>
@@ -98,8 +90,6 @@ header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--b
   </div>
 </div>
 
-
-<!-- ログインモーダル -->
 <div class="modal-overlay hidden" id="authModal">
   <div class="modal">
     <div class="modal-title">管理者ログイン</div>
@@ -114,7 +104,6 @@ header{background:var(--white);padding:14px 16px;border-bottom:1px solid var(--b
 </div>
 <button class="fab hidden" id="addBtn">＋</button>
 
-<!-- 追加・編集モーダル -->
 <div class="modal-overlay hidden" id="editModal">
   <div class="modal">
     <div class="modal-title" id="editModalTitle">追加</div>
@@ -184,12 +173,10 @@ function jsonp(params){
   });
 }
 async function load(){
-  // localStorageキャッシュで先に表示
   try{
     const cached=localStorage.getItem('wishlist_ls_cache');
     if(cached){
       items=JSON.parse(cached);
-      // バックグラウンドで最新取得
       jsonp({action:'getWishlist'}).then(data=>{
         if(Array.isArray(data)){
           items=data;
@@ -251,7 +238,6 @@ function renderList(){
     );
   }
 
-  // 並び順: 探し中/取引中を優先、優先度高い順、新しい順
   const statusOrder={active:0,trading:0};
   const prioOrder={high:0,mid:1,low:2,'':3};
   data.sort((a,b)=>{
@@ -280,7 +266,6 @@ function renderList(){
       ${it.note?`<div class="card-date">📝 ${esc(it.note)}</div>`:''}
       ${isAdmin?`<div class="card-actions">
         <button class="btn-sm" data-edit="${it.id}">編集</button>
-
       </div>`:''}
     </div>
   `).join('');
@@ -372,11 +357,6 @@ document.getElementById('statusFilterBar').querySelectorAll('[data-status]').for
   renderList();
 }));
 
-document.getElementById('searchInput').addEventListener('input',e=>{
-  searchQuery=e.target.value;renderList();
-});
-
-// === タブ切り替え ===
 // === 管理者モード ===
 const ADMIN_PASSWORD='0703clarinet';
 let isAdmin=false;
@@ -421,9 +401,9 @@ document.getElementById('authLoginBtn').addEventListener('click',()=>{
 });
 
 // === init ===
+// ※ 不足している関数（loadTabLabels, loadGuideHeading等）がある場合は環境に合わせて定義または調整してください
 (async()=>{
   loadAdminState();
-  // 全データを並列取得
   await Promise.all([load(), loadTabLabels(), loadGuideHeading()]);
   renderGenreFilterBar();
   renderList();
