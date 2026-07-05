@@ -106,7 +106,7 @@
 </head>
 <body>
 <header>
-  <div class="header-title" id="headerTitle" style="cursor:default">所持リスト</div>
+  <div class="header-title" id="headerTitle" style="cursor:default">💎 所持リスト</div>
   <div class="header-right">
     <span class="mode-badge view" id="modeBadge">閲覧モード</span>
     <button class="btn-icon" id="settingsBtn" style="display:none">⚙️</button>
@@ -393,7 +393,6 @@ async function loadVideos(force=false){
   }
   cachedVideos=await gasGet({action:'getVideos'});
   if(!Array.isArray(cachedVideos))cachedVideos=[];
-  try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
   return cachedVideos;
 }
 
@@ -985,9 +984,7 @@ document.getElementById('editSaveBtn').addEventListener('click',async()=>{
     await gasGet({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
   }catch(e){}
   cachedVideos=null;
-  try{localStorage.removeItem('videos_ls_cache');}catch{}
   await loadVideos(true);
-  try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
   renderYearTabs(cachedVideos);renderList();
 });
 
@@ -998,9 +995,7 @@ async function deleteItem(id){
     await gasGet({action:'deleteVideo',data:'',id});
   }catch(e){}
   cachedVideos=null;
-  try{localStorage.removeItem('videos_ls_cache');}catch{}
   await loadVideos(true);
-  try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
   renderYearTabs(cachedVideos);renderList();
 }
 
