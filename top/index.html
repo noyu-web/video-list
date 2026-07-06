@@ -295,7 +295,7 @@ const DEFAULTS={
     {name:'所持リスト②',url:'https://noyu-web.github.io/video-list/videolist2/'}
   ],
   drawerLinks:[
-    {name:'所持リストの見方',url:'https://noyu-web.github.io/video-list/'},
+    {name:'所持リストの見方',url:'https://noyu-web.github.io/video-list/view-guide/'},
     {name:'免責事項',url:''}
   ]
 };
@@ -306,6 +306,9 @@ function renderDrawerLinks(){
   sec.innerHTML=contents.drawerLinks.map(l=>{
     if(l.name === '免責事項'){
       return `<div class="drawer-link" style="cursor:pointer;" onclick="showRules()">${esc(l.name)}</div>`;
+    }
+    if(l.name === '所持リストの見方'){
+      return `<a class="drawer-link" href="https://noyu-web.github.io/video-list/view-guide/" target="_blank" rel="noopener noreferrer">${esc(l.name)}</a>`;
     }
     return l.url?`<a class="drawer-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.name)}</a>`:`<div class="drawer-link" style="color:var(--gray)">${esc(l.name)}</div>`;
   }).join('');
