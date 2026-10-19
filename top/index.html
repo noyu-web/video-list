@@ -2,436 +2,461 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>💎</title>
 <style>
 :root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--bg:#fff8fb;--white:#fff;--gray:#aaa;--border:#f0dde7;--text:#333;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+header{background:var(--bg);padding:env(safe-area-inset-top) 20px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
+.logo-area{width:70px;height:100%;cursor:default;user-select:none;}
+.admin-badge{display:none;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--pink-dark);}
+.admin-badge.on{display:flex;}
+.admin-badge button{font-size:11px;font-weight:700;color:var(--pink-dark);background:var(--white);border:1px solid var(--border);border-radius:14px;padding:3px 10px;cursor:pointer;font-family:inherit;}
+main{padding:22px 20px 30px;max-width:440px;width:100%;margin:0 auto;flex:1;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;min-height:24px;}
+.section-label{font-size:13px;font-weight:800;color:var(--pink-dark);letter-spacing:.12em;}
+.add-btn{display:none;font-size:12px;background:var(--pink-light);color:var(--pink-dark);border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-weight:700;font-family:inherit;}
+body.admin .add-btn{display:inline-block;}
 
-header{background:var(--bg);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
-.logo-area{width:60px;height:100%;cursor:default;user-select:none;}
-.hamburger{width:36px;height:36px;display:flex;flex-direction:column;justify-content:center;gap:5px;cursor:pointer;background:none;border:none;padding:4px;}
-.hamburger span{display:block;height:1.5px;background:var(--pink-dark);border-radius:2px;transition:all .25s;}
-.hamburger.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg);}
-.hamburger.open span:nth-child(2){opacity:0;}
-.hamburger.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
+/* ガイド埋め込み */
+.guide{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:var(--white);}
+.guide iframe{display:block;width:100%;height:470px;border:0;}
 
-.back-btn{font-size:13px;font-weight:700;color:var(--pink-dark);text-decoration:none;border:1px solid var(--border);padding:4px 12px;border-radius:20px;background:var(--white);cursor:pointer;}
+/* 必読トグル */
+.toggle{background:var(--white);border:1.5px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.toggle.hl{border-color:var(--pink);background:var(--pink-light);}
+.toggle-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;}
+.toggle-title{font-size:14px;font-weight:700;color:var(--pink-dark);line-height:1.4;}
+.chev{color:var(--pink);font-size:20px;line-height:1;transition:transform .22s;flex-shrink:0;}
+.toggle.open .chev{transform:rotate(90deg);}
+.toggle-body{display:none;padding:0 18px 16px;}
+.toggle.open .toggle-body{display:block;}
+.info-text{font-size:12.5px;line-height:1.75;color:var(--text);text-align:justify;word-break:break-word;}
+.info-text .gray{color:var(--gray);}
+.toggle.hl .info-text{font-weight:700;color:var(--pink-dark);}
 
-.drawer{position:fixed;top:52px;right:0;bottom:0;width:280px;background:var(--white);box-shadow:-2px 0 16px rgba(0,0,0,.07);z-index:99;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow-y:auto;}
-.drawer.open{transform:translateX(0);}
-.drawer-overlay{position:fixed;inset:0;top:52px;background:rgba(0,0,0,.15);z-index:98;opacity:0;pointer-events:none;transition:opacity .28s;}
-.drawer-overlay.open{opacity:1;pointer-events:auto;}
-.drawer-inner{padding:18px 18px 40px;}
-.drawer-section{margin-bottom:18px;}
-.drawer-link{display:block;font-size:14px;font-weight:700;color:var(--pink-dark);text-decoration:none;padding:10px 0;border-bottom:1px solid var(--border);}
-.drawer-link:last-child{border-bottom:none;}
+/* LINK 細長ボタン */
+.slim{display:flex;align-items:center;justify-content:space-between;height:46px;padding:0 16px;margin-bottom:10px;background:var(--white);border:1.5px solid var(--border);border-radius:12px;text-decoration:none;color:var(--pink-dark);}
+.slim-name{font-size:15px;font-weight:700;}
+.slim-tag{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:var(--pink-dark);background:var(--pink-light);border-radius:20px;padding:3px 11px;}
 
-main{padding:24px 20px 60px;max-width:440px;margin:0 auto;}
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.section-label{font-size:13px;font-weight:800;color:var(--pink-dark);letter-spacing:.12em;text-transform:uppercase;}
+/* フッター */
+footer{padding:10px 20px calc(26px + env(safe-area-inset-bottom));text-align:center;}
+.foot-btn{font-size:12px;font-weight:700;color:var(--pink-dark);background:none;border:none;cursor:pointer;font-family:inherit;padding:8px 14px;letter-spacing:.06em;}
 
-.link-card{display:flex;align-items:center;justify-content:space-between;background:var(--white);border-radius:12px;padding:16px 18px;margin-bottom:10px;border:1.5px solid var(--border);text-decoration:none;color:var(--pink-dark);cursor:pointer;}
-.link-card-name{font-size:15px;font-weight:700;}
-.link-card-arrow{color:var(--pink);font-size:18px;}
+/* 管理用 */
+.edit-box{display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);}
+body.admin .edit-box{display:block;}
+.edit-input{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:6px;background:var(--white);color:var(--text);}
+textarea.edit-input{resize:vertical;line-height:1.6;}
+.hint{font-size:10.5px;color:var(--gray);margin-bottom:8px;}
+.row{display:flex;gap:6px;}
+.btn-save{flex:1;background:var(--pink);color:#fff;border:none;border-radius:8px;padding:8px;font-size:13px;cursor:pointer;font-family:inherit;}
+.btn-mini{background:var(--pink-light);color:var(--pink-dark);border:none;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
+.btn-mini:disabled{opacity:.35;cursor:default;}
+.btn-del{background:#fdecec;color:#d33;border:none;border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+.link-edit{margin-bottom:10px;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--white);}
+.link-edit .lbl{font-size:11px;color:var(--gray);margin-bottom:2px;}
+#linkAdmin{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+body.admin #linkAdmin{display:block;}
+#linkAdmin .sub{font-size:11px;font-weight:700;color:var(--pink);margin-bottom:10px;}
 
-.edit-btn{font-size:11px;background:none;border:1px solid var(--border);border-radius:6px;padding:3px 10px;cursor:pointer;color:var(--gray);display:none;}
-.edit-wrap{display:none;margin-top:8px;}
-.edit-input{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:6px;}
-.save-btn{background:var(--pink);color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;cursor:pointer;width:100%;}
-.add-btn{font-size:12px;background:var(--pink-light);color:var(--pink-dark);border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-weight:700;display:none;}
-.add-form{display:none;background:var(--white);border-radius:12px;padding:14px;border:1.5px solid var(--border);margin-bottom:10px;}
+/* モーダル */
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.28);}
+.modal.open{display:flex;}
+.sheet{width:100%;max-width:480px;max-height:88vh;overflow-y:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px calc(24px + env(safe-area-inset-bottom));animation:up .22s ease-out;}
+@keyframes up{from{transform:translateY(40px);opacity:0;}to{transform:none;opacity:1;}}
+@media(min-width:600px){.modal{align-items:center;}.sheet{border-radius:20px;}}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sheet-title{font-size:15px;font-weight:800;color:var(--pink-dark);letter-spacing:.08em;}
+.x-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--white);color:var(--pink-dark);font-size:16px;cursor:pointer;line-height:1;}
+.info-card{background:var(--white);border-radius:12px;padding:16px 18px;margin-bottom:12px;border:1.5px solid var(--border);}
+.info-title{font-size:14px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
 
-/* ルール・必読共通のカードデザイン */
-.info-card{background:var(--white);border-radius:12px;padding:18px;margin-bottom:12px;border:1.5px solid var(--border);line-height:1.6;}
-.info-title{font-size:14px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
-.info-text{font-size:12.5px;color:var(--text);text-align:justify;}
+/* ログイン */
+.login-msg{font-size:12.5px;color:var(--pink-dark);line-height:1.6;min-height:20px;margin:10px 0;}
+.big-btn{width:100%;background:var(--pink);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.big-btn:disabled{opacity:.5;cursor:default;}
+.code-input{width:100%;text-align:center;font-size:24px;letter-spacing:.4em;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;margin-bottom:10px;background:var(--white);color:var(--text);}
+.link-btn{display:block;margin:12px auto 0;background:none;border:none;color:var(--pink-dark);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;}
+.link-btn:disabled{opacity:.45;text-decoration:none;cursor:default;}
+
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:300;}
+.toast.show{opacity:1;transform:translateX(-50%);}
 </style>
 </head>
 <body>
 
-<div id="pageTop">
-  <header>
-    <div class="logo-area" id="logoArea"></div>
-    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
-  </header>
+<header>
+  <div class="logo-area" id="logoArea"></div>
+  <div class="admin-badge" id="adminBadge"><span>編集モード</span><button data-act="logout">ログアウト</button></div>
+</header>
 
-  <div class="drawer-overlay" id="overlay"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawer-inner">
-      <div class="drawer-section" id="drawerLinksSection"></div>
-      <div id="drawerAdminEdit" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
-        <div style="font-size:11px;font-weight:700;color:var(--pink);margin-bottom:10px">三本線メニュー編集</div>
-        <div id="drawerEditList"></div>
-        <div class="add-form" id="drawerAddForm" style="display:none">
-          <div style="font-size:11px;color:var(--gray);margin-bottom:3px">名前</div>
-          <input class="edit-input" id="drawerNewName" placeholder="例: 見方">
-          <div style="font-size:11px;color:var(--gray);margin-bottom:3px">URL</div>
-          <input class="edit-input" id="drawerNewUrl" placeholder="https://...">
-          <button class="save-btn" id="drawerNewSaveBtn">追加</button>
-        </div>
-        <button style="font-size:12px;background:var(--pink-light);color:var(--pink-dark);border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-weight:700;margin-top:8px;width:100%" id="drawerAddBtn">＋ 追加</button>
-      </div>
-    </div>
+<main>
+  <div class="guide">
+    <iframe src="https://noyu-web.github.io/video-list/view-guide/" title="所持リストの見方"></iframe>
   </div>
 
-  <main>
-    <div class="link-card" onclick="showMustread()" style="margin-bottom:20px;border-color:var(--pink);">
-      <span class="link-card-name" style="color:var(--pink-dark);">必読</span>
-      <span class="link-card-arrow" style="color:var(--pink);">›</span>
-    </div>
+  <div class="section-header">
+    <div class="section-label">必読</div>
+    <button class="add-btn" data-act="add-item" data-kind="mustread">＋ 追加</button>
+  </div>
+  <div id="mustreadList"></div>
 
-    <div class="section-header">
-      <div class="section-label">LINK</div>
-      <button class="add-btn" id="addLinkBtn">＋ 追加</button>
-    </div>
-    <div id="linkList"></div>
-    
-    <div id="linkAdminEdit" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--pink);margin-bottom:10px">LINKの編集・削除</div>
-      <div id="linkEditList"></div>
-    </div>
+  <div class="section-header">
+    <div class="section-label">LINK</div>
+    <button class="add-btn" data-act="add-link">＋ 追加</button>
+  </div>
+  <div id="linkList"></div>
+  <div id="linkAdmin">
+    <div class="sub">LINKの編集・削除</div>
+    <div id="linkEditList"></div>
+  </div>
+</main>
 
-    <div class="add-form" id="addLinkForm">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:3px">名前</div>
-      <input class="edit-input" id="newLinkName" placeholder="例: 新しいリスト">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:3px">URL</div>
-      <input class="edit-input" id="newLinkUrl" placeholder="https://...">
-      <button class="save-btn" id="newLinkSaveBtn">追加</button>
+<footer>
+  <button class="foot-btn" data-act="open-rules">免責事項</button>
+</footer>
+
+<!-- 免責事項 -->
+<div class="modal" id="rulesModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title">免責事項</div>
+      <button class="x-btn" data-act="close">✕</button>
     </div>
-  </main>
+    <div id="rulesList"></div>
+    <button class="add-btn" style="width:100%;margin-top:4px;padding:8px;" data-act="add-item" data-kind="rules">＋ 追加</button>
+  </div>
 </div>
 
-<div id="pageMustread" style="display:none;">
-  <header>
-    <div class="logo-area" id="logoAreaMustread"></div>
-    <button class="back-btn" onclick="hideMustread()">戻る</button>
-  </header>
-  <main>
-    <div class="section-header">
-      <div class="section-label">必読（お取引ルール）</div>
+<!-- 管理者ログイン -->
+<div class="modal" id="loginModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title">管理者ログイン</div>
+      <button class="x-btn" data-act="close">✕</button>
     </div>
-
-    <div class="info-card">
-      <div class="info-title">画質・編集・番組内容について</div>
-      <div class="info-text">
-        ・動画のサイズ圧縮をしているものや、出演部分のみにカットしているものがあります。<br>
-        ・画質や編集にこだわりがある方は、<strong>必ずお取引確定前</strong>にご確認をお願いします。<br>
-        ・レギュラー番組等は、リストにお名前の記載があっても「お休み」や「名前が出たのみ」の場合がございます。
-      </div>
+    <div id="loginStep1">
+      <button class="big-btn" id="sendCodeBtn" data-act="send-code">ログインコードを送る</button>
     </div>
-
-    <div class="info-card">
-      <div class="info-title">ご自身でお調べ頂けること</div>
-      <div class="info-text">
-        ・「何話に誰が出ているか」「番組の放送時間」など、ご自身で調べられる内容へのお問い合わせはご遠慮ください。<br>
-        <span style="color:var(--gray);">※DVD等、確認が難しいものはもちろん対応いたします！</span>
-      </div>
+    <div id="loginStep2" style="display:none;">
+      <input class="code-input" id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="------">
+      <button class="big-btn" id="verifyBtn" data-act="verify">ログイン</button>
+      <button class="link-btn" id="resendBtn" data-act="send-code" disabled>コードを再送する</button>
     </div>
-
-    <div class="info-card">
-      <div class="info-title">禁止事項</div>
-      <div class="info-text">
-        ・交換した動画の<strong>二次転載、販売、配布は絶対に禁止</strong>です。<br>
-        ・二次交換（他の方との再交換）は、お互いの同意がある場合のみ検討します。<br>
-        ・<strong>お取引確定後、および交換後のクレーム・返品等はお受けできません。</strong>
-      </div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">条件・比率について</div>
-      <div class="info-text">
-        ・基本は動画の長さ（尺）だけでなく、<strong>【出回り数】を考慮したお取引</strong>を希望しています。<br>
-        ・希少同士 ＝ 同率（1:1〜）<br>
-        ・それ以外、または「音声×動画」の交換 ＝ 比率違いとなります。<br>
-        <span style="color:var(--gray);">※お互いの意見を尊重しつつ、お話し合いで決められれば幸いです。</span>
-      </div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">ご連絡・日数について</div>
-      <div class="info-text">
-        ・基本は<strong>同日内のスムーズなやり取り</strong>を希望しております。<br>
-        ・ご連絡なしで<strong>3日間音沙汰がない場合は【白紙】</strong>とさせていただきます。<br>
-        ・当日〜7日以内にお取引を完了させる見込みがない方は、恐れ入りますがまたの機会にお声掛けください。
-      </div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">お渡し方法について</div>
-      <div class="info-text">
-        ・発送やお渡し方法の指定（こちらへの強要）は受け付けておりません。<br>
-        ・ギガファイル便、ギガわた、Googleフォトを使用できない方、ご自身で使い方が調べられない方はお取引をご遠慮ください。<br>
-        ・私が受け取る際はどの方法でも可能ですが、<strong>動画ファイルのみを直接トークに送るのはNG</strong>でお願いします。
-      </div>
-    </div>
-
-    <div class="info-card" style="border-color:var(--pink); background:var(--pink-light);">
-      <div class="info-title" style="color:var(--pink-dark);">最後に</div>
-      <div class="info-text" style="font-weight:bold; color:var(--pink-dark);">
-        ここまで読んでいただきありがとうございました！<br>
-        同意いただける方は、メッセージの際に「必読を読んだ旨」をお書き添えください。<br>
-        あわせて、メニューにある免責事項もご確認いただけますと幸いです。
-      </div>
-    </div>
-  </main>
+    <div class="login-msg" id="loginMsg"></div>
+  </div>
 </div>
 
-<div id="pageRules" style="display:none;">
-  <header>
-    <div class="logo-area" id="logoAreaRules"></div>
-    <button class="back-btn" onclick="hideRules()">戻る</button>
-  </header>
-  <main>
-    <div class="section-header">
-      <div class="section-label">免責事項</div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">禁止・注意事項</div>
-      <div class="info-text">
-        ・交換した動画のSNSへの投稿、加工、販売は固くお断りします。<br>
-        ・二次配布（他の人への転送・別OCへの持ち出しなど）はトラブル防止のため【要相談】となります。希望される場合は必ず事前にご相談ください。
-      </div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">万が一の不備について</div>
-      <div class="info-text">
-        ・動画に不備があった場合は、必ず【取引終了前】に申告をお願いします。<br>
-        ・不備の基準は「明らかな内容違い」のみです（数日程度の微妙な日付違い、画質やカット等の事前確認不足によるものは対応できません）。<br>
-        ・金銭での補償・対応は一切行っておりません。
-      </div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">取引終了のタイミング</div>
-      <div class="info-text">
-        ・OC（オープンチャット）の削除、またはリンク送付後【3日】が経過した時点で取引終了とみなします。これ以降の不備連絡には対応できません。<br>
-        ・ギガファイル等の保存期限が切れた場合の再送も不可となりますので、お早めの保存をお願いします。
-      </div>
-    </div>
-
-    <div class="info-card">
-      <div class="info-title">その他</div>
-      <div class="info-text">
-        ・お使いの端末やアプリの環境による「動画が再生できない・音が出ない」等のトラブルについては責任を負いかねます。
-      </div>
-    </div>
-  </main>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbzcQk2qXHLkun0bAgOYsFJiATESW-eju6s8ZqplZwvxXr94hpmZKmzLqIu5UaHRDTzU/exec';
-const ADMIN_PASSWORD='0703clarinet';
+const TOKEN_KEY='top_admin_token';
+
+/* ---------- 初期データ（埋め込み） ---------- */
+const DEF={
+  links:[
+    {name:'求めリスト',url:'https://noyu-web.github.io/video-list/wishlist-app/'},
+    {name:'所持リスト①',url:'https://noyu-web.github.io/video-list/'},
+    {name:'所持リスト②',url:'https://noyu-web.github.io/video-list/videolist2/'}
+  ],
+  mustread:[
+    {title:'画質・編集・番組内容について',text:'・動画のサイズ圧縮をしているものや、出演部分のみにカットしているものがあります。\n・画質や編集にこだわりがある方は、**必ずお取引確定前**にご確認をお願いします。\n・レギュラー番組等は、リストにお名前の記載があっても「お休み」や「名前が出たのみ」の場合がございます。'},
+    {title:'ご自身でお調べ頂けること',text:'・「何話に誰が出ているか」「番組の放送時間」など、ご自身で調べられる内容へのお問い合わせはご遠慮ください。\n※DVD等、確認が難しいものはもちろん対応いたします！'},
+    {title:'禁止事項',text:'・交換した動画の**二次転載、販売、配布は絶対に禁止**です。\n・二次交換（他の方との再交換）は、お互いの同意がある場合のみ検討します。\n・**お取引確定後、および交換後のクレーム・返品等はお受けできません。**'},
+    {title:'条件・比率について',text:'・基本は動画の長さ（尺）だけでなく、**【出回り数】を考慮したお取引**を希望しています。\n・希少同士 ＝ 同率（1:1〜）\n・それ以外、または「音声×動画」の交換 ＝ 比率違いとなります。\n※お互いの意見を尊重しつつ、お話し合いで決められれば幸いです。'},
+    {title:'ご連絡・日数について',text:'・基本は**同日内のスムーズなやり取り**を希望しております。\n・ご連絡なしで**3日間音沙汰がない場合は【白紙】**とさせていただきます。\n・当日〜7日以内にお取引を完了させる見込みがない方は、恐れ入りますがまたの機会にお声掛けください。'},
+    {title:'お渡し方法について',text:'・発送やお渡し方法の指定（こちらへの強要）は受け付けておりません。\n・ギガファイル便、ギガわた、Googleフォトを使用できない方、ご自身で使い方が調べられない方はお取引をご遠慮ください。\n・私が受け取る際はどの方法でも可能ですが、**動画ファイルのみを直接トークに送るのはNG**でお願いします。'},
+    {title:'最後に',hl:true,text:'ここまで読んでいただきありがとうございました！\n同意いただける方は、メッセージの際に「必読を読んだ旨」をお書き添えください。\nあわせて、ページ下部の免責事項もご確認いただけますと幸いです。'}
+  ],
+  rules:[
+    {title:'禁止・注意事項',text:'・交換した動画のSNSへの投稿、加工、販売は固くお断りします。\n・二次配布（他の人への転送・別OCへの持ち出しなど）はトラブル防止のため【要相談】となります。希望される場合は必ず事前にご相談ください。'},
+    {title:'万が一の不備について',text:'・動画に不備があった場合は、必ず【取引終了前】に申告をお願いします。\n・不備の基準は「明らかな内容違い」のみです（数日程度の微妙な日付違い、画質やカット等の事前確認不足によるものは対応できません）。\n・金銭での補償・対応は一切行っておりません。'},
+    {title:'取引終了のタイミング',text:'・OC（オープンチャット）の削除、またはリンク送付後【3日】が経過した時点で取引終了とみなします。これ以降の不備連絡には対応できません。\n・ギガファイル等の保存期限が切れた場合の再送も不可となりますので、お早めの保存をお願いします。'},
+    {title:'その他',text:'・お使いの端末やアプリの環境による「動画が再生できない・音が出ない」等のトラブルについては責任を負いかねます。'}
+  ]
+};
+
+const clone=o=>JSON.parse(JSON.stringify(o));
+let contents=clone(DEF);   // links / mustread / rules
+let raw={};                // シート上のその他のキー（上書き消失防止）
+let isAdmin=false,token='';
+const openSet=new Set();
+
+/* ---------- 共通 ---------- */
+const $=s=>document.querySelector(s);
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmt(t){
+  return String(t||'').split('\n').map(line=>{
+    let h=esc(line).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    if(line.trim().startsWith('※'))h='<span class="gray">'+h+'</span>';
+    return h;
+  }).join('<br>');
+}
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+
 let cbIdx=0;
-function jsonp(params){
+function jsonp(params,timeout){
   return new Promise((resolve,reject)=>{
-    const name='_cb'+cbIdx++;const s=document.createElement('script');
-    const timer=setTimeout(()=>{delete window[name];s.remove();reject();},6000); 
-    window[name]=(d)=>{clearTimeout(timer);delete window[name];s.remove();resolve(d);};
-    s.onerror=()=>{clearTimeout(timer);delete window[name];s.remove();reject();};
+    const name='_cb'+(cbIdx++);const s=document.createElement('script');
+    const timer=setTimeout(()=>{delete window[name];s.remove();reject(new Error('timeout'));},timeout||8000);
+    window[name]=d=>{clearTimeout(timer);delete window[name];s.remove();resolve(d);};
+    s.onerror=()=>{clearTimeout(timer);delete window[name];s.remove();reject(new Error('error'));};
     s.src=GAS_URL+'?'+new URLSearchParams({...params,callback:name});
     document.body.appendChild(s);
   });
 }
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-const hamburger=document.getElementById('hamburger');
-const drawer=document.getElementById('drawer');
-const overlay=document.getElementById('overlay');
-function toggleDrawer(){const open=drawer.classList.contains('open');drawer.classList.toggle('open',!open);overlay.classList.toggle('open',!open);hamburger.classList.toggle('open',!open);}
-hamburger.addEventListener('click',toggleDrawer);
-overlay.addEventListener('click',toggleDrawer);
-
-function showMustread(){
-  document.getElementById('pageTop').style.display='none';
-  document.getElementById('pageMustread').style.display='block';
-  window.scrollTo(0,0);
-}
-function hideMustread(){
-  document.getElementById('pageTop').style.display='block';
-  document.getElementById('pageMustread').style.display='none';
-  window.scrollTo(0,0);
-}
-
-function showRules(){
-  document.getElementById('pageTop').style.display='none';
-  document.getElementById('pageRules').style.display='block';
-  if(drawer.classList.contains('open')) toggleDrawer();
-  window.scrollTo(0,0);
-}
-function hideRules(){
-  document.getElementById('pageTop').style.display='block';
-  document.getElementById('pageRules').style.display='none';
-  window.scrollTo(0,0);
-}
-
-let isAdmin=false;
-function loadAdmin(){try{isAdmin=sessionStorage.getItem('top_admin')==='1';}catch{}}
-function applyAdmin(){
-  document.querySelectorAll('.edit-btn,.add-btn').forEach(b=>b.style.display=isAdmin?'inline-block':'none');
-  document.getElementById('drawerAdminEdit').style.display=isAdmin?'block':'none';
-  document.getElementById('linkAdminEdit').style.display=isAdmin?'block':'none';
-}
-
-let _tap=0,_tapT=null;
-function handleLogoClick(){
-  _tap++;clearTimeout(_tapT);_tapT=setTimeout(()=>{_tap=0;},1500);
-  if(_tap>=5){_tap=0;
-    if(isAdmin){isAdmin=false;try{sessionStorage.removeItem('top_admin');}catch{}applyAdmin();alert('ログアウトしました');}
-    else{const pw=prompt('パスロール');if(pw===ADMIN_PASSWORD){isAdmin=true;try{sessionStorage.setItem('top_admin','1');}catch{}applyAdmin();alert('ログインしました');}else if(pw!==null)alert('パスワードが違います');}
-  }
-}
-document.getElementById('logoArea').addEventListener('click',handleLogoClick);
-document.getElementById('logoAreaRules').addEventListener('click',handleLogoClick);
-document.getElementById('logoAreaMustread').addEventListener('click',handleLogoClick);
-
-const DEFAULTS={
-  links:[
-    {name:'求めリスト',url:'https://noyu-web.github.io/video-list/wishlist-app/'},
-    {name:'所持リスト',url:'https://noyu-web.github.io/video-list/'},
-    {name:'所持リスト②',url:'https://noyu-web.github.io/video-list/videolist2/'}
-  ],
-  drawerLinks:[
-    {name:'免責事項',url:''},
-    {name:'所持リストの見方',url:'https://noyu-web.github.io/video-list/view-guide/'}
-  ]
-};
-let contents={links:[...DEFAULTS.links.map(l=>({...l}))],drawerLinks:[...DEFAULTS.drawerLinks.map(l=>({...l}))]};
-
-function renderDrawerLinks(){
-  const sec=document.getElementById('drawerLinksSection');
-  sec.innerHTML=contents.drawerLinks.map(l=>{
-    if(l.name === '免責事項'){
-      return `<div class="drawer-link" style="cursor:pointer;" onclick="showRules()">${esc(l.name)}</div>`;
-    }
-    if(l.name === '所持リストの見方'){
-      return `<a class="drawer-link" href="https://noyu-web.github.io/video-list/view-guide/" target="_blank" rel="noopener noreferrer">${esc(l.name)}</a>`;
-    }
-    return l.url?`<a class="drawer-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${esc(l.name)}</a>`:`<div class="drawer-link" style="color:var(--gray)">${esc(l.name)}</div>`;
-  }).join('');
-  
-  const editList=document.getElementById('drawerEditList');
-  editList.innerHTML=contents.drawerLinks.map((l,i)=>`
-    <div style="margin-bottom:10px;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:2px">名前</div>
-      <input class="edit-input" value="${esc(l.name)}" data-d-name-i="${i}" style="margin-bottom:6px">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:2px">URL</div>
-      <input class="edit-input" value="${esc(l.url)}" data-d-url-i="${i}" style="margin:0" placeholder="${l.name==='免責事項'?'URL登録は不要になりました':'https://...'}">
-      <div style="display:flex;gap:6px;margin-top:6px">
-        <button style="flex:1;background:var(--pink);color:#fff;border:none;border-radius:7px;padding:6px;font-size:12px;cursor:pointer" data-dsave="${i}">保存</button>
-        <button style="background:#fdecec;color:#d33;border:none;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer" data-ddel="${i}">削除</button>
-      </div>
+/* ---------- 描画 ---------- */
+function editBox(kind,it,i,n,withTitle){
+  return `<div class="edit-box" data-kind="${kind}" data-i="${i}">
+    <input class="edit-input" data-f="title" value="${esc(it.title)}" placeholder="タイトル">
+    <textarea class="edit-input" data-f="text" rows="7" placeholder="本文">${esc(it.text)}</textarea>
+    <div class="hint">**太字** ／ 「※」で始まる行は灰色になります</div>
+    <div class="row">
+      <button class="btn-save" data-act="save-item" data-kind="${kind}" data-i="${i}">保存</button>
+      <button class="btn-mini" data-act="move" data-kind="${kind}" data-i="${i}" data-d="-1" ${i===0?'disabled':''}>↑</button>
+      <button class="btn-mini" data-act="move" data-kind="${kind}" data-i="${i}" data-d="1" ${i===n-1?'disabled':''}>↓</button>
+      <button class="btn-del" data-act="del-item" data-kind="${kind}" data-i="${i}">削除</button>
     </div>
-  `).join('');
-  
-  editList.querySelectorAll('[data-dsave]').forEach(b=>b.addEventListener('click',async()=>{
-    const i=parseInt(b.dataset.dsave);
-    const newName = editList.querySelector(`[data-d-name-i="${i}"]`).value.trim();
-    const newUrl = editList.querySelector(`[data-d-url-i="${i}"]`).value.trim();
-    if(!newName) return alert('名前を入力してください');
-    contents.drawerLinks[i].name=newName;
-    contents.drawerLinks[i].url=newUrl;
-    renderDrawerLinks();await saveContents();
-  }));
-  editList.querySelectorAll('[data-ddel]').forEach(b=>b.addEventListener('click',async()=>{
-    if(!confirm('削除しますか？'))return;
-    contents.drawerLinks.splice(parseInt(b.dataset.ddel),1);
-    renderDrawerLinks();await saveContents();
-  }));
+  </div>`;
 }
-
+function renderMustread(){
+  const list=contents.mustread;
+  $('#mustreadList').innerHTML=list.map((it,i)=>`
+    <div class="toggle ${it.hl?'hl':''} ${openSet.has('m'+i)?'open':''}">
+      <button class="toggle-head" data-act="toggle" data-key="m${i}">
+        <span class="toggle-title">${esc(it.title)}</span><span class="chev">›</span>
+      </button>
+      <div class="toggle-body">
+        <div class="info-text">${fmt(it.text)}</div>
+        ${editBox('mustread',it,i,list.length)}
+      </div>
+    </div>`).join('');
+}
+function renderRules(){
+  const list=contents.rules;
+  $('#rulesList').innerHTML=list.map((it,i)=>`
+    <div class="info-card">
+      <div class="info-title">${esc(it.title)}</div>
+      <div class="info-text">${fmt(it.text)}</div>
+      ${editBox('rules',it,i,list.length)}
+    </div>`).join('');
+}
 function renderLinks(){
-  const list=document.getElementById('linkList');
-  list.innerHTML=contents.links.map((l,i)=>`
-    <div style="display:flex;align-items:center;margin-bottom:10px">
-      <a class="link-card" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="flex:1;margin-bottom:0;">
-        <span class="link-card-name">${esc(l.name)}</span>
-        <span class="link-card-arrow">›</span>
-      </a>
-    </div>
-  `).join('');
-
-  const editList=document.getElementById('linkEditList');
-  editList.innerHTML=contents.links.map((l,i)=>`
-    <div style="margin-bottom:10px;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--white)">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:2px">名前</div>
-      <input class="edit-input" value="${esc(l.name)}" data-l-name-i="${i}" style="margin-bottom:6px">
-      <div style="font-size:11px;color:var(--gray);margin-bottom:2px">URL</div>
-      <input class="edit-input" value="${esc(l.url)}" data-l-url-i="${i}" style="margin:0">
-      <div style="display:flex;gap:6px;margin-top:6px">
-        <button style="flex:1;background:var(--pink);color:#fff;border:none;border-radius:7px;padding:6px;font-size:12px;cursor:pointer" data-lsave="${i}">保存</button>
-        <button style="background:#fdecec;color:#d33;border:none;border-radius:7px;padding:6px 10px;font-size:12px;cursor:pointer" data-ldel="${i}">削除</button>
+  $('#linkList').innerHTML=contents.links.map(l=>`
+    <a class="slim" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
+      <span class="slim-name">${esc(l.name)}</span><span class="slim-tag">LINK</span>
+    </a>`).join('');
+  const n=contents.links.length;
+  $('#linkEditList').innerHTML=contents.links.map((l,i)=>`
+    <div class="link-edit" data-i="${i}">
+      <div class="lbl">名前</div>
+      <input class="edit-input" data-f="name" value="${esc(l.name)}">
+      <div class="lbl">URL</div>
+      <input class="edit-input" data-f="url" value="${esc(l.url)}" style="margin-bottom:8px">
+      <div class="row">
+        <button class="btn-save" data-act="save-link" data-i="${i}">保存</button>
+        <button class="btn-mini" data-act="move-link" data-i="${i}" data-d="-1" ${i===0?'disabled':''}>↑</button>
+        <button class="btn-mini" data-act="move-link" data-i="${i}" data-d="1" ${i===n-1?'disabled':''}>↓</button>
+        <button class="btn-del" data-act="del-link" data-i="${i}">削除</button>
       </div>
-    </div>
-  `).join('');
-
-  editList.querySelectorAll('[data-lsave]').forEach(b=>b.addEventListener('click',async()=>{
-    const i=parseInt(b.dataset.lsave);
-    const newName = editList.querySelector(`[data-l-name-i="${i}"]`).value.trim();
-    const newUrl = editList.querySelector(`[data-l-url-i="${i}"]`).value.trim();
-    if(!newName || !newUrl) return alert('名前とURLを入力してください');
-    contents.links[i].name=newName;
-    contents.links[i].url=newUrl;
-    renderLinks();await saveContents();
-  }));
-  editList.querySelectorAll('[data-ldel]').forEach(b=>b.addEventListener('click',async()=>{
-    if(!confirm('削除しますか？'))return;
-    contents.links.splice(parseInt(b.dataset.ldel),1);
-    renderLinks();await saveContents();
-  }));
+    </div>`).join('');
+}
+function render(){
+  document.body.classList.toggle('admin',isAdmin);
+  $('#adminBadge').classList.toggle('on',isAdmin);
+  renderMustread();renderLinks();renderRules();
 }
 
-function renderAll(){renderDrawerLinks();renderLinks();}
-
+/* ---------- データ読み込み・保存 ---------- */
+function parseVal(v){if(typeof v!=='string')return v;try{return JSON.parse(v);}catch{return null;}}
 async function loadContents(){
   try{
-    const data=await jsonp({action:'getTopContents'});
-    if(data&&Object.keys(data).length>0){
-      if(data.links)contents.links=typeof data.links==='string'?JSON.parse(data.links):data.links;
-      if(data.drawerLinks)contents.drawerLinks=typeof data.drawerLinks==='string'?JSON.parse(data.drawerLinks):data.drawerLinks;
-      renderAll(); 
+    const data=await jsonp({action:'getTopContents'},10000);
+    if(!data||typeof data!=='object'||data.error)return;
+    raw={...data};
+    const L=parseVal(data.links),M=parseVal(data.mustread),R=parseVal(data.rules);
+    if(Array.isArray(L)&&L.length){
+      contents.links=L.map(l=>l&&l.name==='所持リスト'?{...l,name:'所持リスト①'}:l);
     }
+    if(Array.isArray(M)&&M.length)contents.mustread=M;
+    if(Array.isArray(R)&&R.length)contents.rules=R;
+    render();
   }catch{}
 }
-
 async function saveContents(){
-  const toSave={links:JSON.stringify(contents.links),drawerLinks:JSON.stringify(contents.drawerLinks)};
-  try{await jsonp({action:'saveTopContents',data:encodeURIComponent(JSON.stringify(toSave))});}catch{}
+  const payload={...raw,
+    links:JSON.stringify(contents.links),
+    mustread:JSON.stringify(contents.mustread),
+    rules:JSON.stringify(contents.rules)};
+  try{
+    const r=await fetch(GAS_URL+'?action=saveTopContents&token='+encodeURIComponent(token),{
+      method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(d&&d.error==='unauthorized'){clearToken();render();alert('ログインの有効期限が切れました。もう一度ログインしてください。');return false;}
+    if(d&&d.ok){raw=payload;toast('保存しました');return true;}
+  }catch{}
+  alert('保存に失敗しました。通信状況を確認してもう一度お試しください。');
+  return false;
 }
 
-document.getElementById('addLinkBtn').addEventListener('click',()=>{
-  const f=document.getElementById('addLinkForm');f.style.display=f.style.display==='block'?'none':'block';
-});
-document.getElementById('newLinkSaveBtn').addEventListener('click',async()=>{
-  const name=document.getElementById('newLinkName').value.trim();
-  const url=document.getElementById('newLinkUrl').value.trim();
-  if(!name||!url)return;
-  contents.links.push({name,url});
-  document.getElementById('newLinkName').value='';document.getElementById('newLinkUrl').value='';
-  document.getElementById('addLinkForm').style.display='none';
-  renderLinks();await saveContents();
+/* ---------- 管理者ログイン ---------- */
+function loadToken(){
+  try{
+    const o=JSON.parse(localStorage.getItem(TOKEN_KEY)||'null');
+    if(o&&o.token&&o.expires>Date.now()){token=o.token;isAdmin=true;}
+    else localStorage.removeItem(TOKEN_KEY);
+  }catch{}
+}
+function clearToken(){
+  isAdmin=false;token='';
+  try{localStorage.removeItem(TOKEN_KEY);}catch{}
+}
+const ERR={
+  too_soon:'少し時間をおいてから、もう一度押してください。',
+  rate_limited:'送信回数の上限です。1時間ほど待ってからお試しください。',
+  expired:'コードの有効期限が切れました。もう一度コードを送ってください。',
+  locked:'入力の失敗が上限に達しました。もう一度コードを送ってください。',
+  invalid:'コードが違います。'
+};
+function setMsg(t){$('#loginMsg').textContent=t||'';}
+let cdTimer;
+function startCountdown(sec){
+  const b=$('#resendBtn');clearInterval(cdTimer);
+  b.disabled=true;
+  let n=sec;b.textContent='コードを再送する（'+n+'秒）';
+  cdTimer=setInterval(()=>{
+    n--;
+    if(n<=0){clearInterval(cdTimer);b.disabled=false;b.textContent='コードを再送する';}
+    else b.textContent='コードを再送する（'+n+'秒）';
+  },1000);
+}
+function openLogin(){
+  $('#loginStep1').style.display='block';$('#loginStep2').style.display='none';
+  $('#sendCodeBtn').disabled=false;$('#codeInput').value='';setMsg('');
+  openModal('loginModal');
+}
+async function sendCode(){
+  const b1=$('#sendCodeBtn');b1.disabled=true;
+  setMsg('送信中…（数秒かかります）');
+  try{
+    const d=await jsonp({action:'requestAdminCode'},30000);
+    if(d&&d.ok){
+      $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';
+      setMsg('管理者のメールにコードを送りました。10分以内に入力してください。');
+      startCountdown(60);$('#codeInput').focus();
+    }else{setMsg(ERR[d&&d.error]||'送信に失敗しました。');b1.disabled=false;}
+  }catch{setMsg('通信に失敗しました。もう一度お試しください。');b1.disabled=false;}
+}
+async function verifyCode(){
+  const code=$('#codeInput').value.trim();
+  if(!/^\d{6}$/.test(code)){setMsg('6桁の数字を入力してください。');return;}
+  const b=$('#verifyBtn');b.disabled=true;setMsg('確認中…');
+  try{
+    const d=await jsonp({action:'verifyAdminCode',code},15000);
+    if(d&&d.ok){
+      token=d.token;isAdmin=true;
+      try{localStorage.setItem(TOKEN_KEY,JSON.stringify({token:d.token,expires:d.expires}));}catch{}
+      closeModals();render();toast('ログインしました');
+    }else{
+      setMsg(ERR[d&&d.error]||'ログインに失敗しました。');
+      if(d&&(d.error==='expired'||d.error==='locked')){$('#loginStep1').style.display='block';$('#loginStep2').style.display='none';$('#sendCodeBtn').disabled=false;}
+    }
+  }catch{setMsg('通信に失敗しました。もう一度お試しください。');}
+  b.disabled=false;
+}
+async function logout(){
+  const t=token;clearToken();render();
+  toast('ログアウトしました');
+  try{await jsonp({action:'logoutAdmin',token:t},8000);}catch{}
+}
+
+/* 左上を5回タップでログイン画面 */
+let _tap=0,_tapT=null;
+$('#logoArea').addEventListener('click',()=>{
+  _tap++;clearTimeout(_tapT);_tapT=setTimeout(()=>{_tap=0;},1500);
+  if(_tap>=5){_tap=0;if(!isAdmin)openLogin();}
 });
 
-document.getElementById('drawerAddBtn').addEventListener('click',()=>{
-  const f=document.getElementById('drawerAddForm');f.style.display=f.style.display==='block'?'none':'block';
-});
-document.getElementById('drawerNewSaveBtn').addEventListener('click',async()=>{
-  const name=document.getElementById('drawerNewName').value.trim();
-  const url=document.getElementById('drawerNewUrl').value.trim();
-  if(!name)return;
-  contents.drawerLinks.push({name,url});
-  document.getElementById('drawerNewName').value='';document.getElementById('drawerNewUrl').value='';
-  document.getElementById('drawerAddForm').style.display='none';
-  renderDrawerLinks();await saveContents();
-});
+/* ---------- モーダル ---------- */
+function openModal(id){$('#'+id).classList.add('open');document.body.style.overflow='hidden';}
+function closeModals(){document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));document.body.style.overflow='';}
 
-loadAdmin();
-renderAll(); 
-loadContents(); 
-applyAdmin();
+/* ---------- クリック処理 ---------- */
+document.addEventListener('click',async e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const act=el.dataset.act;
+  if(act==='close-bg'){if(e.target===el)closeModals();return;}
+  if(act==='close'){closeModals();return;}
+  if(act==='toggle'){
+    const k=el.dataset.key;openSet.has(k)?openSet.delete(k):openSet.add(k);
+    el.closest('.toggle').classList.toggle('open');return;
+  }
+  if(act==='open-rules'){openModal('rulesModal');return;}
+  if(act==='send-code'){sendCode();return;}
+  if(act==='verify'){verifyCode();return;}
+  if(act==='logout'){logout();return;}
+  if(!isAdmin)return;
+
+  const kind=el.dataset.kind,i=parseInt(el.dataset.i);
+  if(act==='add-item'){
+    contents[kind].push({title:'新しい項目',text:''});
+    if(kind==='mustread')openSet.add('m'+(contents[kind].length-1));
+    render();return;
+  }
+  if(act==='save-item'){
+    const box=el.closest('.edit-box');
+    const title=box.querySelector('[data-f="title"]').value.trim();
+    const text=box.querySelector('[data-f="text"]').value;
+    if(!title){alert('タイトルを入力してください');return;}
+    contents[kind][i].title=title;contents[kind][i].text=text;
+    render();await saveContents();return;
+  }
+  if(act==='del-item'){
+    if(!confirm('削除しますか？'))return;
+    contents[kind].splice(i,1);openSet.clear();render();await saveContents();return;
+  }
+  if(act==='move'){
+    const j=i+parseInt(el.dataset.d);const a=contents[kind];
+    if(j<0||j>=a.length)return;
+    [a[i],a[j]]=[a[j],a[i]];openSet.clear();render();await saveContents();return;
+  }
+  if(act==='add-link'){
+    contents.links.push({name:'新しいリンク',url:'https://'});render();
+    const last=$('#linkEditList').lastElementChild;if(last)last.scrollIntoView({behavior:'smooth',block:'center'});return;
+  }
+  if(act==='save-link'){
+    const box=el.closest('.link-edit');
+    const name=box.querySelector('[data-f="name"]').value.trim();
+    const url=box.querySelector('[data-f="url"]').value.trim();
+    if(!name||!/^https?:\/\//i.test(url)){alert('名前と、http から始まるURLを入力してください');return;}
+    contents.links[i].name=name;contents.links[i].url=url;
+    render();await saveContents();return;
+  }
+  if(act==='del-link'){
+    if(!confirm('削除しますか？'))return;
+    contents.links.splice(i,1);render();await saveContents();return;
+  }
+  if(act==='move-link'){
+    const j=i+parseInt(el.dataset.d);const a=contents.links;
+    if(j<0||j>=a.length)return;
+    [a[i],a[j]]=[a[j],a[i]];render();await saveContents();return;
+  }
+});
+$('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
+
+/* ---------- 起動 ---------- */
+loadToken();
+render();
+loadContents();
+if(isAdmin){
+  jsonp({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();render();}}).catch(()=>{});
+}
 </script>
 </body>
 </html>
