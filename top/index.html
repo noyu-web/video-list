@@ -114,11 +114,11 @@ body.admin #linkAdmin{display:block;}
 </header>
 
 <main>
-  <div class="guide-toggle open" id="guideToggle">
+  <div class="guide-toggle" id="guideToggle">
     <button class="guide-head" data-act="guide-toggle"><span class="guide-title">見方ガイド</span><span class="chev">›</span></button>
     <div class="guide-body">
       <div class="guide">
-        <iframe id="guideFrame" src="https://noyu-web.github.io/video-list/view-guide/" title="所持リストの見方"></iframe>
+        <iframe id="guideFrame" title="所持リストの見方"></iframe>
       </div>
     </div>
   </div>
@@ -423,7 +423,7 @@ document.addEventListener('click',async e=>{
   const act=el.dataset.act;
   if(act==='close-bg'){if(e.target===el)closeModals();return;}
   if(act==='close'){closeModals();return;}
-  if(act==='guide-toggle'){$('#guideToggle').classList.toggle('open');return;}
+  if(act==='guide-toggle'){const t=$('#guideToggle');t.classList.toggle('open');if(t.classList.contains('open')&&!guideLoaded)loadGuide();return;}
   if(act==='toggle'){
     const k=el.dataset.key;openSet.has(k)?openSet.delete(k):openSet.add(k);
     el.closest('.toggle').classList.toggle('open');return;
@@ -481,25 +481,36 @@ document.addEventListener('click',async e=>{
 });
 $('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
 
-/* ---------- ガイド内の遷移リンクを消す ---------- */
-function hideGuideLink(){
+/* ---------- 見方ガイド：💎・説明文・遷移リンクを除いて表示 ---------- */
+const GUIDE_URL='https://noyu-web.github.io/video-list/view-guide/';
+let guideLoaded=false;
+async function loadGuide(){
+  guideLoaded=true;
+  const f=$('#guideFrame');
   try{
-    const d=$('#guideFrame').contentDocument;if(!d||!d.body)return;
-    d.querySelectorAll('a').forEach(a=>{
+    const r=await fetch(GUIDE_URL,{cache:'no-cache'});
+    if(!r.ok)throw new Error('http');
+    const doc=new DOMParser().parseFromString(await r.text(),'text/html');
+    const tw=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT);
+    const kill=[];let n;
+    while((n=tw.nextNode())){
+      const t=n.nodeValue.trim();
+      if(t==='💎'||t.indexOf('使い方を簡単にご紹介')===0)kill.push(n);
+    }
+    kill.forEach(node=>{
+      const p=node.parentNode;p.removeChild(node);
+      if(p!==doc.body&&!p.textContent.trim()&&!p.querySelector('img,svg,a,button,input'))p.remove();
+    });
+    doc.querySelectorAll('a').forEach(a=>{
       if(a.textContent.indexOf('所持リストを見る')!==-1||/\/video-list\/?$/.test(a.getAttribute('href')||'')){
-        const w=a.closest('.btn-wrap,.cta,.footer,.slide-link')||a;
-        w.style.display='none';
+        const p=a.parentNode;a.remove();
+        if(p&&p!==doc.body&&!p.textContent.trim()&&!p.children.length)p.remove();
       }
     });
-    d.querySelectorAll('body *').forEach(el=>{
-      if(el.children.length===0){
-        const t=(el.textContent||'').trim();
-        if(t==='💎'||t.indexOf('使い方を簡単にご紹介')===0)el.style.display='none';
-      }
-    });
-  }catch{}
+    if(!doc.querySelector('base')){const b=doc.createElement('base');b.href=GUIDE_URL;doc.head.insertBefore(b,doc.head.firstChild);}
+    f.srcdoc='<!DOCTYPE html>'+doc.documentElement.outerHTML;
+  }catch{f.src=GUIDE_URL;}
 }
-$('#guideFrame').addEventListener('load',()=>{hideGuideLink();setTimeout(hideGuideLink,300);setTimeout(hideGuideLink,1200);});
 
 /* ---------- 起動 ---------- */
 loadToken();
