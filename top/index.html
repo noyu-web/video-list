@@ -234,7 +234,7 @@ function jsonp(params,timeout){
     const timer=setTimeout(()=>{delete window[name];s.remove();reject(new Error('timeout'));},timeout||8000);
     window[name]=d=>{clearTimeout(timer);delete window[name];s.remove();resolve(d);};
     s.onerror=()=>{clearTimeout(timer);delete window[name];s.remove();reject(new Error('error'));};
-    s.src=GAS_URL+'?'+new URLSearchParams({...params,callback:name});
+    s.src=GAS_URL+'?'+new URLSearchParams({...params,callback:name,t:Date.now()});
     document.body.appendChild(s);
   });
 }
@@ -398,10 +398,10 @@ async function verifyCode(){
       try{localStorage.setItem(TOKEN_KEY,JSON.stringify({token:d.token,expires:d.expires}));}catch{}
       closeModals();render();toast('ログインしました');
     }else{
-      setMsg(ERR[d&&d.error]||'ログインに失敗しました。');
+      setMsg(ERR[d&&d.error]||('ログインに失敗しました（'+((d&&d.error)||'応答なし')+'）'));
       if(d&&(d.error==='expired'||d.error==='locked')){$('#loginStep1').style.display='block';$('#loginStep2').style.display='none';$('#sendCodeBtn').disabled=false;setStep(1);}
     }
-  }catch{setMsg('通信に失敗しました。もう一度お試しください。');}
+  }catch(err){setMsg('通信に失敗しました（'+err.message+'）。もう一度お試しください。');}
   b.disabled=false;
 }
 async function logout(){
