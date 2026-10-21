@@ -22,8 +22,14 @@ main{padding:22px 20px 30px;max-width:440px;width:100%;margin:0 auto;flex:1;}
 body.admin .add-btn{display:inline-block;}
 
 /* ガイド埋め込み */
+.guide-toggle{border-top:1.5px solid var(--pink);border-bottom:1px solid var(--border);}
+.guide-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 4px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;}
+.guide-title{font-size:16px;font-weight:700;color:var(--pink-dark);}
+.guide-body{display:none;padding-bottom:14px;}
+.guide-toggle.open .guide-body{display:block;}
+.guide-toggle.open .chev{transform:rotate(90deg);}
 .guide{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:var(--white);}
-.guide iframe{display:block;width:100%;height:470px;border:0;}
+.guide iframe{display:block;width:100%;height:340px;border:0;}
 
 /* 必読トグル */
 #mustreadList{border-top:1.5px solid var(--pink);}
@@ -108,8 +114,13 @@ body.admin #linkAdmin{display:block;}
 </header>
 
 <main>
-  <div class="guide">
-    <iframe id="guideFrame" src="https://noyu-web.github.io/video-list/view-guide/" title="所持リストの見方"></iframe>
+  <div class="guide-toggle open" id="guideToggle">
+    <button class="guide-head" data-act="guide-toggle"><span class="guide-title">見方ガイド</span><span class="chev">›</span></button>
+    <div class="guide-body">
+      <div class="guide">
+        <iframe id="guideFrame" src="https://noyu-web.github.io/video-list/view-guide/" title="所持リストの見方"></iframe>
+      </div>
+    </div>
   </div>
 
   <div class="section-header">
@@ -412,6 +423,7 @@ document.addEventListener('click',async e=>{
   const act=el.dataset.act;
   if(act==='close-bg'){if(e.target===el)closeModals();return;}
   if(act==='close'){closeModals();return;}
+  if(act==='guide-toggle'){$('#guideToggle').classList.toggle('open');return;}
   if(act==='toggle'){
     const k=el.dataset.key;openSet.has(k)?openSet.delete(k):openSet.add(k);
     el.closest('.toggle').classList.toggle('open');return;
@@ -472,11 +484,17 @@ $('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();}
 /* ---------- ガイド内の遷移リンクを消す ---------- */
 function hideGuideLink(){
   try{
-    const d=$('#guideFrame').contentDocument;if(!d)return;
+    const d=$('#guideFrame').contentDocument;if(!d||!d.body)return;
     d.querySelectorAll('a').forEach(a=>{
       if(a.textContent.indexOf('所持リストを見る')!==-1||/\/video-list\/?$/.test(a.getAttribute('href')||'')){
         const w=a.closest('.btn-wrap,.cta,.footer,.slide-link')||a;
         w.style.display='none';
+      }
+    });
+    d.querySelectorAll('body *').forEach(el=>{
+      if(el.children.length===0){
+        const t=(el.textContent||'').trim();
+        if(t==='💎'||t.indexOf('使い方を簡単にご紹介')===0)el.style.display='none';
       }
     });
   }catch{}
@@ -493,4 +511,3 @@ if(isAdmin){
 </script>
 </body>
 </html>
-
