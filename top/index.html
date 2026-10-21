@@ -9,7 +9,8 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 header{background:var(--bg);padding:env(safe-area-inset-top) 20px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
-.logo-area{width:70px;height:100%;cursor:default;user-select:none;}
+.logo-area{min-width:70px;height:100%;display:flex;align-items:center;}
+.hidden{display:none!important;}
 .admin-badge{display:none;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--pink-dark);}
 .admin-badge.on{display:flex;}
 .admin-badge button{font-size:11px;font-weight:700;color:var(--pink-dark);background:var(--white);border:1px solid var(--border);border-radius:14px;padding:3px 10px;cursor:pointer;font-family:inherit;}
@@ -79,6 +80,15 @@ body.admin #linkAdmin{display:block;}
 .info-title{font-size:14px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
 
 /* ログイン */
+.steps{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--gray);opacity:.55}
+.step b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--border);color:var(--gray);font-size:12px}
+.step.on{opacity:1;color:var(--pink-dark)}
+.step.on b{background:var(--pink);color:#fff}
+.step-line{flex:1;height:2px;background:var(--border);border-radius:2px}
+.step-desc{font-size:13px;line-height:1.7;color:var(--text);margin-bottom:12px}
+.login-btn{background:var(--white);color:var(--pink-dark);border:1.5px solid var(--pink);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+
 .login-msg{font-size:12.5px;color:var(--pink-dark);line-height:1.6;min-height:20px;margin:10px 0;}
 .big-btn{width:100%;background:var(--pink);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
 .big-btn:disabled{opacity:.5;cursor:default;}
@@ -93,7 +103,7 @@ body.admin #linkAdmin{display:block;}
 <body>
 
 <header>
-  <div class="logo-area" id="logoArea"></div>
+  <div class="logo-area"><button class="login-btn" id="loginBtn">ログイン</button></div>
   <div class="admin-badge" id="adminBadge"><span>編集モード</span><button data-act="logout">ログアウト</button></div>
 </header>
 
@@ -142,10 +152,13 @@ body.admin #linkAdmin{display:block;}
       <div class="sheet-title">管理者ログイン</div>
       <button class="x-btn" data-act="close">✕</button>
     </div>
+    <div class="steps"><div class="step on" id="stepDot1"><b>1</b>コードを送る</div><div class="step-line"></div><div class="step" id="stepDot2"><b>2</b>コードを入力</div></div>
     <div id="loginStep1">
+      <div class="step-desc">下のボタンを押すと、管理者のメールにログインコード（6桁）が届きます。</div>
       <button class="big-btn" id="sendCodeBtn" data-act="send-code">ログインコードを送る</button>
     </div>
     <div id="loginStep2" style="display:none;">
+      <div class="step-desc">メールに届いた6桁のコードを入力してください。</div>
       <input class="code-input" id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="------">
       <button class="big-btn" id="verifyBtn" data-act="verify">ログイン</button>
       <button class="link-btn" id="resendBtn" data-act="send-code" disabled>コードを再送する</button>
@@ -274,6 +287,7 @@ function renderLinks(){
 function render(){
   document.body.classList.toggle('admin',isAdmin);
   $('#adminBadge').classList.toggle('on',isAdmin);
+  $('#loginBtn').classList.toggle('hidden',isAdmin);
   renderMustread();renderLinks();renderRules();
 }
 
@@ -340,7 +354,12 @@ function startCountdown(sec){
     else b.textContent='コードを再送する（'+n+'秒）';
   },1000);
 }
+function setStep(n){
+$('#stepDot1').classList.toggle('on',n===1);
+$('#stepDot2').classList.toggle('on',n===2);
+}
 function openLogin(){
+  setStep(1);
   $('#loginStep1').style.display='block';$('#loginStep2').style.display='none';
   $('#sendCodeBtn').disabled=false;$('#codeInput').value='';setMsg('');
   openModal('loginModal');
@@ -351,7 +370,7 @@ async function sendCode(){
   try{
     const d=await jsonp({action:'requestAdminCode'},30000);
     if(d&&d.ok){
-      $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';
+      $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';setStep(2);
       setMsg('管理者のメールにコードを送りました。10分以内に入力してください。');
       startCountdown(60);$('#codeInput').focus();
     }else{setMsg(ERR[d&&d.error]||('送信に失敗しました（'+((d&&d.error)||'応答なし')+'）'));b1.disabled=false;}
@@ -369,7 +388,7 @@ async function verifyCode(){
       closeModals();render();toast('ログインしました');
     }else{
       setMsg(ERR[d&&d.error]||'ログインに失敗しました。');
-      if(d&&(d.error==='expired'||d.error==='locked')){$('#loginStep1').style.display='block';$('#loginStep2').style.display='none';$('#sendCodeBtn').disabled=false;}
+      if(d&&(d.error==='expired'||d.error==='locked')){$('#loginStep1').style.display='block';$('#loginStep2').style.display='none';$('#sendCodeBtn').disabled=false;setStep(1);}
     }
   }catch{setMsg('通信に失敗しました。もう一度お試しください。');}
   b.disabled=false;
@@ -380,12 +399,8 @@ async function logout(){
   try{await jsonp({action:'logoutAdmin',token:t},8000);}catch{}
 }
 
-/* 左上を5回タップでログイン画面 */
-let _tap=0,_tapT=null;
-$('#logoArea').addEventListener('click',()=>{
-  _tap++;clearTimeout(_tapT);_tapT=setTimeout(()=>{_tap=0;},1500);
-  if(_tap>=5){_tap=0;if(!isAdmin)openLogin();}
-});
+/* 左上のログインボタン（1タップ） */
+$('#loginBtn').addEventListener('click',openLogin);
 
 /* ---------- モーダル ---------- */
 function openModal(id){$('#'+id).classList.add('open');document.body.style.overflow='hidden';}
