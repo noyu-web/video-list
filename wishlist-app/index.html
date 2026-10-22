@@ -75,6 +75,23 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
 .fs-others summary{font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;padding:4px 0;margin-bottom:6px;}
 .x-btn{background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer;}
 
+/* NEW・所持照合・一括選択 */
+.new-badge{display:inline-block;background:var(--pink-dark);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:6px;letter-spacing:.06em;vertical-align:middle;}
+.card-owned{font-size:11px;color:#1f8a4c;background:#e8f8ef;border-radius:8px;padding:4px 8px;margin-top:6px;word-break:break-all;}
+.admin-bar{padding:0 0 10px;}
+.admin-bar button{background:var(--pink-light);color:var(--pink-dark);border:1.5px solid var(--pink);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.sel-box{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:7px;border:2px solid var(--border);color:transparent;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;background:#fff;}
+.card.sel{outline:2px solid var(--pink-dark);background:var(--pink-light);}
+.card.sel .sel-box{background:var(--pink-dark);border-color:var(--pink-dark);color:#fff;}
+.card.has-sel .card-title{padding-right:30px;}
+body.selecting .fab{display:none;}
+body.selecting{padding-bottom:110px;}
+.bulk-bar{position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--white);border-top:2px solid var(--pink-light);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;box-shadow:0 -4px 14px rgba(0,0,0,.08);}
+.bulk-bar .bulk-count{flex:1;font-size:13px;font-weight:700;color:var(--pink-dark);}
+.bulk-bar button{padding:8px 12px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:400;}
+.toast.show{opacity:1;transform:translateX(-50%);}
+
 /* ログイン */
 .steps{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
 .step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--gray);opacity:.55;}
@@ -104,6 +121,7 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
 </header>
 
 <div class="page">
+  <div class="admin-bar hidden" id="adminBar"><button id="selectBtn">☑ 選択</button></div>
   <div class="active-bar" id="activeBar"></div>
   <div class="list-count" id="listCount"></div>
   <div id="cardList"></div>
@@ -121,10 +139,48 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
     <div class="fs-body" id="filterBody"></div>
     <div class="fs-foot">
       <button class="btn-cancel" id="filterResetBtn">リセット</button>
+      <button class="btn-cancel" id="filterShareBtn" title="この条件のリンクをコピー">🔗</button>
       <button class="btn-save" id="filterApplyBtn">表示する</button>
     </div>
   </div>
 </div>
+
+<!-- 一括操作 -->
+<div class="bulk-bar hidden" id="bulkBar">
+  <span class="bulk-count" id="bulkCount">0件選択</span>
+  <button id="bulkAllBtn" style="background:#f0f0f0;color:#666">全選択</button>
+  <button id="bulkActBtn" style="background:var(--pink-dark);color:#fff">操作</button>
+  <button id="bulkDoneBtn" style="background:var(--pink-light);color:var(--pink-dark)">完了</button>
+</div>
+<div class="modal-overlay hidden" id="bulkModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="modal-title" style="margin-bottom:0" id="bulkTitle">一括操作</div>
+      <button class="x-btn" id="bulkCloseBtn">✕</button>
+    </div>
+    <div id="bulkForm">
+      <div class="form-group">
+        <label class="form-label">ステータスをまとめて変更</label>
+        <div style="display:flex;gap:6px">
+          <select class="form-select" id="bulkStatus"><option value="active">探し中</option><option value="trading">取引中</option><option value="done">入手済み</option></select>
+          <button class="btn-save" id="bulkStatusApply" style="flex-shrink:0;padding:0 16px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit">変更</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">優先度をまとめて変更</label>
+        <div style="display:flex;gap:6px">
+          <select class="form-select" id="bulkPriority"><option value="">なし</option><option value="high">高</option><option value="mid">中</option><option value="low">低</option></select>
+          <button class="btn-save" id="bulkPriorityApply" style="flex-shrink:0;padding:0 16px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit">変更</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <button id="bulkDelete" style="width:100%;background:#fdecec;color:#d33;padding:11px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">選んだ項目を削除</button>
+      </div>
+    </div>
+    <div id="bulkProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
 
 <!-- 管理者ログイン（メール認証） -->
 <div class="modal-overlay hidden" id="authModal">
@@ -137,6 +193,7 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
     <div id="authStep1">
       <div class="step-desc">下のボタンを押すと、管理者のメールにログインコード（6桁）が届きます。</div>
       <button class="big-btn" id="sendCodeBtn">ログインコードを送る</button>
+      <button class="link-btn" id="haveCodeBtn">届いているコードを入力する</button>
     </div>
     <div id="authStep2" class="hidden">
       <div class="step-desc">メールに届いた6桁のコードを入力してください。</div>
@@ -201,7 +258,77 @@ const SIXT=['京本大我','ジェシー','田中樹','松村北斗','髙地優�
 const PRIO=[['high','高'],['mid','中'],['low','低'],['none','なし']];
 const STAT=[['active','探し中'],['trading','取引中'],['done','入手済み']];
 let items=[],editingId=null,isAdmin=false,token='',cbIdx=0;
-const F={q:'',members:new Set(),years:new Set(),prio:new Set(),status:new Set()};
+const F={q:'',members:new Set(),years:new Set(),prio:new Set(),status:new Set(),owned:new Set(),fresh:new Set()};
+let selectMode=false,lastShown=[],bulkBusy=false;
+const selected=new Set();
+const NEW_DAYS=7;
+function isNewW(it){const c=Number(it.createdAt)||0;const d=Date.now()-c;return c>0&&d<NEW_DAYS*86400000&&d>-86400000;}
+let _toastT;
+function toastMsg(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+
+/* 所持リストとの照合 */
+const OWNED_KEY='wishlist_owned_cache';
+let owned=[],_matchCache=new Map();
+function normTitle(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');}
+function exLabel(e){return e==='ok'?'交換可':e==='partial'?'一部交換可':e==='consult'?'要相談':'交換不可';}
+function setOwned(list){owned=Array.isArray(list)?list:[];_matchCache=new Map();}
+function ownedMatches(it){
+  const key=it.id+'|'+it.title;
+  if(_matchCache.has(key))return _matchCache.get(key);
+  const n=normTitle(it.title);const exact=[],part=[];
+  if(n.length>=2){
+    for(const o of owned){
+      if(!o.n)continue;
+      if(o.n===n)exact.push(o);
+      else{const sh=Math.min(n.length,o.n.length);if(sh>=5&&(o.n.includes(n)||n.includes(o.n)))part.push(o);}
+    }
+  }
+  const res=exact.concat(part).slice(0,6);
+  _matchCache.set(key,res);return res;
+}
+function ownedLinesHTML(it){
+  const m=ownedMatches(it);if(!m.length)return'';
+  return m.slice(0,2).map(o=>`<div class="card-owned">📦 ${esc(o.l)}にあります：${esc(o.t)}（${exLabel(o.e)}）</div>`).join('')+(m.length>2?`<div class="card-owned">…ほか${m.length-2}件</div>`:'');
+}
+async function loadOwned(){
+  let ts=0;
+  try{const c=JSON.parse(localStorage.getItem(OWNED_KEY)||'null');if(c&&Array.isArray(c.list)){setOwned(c.list);ts=c.ts||0;}}catch{}
+  if(Date.now()-ts<10*60*1000)return;
+  const srcs=[['getVideos','所持リスト①'],['getVideos2','所持リスト②']];
+  const parts={};
+  await Promise.all(srcs.map(async([a,label])=>{
+    try{
+      const d=await jsonp({action:a},45000);
+      if(Array.isArray(d))parts[label]=d.map(v=>({l:label,t:String(v.title||''),n:normTitle(v.title),e:v.exchange||''}));
+    }catch{}
+  }));
+  if(Object.keys(parts).length===srcs.length){
+    const list=[].concat(...srcs.map(x=>parts[x[1]]));
+    setOwned(list);
+    try{localStorage.setItem(OWNED_KEY,JSON.stringify({ts:Date.now(),list}));}catch{}
+    renderList();syncFilterSheet();
+  }
+}
+
+/* 絞り込み条件をURLに保存・復元（共有用） */
+const HK=[['m','members'],['y','years'],['p','prio'],['s','status'],['o','owned'],['n','fresh']];
+function syncHash(){
+  try{
+    const o={};
+    if(F.q)o.q=F.q;
+    HK.forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
+    const h=Object.keys(o).length?'#s='+encodeURIComponent(JSON.stringify(o)):'';
+    history.replaceState(null,'',location.pathname+location.search+h);
+  }catch{}
+}
+function applyHash(){
+  try{
+    const m=/^#s=(.+)$/.exec(location.hash);if(!m)return;
+    const o=JSON.parse(decodeURIComponent(m[1]));
+    if(typeof o.q==='string')F.q=o.q;
+    HK.forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
+  }catch{}
+}
 const $=s=>document.querySelector(s);
 
 /* ---------- 共通 ---------- */
@@ -284,19 +411,26 @@ function matchItem(it){
     const terms=F.q.toLowerCase().split(/\s+/).filter(Boolean);
     if(!terms.every(t=>hay.includes(t)))return false;
   }
+  if(F.fresh.size&&!isNewW(it))return false;
+  if(F.owned.size){
+    const has=ownedMatches(it).length>0;
+    if(!((F.owned.has('yes')&&has)||(F.owned.has('no')&&!has)))return false;
+  }
   return true;
 }
-function filterCount(){return F.members.size+F.years.size+F.prio.size+F.status.size+(F.q?1:0);}
+function filterCount(){return F.members.size+F.years.size+F.prio.size+F.status.size+F.owned.size+F.fresh.size+(F.q?1:0);}
 function labelOf(k,v){
   if(k==='years')return v+'年';
   if(k==='prio')return '優先度: '+(PRIO.find(x=>x[0]===v)||[0,v])[1];
   if(k==='status')return (STAT.find(x=>x[0]===v)||[0,v])[1];
+  if(k==='owned')return v==='yes'?'所持リストにある':'所持リストにない';
+  if(k==='fresh')return '新着（7日以内）';
   return v;
 }
 function renderActiveBar(){
   const arr=[];
   if(F.q)arr.push({k:'q',v:F.q,label:'「'+F.q+'」'});
-  ['members','years','prio','status'].forEach(k=>F[k].forEach(v=>arr.push({k,v,label:labelOf(k,v)})));
+  ['members','years','prio','status','owned','fresh'].forEach(k=>F[k].forEach(v=>arr.push({k,v,label:labelOf(k,v)})));
   $('#activeBar').innerHTML=arr.map(a=>`<button type="button" class="af-chip" data-fk="${a.k}" data-fv="${esc(a.v)}">${esc(a.label)} ✕</button>`).join('');
   const n=filterCount();
   $('#filterBadge').textContent=n;
@@ -333,7 +467,9 @@ function renderFilterSheet(){
       (others.length?`<details class="fs-others"${othersOpen?' open':''}><summary>その他の出演者（${others.length}名）</summary><div class="chips-grid">${others.map(m=>chipHTML('members',m)).join('')}</div></details>`:''))+
     secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
     secHTML('優先度','複数選択可','<div class="chips-grid">'+PRIO.map(p=>chipHTML('prio',p[0],p[1])).join('')+'</div>')+
-    secHTML('ステータス','複数選択可','<div class="chips-grid">'+STAT.map(s=>chipHTML('status',s[0],s[1])).join('')+'</div>');
+    secHTML('ステータス','複数選択可','<div class="chips-grid">'+STAT.map(s=>chipHTML('status',s[0],s[1])).join('')+'</div>')+
+    secHTML('所持リスト','照合結果','<div class="chips-grid">'+chipHTML('owned','yes','所持リストにある')+chipHTML('owned','no','所持リストにない')+'</div>')+
+    secHTML('新着','7日以内に追加','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>');
   body.scrollTop=prev;
   syncFilterSheet();
 }
@@ -364,14 +500,21 @@ function closeFilter(){$('#filterModal').classList.add('hidden');}
 $('#filterCloseBtn').addEventListener('click',closeFilter);
 $('#filterApplyBtn').addEventListener('click',closeFilter);
 $('#filterModal').addEventListener('click',function(e){if(e.target===this)closeFilter();});
+$('#filterShareBtn').addEventListener('click',async()=>{
+  syncHash();
+  const url=location.href;
+  try{await navigator.clipboard.writeText(url);toastMsg('この条件のリンクをコピーしました');}
+  catch{prompt('このリンクをコピーしてください',url);}
+});
 $('#filterResetBtn').addEventListener('click',()=>{
-  F.q='';F.members.clear();F.years.clear();F.prio.clear();F.status.clear();
+  F.q='';F.members.clear();F.years.clear();F.prio.clear();F.status.clear();F.owned.clear();F.fresh.clear();
   renderFilterSheet();renderList();
 });
 
 /* ---------- 一覧 ---------- */
 function renderList(){
   renderActiveBar();
+  syncHash();
   const list=$('#cardList');
   let data=items.filter(matchItem);
   const prioOrder={high:0,mid:1,low:2,'':3};
@@ -382,21 +525,25 @@ function renderList(){
     if(pd!==0)return pd;
     return (b.createdAt||0)-(a.createdAt||0);
   });
+  lastShown=data.map(x=>x.id);
   $('#listCount').textContent=data.length+' 件';
   if(!data.length){list.innerHTML='<div class="empty">該当する項目がありません</div>';return;}
   list.innerHTML=data.map(it=>`
-    <div class="card ${it.status==='done'?'done':''}" data-id="${esc(it.id)}">
-      <div class="card-title ${it.status==='done'?'done':''}">${esc(it.title)}</div>
+    <div class="card ${it.status==='done'?'done':''}${selectMode?' has-sel':''}${selectMode&&selected.has(it.id)?' sel':''}" data-id="${esc(it.id)}">
+      ${selectMode?'<div class="sel-box">✓</div>':''}
+      <div class="card-title ${it.status==='done'?'done':''}">${isNewW(it)?'<span class="new-badge">NEW</span>':''}${esc(it.title)}</div>
       <div class="card-meta">
         ${splitMembers(it.members).map(m=>`<span class="tag">${esc(m)}</span>`).join('')}
         ${it.status&&it.status!=='active'?`<span class="${statusTagClass(it.status)}">${statusLabel(it.status)}</span>`:''}
         ${it.priority?`<span class="tag ${priorityClass(it.priority)}">${priorityLabel(it.priority)}</span>`:''}
       </div>
+      ${ownedLinesHTML(it)}
       ${it.date?`<div class="card-date">📅 ${esc(it.date)}</div>`:''}
       ${it.note?`<div class="card-date">📝 ${esc(it.note)}</div>`:''}
-      ${isAdmin?`<div class="card-actions"><button class="btn-sm" data-edit="${esc(it.id)}">編集</button></div>`:''}
+      ${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm" data-edit="${esc(it.id)}">編集</button></div>`:''}
     </div>`).join('');
   list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEditModal(b.dataset.edit)));
+  list.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{if(selectMode)toggleSel(c);}));
 }
 
 /* ---------- 追加・編集 ---------- */
@@ -468,6 +615,9 @@ function applyAdminUI(){
   $('#addBtn').classList.toggle('hidden',!isAdmin);
   $('#loginBtn').classList.toggle('hidden',isAdmin);
   $('#modeBadge').classList.toggle('hidden',!isAdmin);
+  $('#adminBar').classList.toggle('hidden',!isAdmin);
+  if(!isAdmin){selectMode=false;selected.clear();}
+  updateBulkBar();
   renderList();
 }
 const ERR={
@@ -508,11 +658,11 @@ async function sendCode(){
   setAuthMsg('送信中…（数秒かかります）');
   try{
     const d=await jsonp({action:'requestAdminCode'},30000);
-    if(d&&d.ok){
+    if(d&&(d.ok||d.error==='too_soon')){
       $('#authStep1').classList.add('hidden');
       $('#authStep2').classList.remove('hidden');
       setStep(2);
-      setAuthMsg('管理者のメールにコードを送りました。10分以内に入力してください。');
+      setAuthMsg(d.ok?'管理者のメールにコードを送りました。10分以内に入力してください。':'直前にコードを送信済みです。メールに届いたコードを入力してください。');
       startCountdown(60);$('#codeInput').focus();
     }else{setAuthMsg(ERR[d&&d.error]||('送信に失敗しました（'+((d&&d.error)||'応答なし')+'）'));b1.disabled=false;}
   }catch(err){setAuthMsg('通信に失敗しました（'+err.message+'）。もう一度お試しください。');b1.disabled=false;}
@@ -544,6 +694,14 @@ async function logout(){
 }
 $('#loginBtn').addEventListener('click',openAuth);
 $('#sendCodeBtn').addEventListener('click',sendCode);
+$('#haveCodeBtn').addEventListener('click',()=>{
+  $('#authStep1').classList.add('hidden');
+  $('#authStep2').classList.remove('hidden');
+  setStep(2);
+  clearInterval(cdTimer);const rb=$('#resendBtn');rb.disabled=false;rb.textContent='コードを再送する';
+  setAuthMsg('メールに届いた6桁のコードを入力してください。');
+  $('#codeInput').focus();
+});
 $('#resendBtn').addEventListener('click',sendCode);
 $('#verifyBtn').addEventListener('click',verifyCode);
 $('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
@@ -551,13 +709,92 @@ $('#authCloseBtn').addEventListener('click',closeAuth);
 $('#authModal').addEventListener('click',function(e){if(e.target===this)closeAuth();});
 $('#modeBadge').addEventListener('click',()=>{if(isAdmin&&confirm('ログアウトしますか？'))logout();});
 
+
+/* ---------- 一括選択・一括操作（管理者） ---------- */
+function updateBulkBar(){
+  $('#bulkBar').classList.toggle('hidden',!selectMode);
+  document.body.classList.toggle('selecting',selectMode);
+  $('#bulkCount').textContent=selected.size+'件選択';
+  $('#selectBtn').textContent=selectMode?'☑ 選択中':'☑ 選択';
+}
+function toggleSel(card){
+  const id=card.dataset.id;
+  if(selected.has(id))selected.delete(id);else selected.add(id);
+  card.classList.toggle('sel',selected.has(id));
+  updateBulkBar();
+}
+function exitSelect(){selectMode=false;selected.clear();updateBulkBar();renderList();}
+$('#selectBtn').addEventListener('click',()=>{
+  if(!isAdmin)return;
+  if(selectMode)exitSelect();else{selectMode=true;selected.clear();updateBulkBar();renderList();}
+});
+$('#bulkDoneBtn').addEventListener('click',exitSelect);
+$('#bulkAllBtn').addEventListener('click',()=>{
+  if(lastShown.length&&lastShown.every(id=>selected.has(id)))selected.clear();
+  else lastShown.forEach(id=>selected.add(id));
+  updateBulkBar();renderList();
+});
+$('#bulkActBtn').addEventListener('click',()=>{
+  if(!selected.size){alert('項目を選んでください');return;}
+  $('#bulkTitle').textContent=selected.size+'件をまとめて操作';
+  $('#bulkForm').classList.remove('hidden');
+  $('#bulkProgress').classList.add('hidden');
+  $('#bulkModal').classList.remove('hidden');
+});
+function closeBulk(){if(bulkBusy)return;$('#bulkModal').classList.add('hidden');}
+$('#bulkCloseBtn').addEventListener('click',closeBulk);
+$('#bulkModal').addEventListener('click',function(e){if(e.target===this)closeBulk();});
+async function bulkRun(mutate){
+  if(bulkBusy)return;
+  const targets=items.filter(it=>selected.has(it.id));
+  if(!targets.length){alert('項目を選んでください');return;}
+  bulkBusy=true;
+  $('#bulkForm').classList.add('hidden');
+  const pg=$('#bulkProgress');pg.classList.remove('hidden');
+  let done=0,fail=0,stop=false;
+  pg.textContent='0 / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+  for(const it of targets){
+    if(stop)break;
+    try{
+      let d;
+      if(mutate==='delete')d=await gasWrite({action:'deleteWishlistItem',id:it.id});
+      else d=await gasWrite({action:'saveWishlistItem',data:encodeURIComponent(JSON.stringify({item:mutate(it),isNew:false}))});
+      if(d&&d.error){fail++;if(d.error==='unauthorized')stop=true;}
+    }catch{fail++;}
+    done++;
+    pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+  }
+  bulkBusy=false;
+  $('#bulkModal').classList.add('hidden');
+  await load(true);
+  selected.clear();selectMode=false;updateBulkBar();
+  renderList();
+  toastMsg(fail?`${done-fail}件完了／${fail}件失敗`:`${done}件を処理しました`);
+}
+$('#bulkStatusApply').addEventListener('click',()=>{
+  const v=$('#bulkStatus').value;
+  if(!confirm(selected.size+'件のステータスを「'+statusLabel(v)+'」にします。よろしいですか？'))return;
+  bulkRun(it=>({...it,status:v}));
+});
+$('#bulkPriorityApply').addEventListener('click',()=>{
+  const v=$('#bulkPriority').value;
+  if(!confirm(selected.size+'件の優先度を変更します。よろしいですか？'))return;
+  bulkRun(it=>({...it,priority:v}));
+});
+$('#bulkDelete').addEventListener('click',()=>{
+  if(!confirm(selected.size+'件を削除します。元に戻せません。よろしいですか？'))return;
+  bulkRun('delete');
+});
+
 /* ---------- 起動 ---------- */
 (async()=>{
   loadToken();
+  applyHash();
   applyAdminUI();
   $('#cardList').innerHTML=loadingHTML('読み込み中');
   await load();
   renderList();
+  loadOwned();
   if(isAdmin){
     jsonp({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();applyAdminUI();}}).catch(()=>{});
   }
