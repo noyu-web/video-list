@@ -127,6 +127,18 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .om-in{flex:1;padding:7px 10px;font-size:13px}
 .om-btn{border-radius:8px;padding:6px 14px}
 
+/* NEW・一括選択 */
+.new-badge{display:inline-block;background:var(--pink);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:6px;letter-spacing:.06em;vertical-align:middle}
+.sel-box{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);color:transparent;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;margin-top:2px}
+.card.sel{border-color:var(--pink);background:var(--pink-pale)}
+.card.sel .sel-box{background:var(--pink);border-color:var(--pink);color:#fff}
+body.selecting .list-wrap{padding-bottom:90px}
+.bulk-bar{position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--white);border-top:2px solid var(--pink-light);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+.bulk-bar .bulk-count{flex:1;font-size:13px;font-weight:700;color:var(--pink-dark)}
+.bulk-bar button{padding:8px 12px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:400}
+.toast.show{opacity:1;transform:translateX(-50%)}
+
 /* ログイン */
 .steps{display:flex;align-items:center;gap:8px;margin-bottom:16px}
 .step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--gray);opacity:.55}
@@ -162,6 +174,7 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 
 <div id="adminToolbar" class="toolbar hidden">
 <button class="btn btn-primary" id="addBtn">＋ 追加</button>
+<button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">☑ 選択</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -192,10 +205,53 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 <div class="fs-body" id="filterBody"></div>
 <div class="fs-foot">
 <button class="btn-cancel" id="filterResetBtn">リセット</button>
+<button class="btn-cancel" id="filterShareBtn" title="この条件のリンクをコピー">🔗</button>
 <button class="btn-save" id="filterApplyBtn">表示する</button>
 </div>
 </div>
 </div>
+
+<!-- Bulk Bar -->
+<div class="bulk-bar hidden" id="bulkBar">
+<span class="bulk-count" id="bulkCount">0件選択</span>
+<button id="bulkAllBtn" style="background:var(--gray-light);color:var(--gray)">全選択</button>
+<button id="bulkActBtn" style="background:var(--pink);color:#fff">操作</button>
+<button id="bulkDoneBtn" style="background:var(--pink-pale);color:var(--pink-dark)">完了</button>
+</div>
+
+<!-- Bulk Modal -->
+<div class="modal-overlay hidden" id="bulkModal">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+<div class="modal-title" style="margin-bottom:0" id="bulkTitle">一括操作</div>
+<button class="btn-icon" id="bulkCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div id="bulkForm">
+<div class="form-group">
+<label class="form-label">交換可否をまとめて変更</label>
+<div style="display:flex;gap:6px">
+<select class="form-select" id="bulkExchange"><option value="ok">可</option><option value="partial">一部交換可</option><option value="consult">要相談</option><option value="ng">不可</option></select>
+<button class="btn-save" id="bulkExApply" style="flex-shrink:0">変更</button>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">ジャンルをまとめて設定</label>
+<select class="form-select" id="bulkGenre" style="margin-bottom:6px"></select>
+<select class="form-select" id="bulkSub" style="margin-bottom:6px"></select>
+<div style="display:flex;gap:6px">
+<select class="form-select" id="bulkMode"><option value="replace">今のジャンルを置き換え</option><option value="add">今のジャンルに追加</option></select>
+<button class="btn-save" id="bulkGenreApply" style="flex-shrink:0">設定</button>
+</div>
+</div>
+<div class="form-group">
+<button id="bulkDelete" style="width:100%;background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer">選んだ項目を削除</button>
+</div>
+</div>
+<div id="bulkProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <!-- Detail Modal -->
 <div class="modal-overlay hidden" id="detailModal">
@@ -221,7 +277,7 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 <button class="btn-icon" id="authCloseBtn" style="font-size:20px">✕</button>
 </div>
 <div class="steps"><div class="step on" id="stepDot1"><b>1</b>コードを送る</div><div class="step-line"></div><div class="step" id="stepDot2"><b>2</b>コードを入力</div></div>
-<div id="authStep1"><div class="step-desc">下のボタンを押すと、管理者のメールにログインコード（6桁）が届きます。</div><button class="big-btn" id="sendCodeBtn">ログインコードを送る</button></div>
+<div id="authStep1"><div class="step-desc">下のボタンを押すと、管理者のメールにログインコード（6桁）が届きます。</div><button class="big-btn" id="sendCodeBtn">ログインコードを送る</button><button class="link-btn" id="haveCodeBtn">届いているコードを入力する</button></div>
 <div id="authStep2" class="hidden">
 <div class="step-desc">メールに届いた6桁のコードを入力してください。</div>
 <input class="code-input" id="codeInput" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="------">
@@ -398,7 +454,42 @@ localStorage.setItem('cfg_other_members2',JSON.stringify(cfg.otherMembers));
 gasWrite({action:'saveFullConfig2',data:encodeURIComponent(JSON.stringify(cfg))}).catch(()=>{});
 }
 let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
-const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set()};
+const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set()};
+let selectMode=false,lastShown=[],bulkBusy=false;
+const selected=new Set();
+const NEW_DAYS=7;
+function createdMs(item){const id=String(item.id||'');return /^[0-9]{13}$/.test(id)?Number(id):0;}
+function isNew(item){const c=createdMs(item);const d=Date.now()-c;return c>0&&d<NEW_DAYS*86400000&&d>-86400000;}
+let _toastT;
+function toastMsg(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>el.classList.remove('show'),2200);}
+/* 絞り込み条件をURLに保存・復元（共有用） */
+function stateObj(){
+const o={};
+if(currentGenre!=='すべて')o.t=currentGenre;
+if(currentSubgenre!=='すべて')o.u=currentSubgenre;
+if(sortOrder!=='default')o.o=sortOrder;
+if(F.q)o.q=F.q;
+[['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh']].forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
+return o;
+}
+function syncHash(){
+try{
+const o=stateObj();
+const h=Object.keys(o).length?'#s='+encodeURIComponent(JSON.stringify(o)):'';
+history.replaceState(null,'',location.pathname+location.search+h);
+}catch{}
+}
+function applyHash(){
+try{
+const m=/^#s=(.+)$/.exec(location.hash);if(!m)return;
+const o=JSON.parse(decodeURIComponent(m[1]));
+if(typeof o.t==='string'&&loadConfig().genres.includes(o.t))currentGenre=o.t;
+if(typeof o.u==='string'&&currentGenre!=='すべて')currentSubgenre=o.u;
+if(['default','date_new','date_old','title','exchange'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
+if(typeof o.q==='string')F.q=o.q;
+[['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh']].forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
+}catch{}
+}
 let cfg=loadConfig();
 const SIXTONES_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
@@ -533,10 +624,11 @@ const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(ite
 const terms=F.q.toLowerCase().split(/\s+/).filter(Boolean);
 if(!terms.every(t=>hay.includes(t)))return false;
 }
+if(F.fresh.size&&!isNew(item))return false;
 return true;
 }
 function filterCount(){
-return F.genres.size+F.members.size+F.years.size+F.ex.size+(F.q?1:0);
+return F.genres.size+F.members.size+F.years.size+F.ex.size+F.fresh.size+(F.q?1:0);
 }
 function renderActiveBar(){
 const items=[];
@@ -545,6 +637,7 @@ F.genres.forEach(v=>items.push({k:'genres',v,label:v}));
 F.members.forEach(v=>items.push({k:'members',v,label:v}));
 F.years.forEach(v=>items.push({k:'years',v,label:v+'年'}));
 F.ex.forEach(v=>items.push({k:'ex',v,label:exchangeLabel(v)}));
+F.fresh.forEach(v=>items.push({k:'fresh',v,label:'新着（7日以内）'}));
 document.getElementById('activeBar').innerHTML=items.map(it=>`<button type="button" class="af-chip" data-fk="${it.k}" data-fv="${esc(it.v)}">${esc(it.label)} ✕</button>`).join('');
 const n=filterCount();
 document.getElementById('filterBadge').textContent=n;
@@ -591,7 +684,8 @@ secHTML('文字検索','タイトル・出演者・メモ・収録内容','<inpu
 secHTML('ジャンル名','複数選択可','<div class="chips-grid">'+genres.map(g=>chipHTML('genres',g)).join('')+'</div>')+
 secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/削除ができます':''),'<div class="chips-grid">'+sixt.map(m=>chipHTML('members',m)).join('')+'</div>'+(groupHTML?'<div style="font-size:11px;font-weight:700;color:var(--gray);margin:12px 0 2px">SixTONES以外</div>'+groupHTML:''))+
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
-secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>');
+secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
+secHTML('新着','7日以内に追加された動画','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>');
 body.innerHTML=html;
 body.scrollTop=prevScroll;
 syncFilterSheet();
@@ -652,8 +746,14 @@ function closeFilter(){document.getElementById('filterModal').classList.add('hid
 document.getElementById('filterCloseBtn').addEventListener('click',closeFilter);
 document.getElementById('filterApplyBtn').addEventListener('click',closeFilter);
 document.getElementById('filterModal').addEventListener('click',function(e){if(e.target===this)closeFilter();});
+document.getElementById('filterShareBtn').addEventListener('click',async()=>{
+syncHash();
+const url=location.href;
+try{await navigator.clipboard.writeText(url);toastMsg('この条件のリンクをコピーしました');}
+catch{prompt('このリンクをコピーしてください',url);}
+});
 document.getElementById('filterResetBtn').addEventListener('click',()=>{
-F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();
+F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.clear();
 renderFilterSheet();renderList();
 });
 
@@ -686,6 +786,7 @@ const list=document.getElementById('cardList');
 if(!cachedVideos){list.innerHTML=loadingHTML('読み込み中');}
 let data=cachedVideos||await loadVideos();
 renderActiveBar();
+syncHash();
 data=data.filter(matchItem);
 const gd=item=>{const dd=formatSchedules(item.dates).map(s=>s.date).filter(Boolean).sort();return dd.length?dd[0]:'';};
 if(sortOrder==='date_new'){
@@ -698,17 +799,18 @@ data=[...data].sort((a,b)=>String(a.title).localeCompare(String(b.title),'ja'));
 const o={ok:0,partial:1,consult:2,ng:3};
 data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 }
+lastShown=data.map(d=>d.id);
 document.getElementById('listCount').textContent=data.length+' 件';
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 list.innerHTML=data.map(item=>{
-return`<div class="card" data-detail="${item.id}"><div class="card-main"><div class="card-info">
-<div class="card-title">${esc(item.title)}</div>
+return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
+<div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
 ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
 </div>
-${isAdmin?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
+${isAdmin&&!selectMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
 </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
-${isAdmin?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
+${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
 list.querySelectorAll('[data-toggle]').forEach(inp=>inp.addEventListener('change',async(e)=>{
 e.stopPropagation();
@@ -723,6 +825,7 @@ list.querySelectorAll('label.toggle').forEach(l=>l.addEventListener('click',e=>e
 list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();openEditModal(b.dataset.edit);}));
 list.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();deleteItem(b.dataset.delete);}));
 list.querySelectorAll('[data-detail]').forEach(card=>card.addEventListener('click',async()=>{
+if(selectMode){toggleSel(card);return;}
 const data=await loadVideos();const item=data.find(d=>d.id===card.dataset.detail);if(item)openDetailModal(item);
 }));
 }
@@ -734,6 +837,8 @@ badge.className='mode-badge '+(isAdmin?'admin':'view');
 document.getElementById('loginBtn').classList.toggle('hidden',isAdmin);
 document.getElementById('settingsBtn').style.display=isAdmin?'':'none';
 document.getElementById('adminToolbar').classList.toggle('hidden',!isAdmin);
+if(!isAdmin){selectMode=false;selected.clear();}
+updateBulkBar();
 renderTabs();renderSubtabs();renderList();
 }
 
@@ -787,11 +892,11 @@ const b1=document.getElementById('sendCodeBtn');b1.disabled=true;
 setAuthMsg('送信中…（数秒かかります）');
 try{
 const d=await gasGet({action:'requestAdminCode'},30000);
-if(d&&d.ok){
+if(d&&(d.ok||d.error==='too_soon')){
 document.getElementById('authStep1').classList.add('hidden');
 document.getElementById('authStep2').classList.remove('hidden');
 setStep(2);
-setAuthMsg('管理者のメールにコードを送りました。10分以内に入力してください。');
+setAuthMsg(d.ok?'管理者のメールにコードを送りました。10分以内に入力してください。':'直前にコードを送信済みです。メールに届いたコードを入力してください。');
 startCountdown(60);document.getElementById('codeInput').focus();
 }else{setAuthMsg(ERR[d&&d.error]||('送信に失敗しました（'+((d&&d.error)||'応答なし')+'）'));b1.disabled=false;}
 }catch(err){setAuthMsg('通信に失敗しました（'+err.message+'）。もう一度お試しください。');b1.disabled=false;}
@@ -823,6 +928,14 @@ const t=token;clearToken();updateAdminUI();
 try{await gasGet({action:'logoutAdmin',token:t},8000);}catch{}
 }
 document.getElementById('sendCodeBtn').addEventListener('click',sendCode);
+document.getElementById('haveCodeBtn').addEventListener('click',()=>{
+document.getElementById('authStep1').classList.add('hidden');
+document.getElementById('authStep2').classList.remove('hidden');
+setStep(2);
+clearInterval(cdTimer);const rb=document.getElementById('resendBtn');rb.disabled=false;rb.textContent='コードを再送する';
+setAuthMsg('メールに届いた6桁のコードを入力してください。');
+document.getElementById('codeInput').focus();
+});
 document.getElementById('resendBtn').addEventListener('click',sendCode);
 document.getElementById('verifyBtn').addEventListener('click',verifyCode);
 document.getElementById('codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
@@ -1203,9 +1316,112 @@ await loadVideos(true);
 renderList();
 }
 
+
+/* ===== 一括選択・一括操作（管理者） ===== */
+function updateBulkBar(){
+document.getElementById('bulkBar').classList.toggle('hidden',!selectMode);
+document.body.classList.toggle('selecting',selectMode);
+document.getElementById('bulkCount').textContent=selected.size+'件選択';
+document.getElementById('selectBtn').textContent=selectMode?'☑ 選択中':'☑ 選択';
+}
+function toggleSel(card){
+const id=card.dataset.detail;
+if(selected.has(id))selected.delete(id);else selected.add(id);
+card.classList.toggle('sel',selected.has(id));
+updateBulkBar();
+}
+function exitSelect(){selectMode=false;selected.clear();updateBulkBar();renderList();}
+document.getElementById('selectBtn').addEventListener('click',()=>{
+if(!isAdmin)return;
+if(selectMode){exitSelect();}else{selectMode=true;selected.clear();updateBulkBar();renderList();}
+});
+document.getElementById('bulkDoneBtn').addEventListener('click',exitSelect);
+document.getElementById('bulkAllBtn').addEventListener('click',()=>{
+if(lastShown.length&&lastShown.every(id=>selected.has(id)))selected.clear();
+else lastShown.forEach(id=>selected.add(id));
+updateBulkBar();renderList();
+});
+function fillBulkGenre(){
+cfg=loadConfig();
+const gs=cfg.genres.filter(g=>g!=='すべて');
+const gSel=document.getElementById('bulkGenre');
+gSel.innerHTML=gs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+fillBulkSub();
+}
+function fillBulkSub(){
+const g=document.getElementById('bulkGenre').value;
+const subs=(cfg.subgenres[g]||[]);
+document.getElementById('bulkSub').innerHTML='<option value="">（小ジャンルなし）</option>'+subs.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+}
+document.getElementById('bulkGenre').addEventListener('change',fillBulkSub);
+document.getElementById('bulkActBtn').addEventListener('click',()=>{
+if(!selected.size){alert('項目を選んでください');return;}
+document.getElementById('bulkTitle').textContent=selected.size+'件をまとめて操作';
+document.getElementById('bulkForm').classList.remove('hidden');
+document.getElementById('bulkProgress').classList.add('hidden');
+fillBulkGenre();
+document.getElementById('bulkModal').classList.remove('hidden');
+});
+function closeBulk(){if(bulkBusy)return;document.getElementById('bulkModal').classList.add('hidden');}
+document.getElementById('bulkCloseBtn').addEventListener('click',closeBulk);
+document.getElementById('bulkModal').addEventListener('click',function(e){if(e.target===this)closeBulk();});
+async function bulkRun(mutate){
+if(bulkBusy)return;
+const all=await loadVideos();
+const targets=all.filter(it=>selected.has(it.id));
+if(!targets.length){alert('項目を選んでください');return;}
+bulkBusy=true;
+document.getElementById('bulkForm').classList.add('hidden');
+const pg=document.getElementById('bulkProgress');pg.classList.remove('hidden');
+let done=0,fail=0,stop=false;
+pg.textContent='0 / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+for(const it of targets){
+if(stop)break;
+try{
+let d;
+if(mutate==='delete')d=await gasWrite({action:'deleteVideo2',data:'',id:it.id});
+else d=await gasWrite({action:'saveVideo2',data:encodeURIComponent(JSON.stringify({video:mutate(it),isNew:false})),id:''});
+if(d&&d.error){fail++;if(d.error==='unauthorized')stop=true;}
+}catch{fail++;}
+done++;
+pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+}
+bulkBusy=false;
+document.getElementById('bulkModal').classList.add('hidden');
+cachedVideos=null;
+await loadVideos(true);
+selected.clear();selectMode=false;updateBulkBar();
+renderList();
+toastMsg(fail?`${done-fail}件完了／${fail}件失敗`:`${done}件を処理しました`);
+}
+document.getElementById('bulkExApply').addEventListener('click',()=>{
+const v=document.getElementById('bulkExchange').value;
+if(!confirm(selected.size+'件の交換可否を「'+exchangeLabel(v)+'」にします。よろしいですか？'))return;
+bulkRun(it=>({...it,exchange:v}));
+});
+document.getElementById('bulkGenreApply').addEventListener('click',()=>{
+const g=document.getElementById('bulkGenre').value;
+const sub=document.getElementById('bulkSub').value;
+const mode=document.getElementById('bulkMode').value;
+if(!g){alert('ジャンルを選んでください');return;}
+if(!confirm(selected.size+'件のジャンルを「'+g+(sub?' / '+sub:'')+'」で'+(mode==='add'?'追加':'置き換え')+'します。よろしいですか？'))return;
+bulkRun(it=>{
+const cur=parseGenres(it.genres||it.genre||'');
+let next;
+if(mode==='add')next=cur.some(x=>x.genre===g&&(x.subgenre||'')===sub)?cur:[...cur,{genre:g,subgenre:sub}];
+else next=[{genre:g,subgenre:sub}];
+return{...it,genres:JSON.stringify(next)};
+});
+});
+document.getElementById('bulkDelete').addEventListener('click',()=>{
+if(!confirm(selected.size+'件を削除します。元に戻せません。よろしいですか？'))return;
+bulkRun('delete');
+});
+
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
 loadToken();
+applyHash();
 document.getElementById('cardList').innerHTML=loadingHTML('読み込み中');
 updateAdminUI();
 loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();});
