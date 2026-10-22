@@ -28,8 +28,37 @@ body.admin .add-btn{display:inline-block;}
 .guide-body{display:none;padding-bottom:14px;}
 .guide-toggle.open .guide-body{display:block;}
 .guide-toggle.open .chev{transform:rotate(90deg);}
-.guide{border:1.5px solid var(--border);border-radius:14px;overflow:hidden;background:var(--white);}
-.guide iframe{display:block;width:100%;height:340px;border:0;}
+.vg-wrap{--pink:#e8749a;--pink-light:#f5c6d8;--pink-pale:#fdf0f5;--pink-dark:#c45580;--gray:#6b7280;--border:#e5e7eb;--text:#1f2937;background:#fdf0f5;border-radius:14px;padding:12px 0 10px;color:#1f2937;}
+.vg-hint{font-size:11px;color:var(--gray);text-align:center;margin:4px 0 10px;}
+.vg-track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.vg-track::-webkit-scrollbar{display:none;}
+.vg-slide{flex:0 0 84%;scroll-snap-align:center;background:#fff;border:1.5px solid var(--pink-light);border-radius:14px;padding:14px 14px 16px;}
+.vg-slide:last-child{margin-right:8px;}
+.vg-ico{font-size:22px;line-height:1;margin-bottom:6px;}
+.vg-slide h2{font-size:14px;font-weight:800;color:var(--pink-dark);margin-bottom:6px;}
+.vg-slide p{font-size:12px;line-height:1.7;color:var(--text);}
+.vg-mock{margin-top:10px;background:var(--pink-pale);border-radius:10px;padding:10px;}
+.vg-dots{display:flex;justify-content:center;gap:6px;margin-top:6px;}
+.vg-dot{width:6px;height:6px;border-radius:50%;background:var(--pink-light);transition:.2s;}
+.vg-dot.vg-on{background:var(--pink);width:16px;border-radius:4px;}
+
+/* モック部品 */
+.vg-m-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.vg-m-tab{font-size:10px;font-weight:700;color:var(--gray);padding:3px 8px;border-radius:12px;background:#fff;border:1px solid var(--border);}
+.vg-m-tab.vg-on{color:var(--pink-dark);border-color:var(--pink);background:var(--pink-light);}
+.vg-m-chip{display:inline-block;font-size:10px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--border);background:#fff;color:var(--gray);margin:0 3px 4px 0;}
+.vg-m-chip.vg-on{background:var(--pink-light);border-color:var(--pink);color:var(--pink-dark);font-weight:700;}
+.vg-m-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700;}
+.vg-m-tag{display:inline-block;font-size:9px;padding:1px 7px;border-radius:9px;background:#e0e0e0;color:#555;margin-top:4px;font-weight:500;}
+.vg-m-btn{display:inline-block;background:var(--pink);color:#fff;font-size:11px;font-weight:800;border-radius:14px;padding:5px 12px;}
+.vg-m-lbl{font-size:10px;font-weight:800;color:var(--pink-dark);margin:6px 0 3px;}
+.vg-m-lbl:first-child{margin-top:0;}
+.vg-m-line{font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);}
+.vg-m-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.vg-m-note{font-size:10.5px;line-height:1.6;color:var(--gray);margin-top:6px;}
+.vg-m-eq{font-size:11px;line-height:1.7;}
+.vg-m-eq b{color:var(--pink-dark);}
+
 
 /* 必読トグル */
 #mustreadList{border-top:1.5px solid var(--pink);}
@@ -115,10 +144,83 @@ body.admin #linkAdmin{display:block;}
 
 <main>
   <div class="guide-toggle" id="guideToggle">
-    <button class="guide-head" data-act="guide-toggle"><span class="guide-title">見方ガイド</span><span class="chev">›</span></button>
+    <button class="guide-head" data-act="guide-toggle"><span class="guide-title">所持リストの見方</span><span class="chev">›</span></button>
     <div class="guide-body">
-      <div class="guide">
-        <iframe id="guideFrame" title="所持リストの見方"></iframe>
+      <div class="vg-wrap">
+        <div class="vg-hint">←スワイプして進む</div>
+        <div class="vg-track" id="vgTrack">
+
+<section class="vg-slide">
+  <div class="vg-ico">📂</div>
+  <h2>ジャンルタブで切り替え</h2>
+  <p>画面上部のタブでジャンルを切り替えられます。一番右には「SixTONES以外」（Snow Manなど他グループの動画）もあります。</p>
+  <div class="vg-mock"><div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">バラエティー</span><span class="vg-m-tab">…</span><span class="vg-m-tab">SixTONES以外</span></div></div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico">🗂️</div>
+  <h2>カードの見方</h2>
+  <p>1件ずつのカードには、タイトルと出演者タグが表示されます。カードをタップすると詳細（日付・収録内容など）が見られます。</p>
+  <div class="vg-mock"><div class="vg-m-card">こっから<br><span class="vg-m-tag">SixTONES</span></div></div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico">👤</div>
+  <h2>出演者タグでまたぎ表示</h2>
+  <p>出演者タグをタップすると、その人が出演している作品をジャンルをまたいで一覧表示できます。</p>
+  <div class="vg-mock">
+    <div class="vg-m-lbl">田中樹 の出演作品</div>
+    <div class="vg-m-line">円盤 / こっから</div>
+    <div class="vg-m-line">バラエティー番組 / しゃべくり7</div>
+    <div class="vg-m-line" style="border-bottom:none">Radio / ANN</div>
+  </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico">🔍</div>
+  <h2>検索ボタンで絞り込み</h2>
+  <p>画面右上の「検索」ボタンを押すと、絞り込みの画面が開きます。条件を選ぶと、後ろの一覧がその場で変わります。</p>
+  <div class="vg-mock">
+    <div class="vg-m-row"><span class="vg-m-note" style="margin:0">タブのジャンルとあわせて使えます</span><span class="vg-m-btn">🔍 検索</span></div>
+  </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico">✅</div>
+  <h2>5つの条件を選べます</h2>
+  <p>それぞれ複数選べて、選ばない項目は絞り込みません。</p>
+  <div class="vg-mock">
+    <div class="vg-m-lbl">文字検索</div><span class="vg-m-chip">タイトル・出演者・メモ・収録内容</span>
+    <div class="vg-m-lbl">ジャンル名</div><span class="vg-m-chip vg-on">円盤</span><span class="vg-m-chip">配信関連</span>
+    <div class="vg-m-lbl">出演者</div><span class="vg-m-chip vg-on">田中樹</span><span class="vg-m-chip">ジェシー</span>
+    <div class="vg-m-lbl">年代</div><span class="vg-m-chip vg-on">2020年</span><span class="vg-m-chip">2021年</span>
+    <div class="vg-m-lbl">配布の可否</div><span class="vg-m-chip vg-on">交換可</span><span class="vg-m-chip">交換不可</span>
+  </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico">🧩</div>
+  <h2>組み合わせのルール</h2>
+  <p>同じ項目の中は「どれか1つでも当てはまる」、別の項目どうしは「すべて当てはまる」作品が出ます。</p>
+  <div class="vg-mock vg-m-eq">
+    出演者 <b>田中樹・ジェシー</b><br>
+    ＋ 年代 <b>2020年</b><br>
+    ＝ 田中樹またはジェシーが出ている、2020年の作品
+    <div class="vg-m-note">文字検索は、スペースで区切ると「すべて含む」で探します。</div>
+  </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico">↩️</div>
+  <h2>条件を解除する</h2>
+  <p>選んだ条件は一覧の上に表示されます。タップで1つずつ外せます。絞り込み画面の「リセット」で、まとめて解除できます。</p>
+  <div class="vg-mock">
+    <span class="vg-m-chip vg-on">田中樹 ✕</span><span class="vg-m-chip vg-on">2020年 ✕</span><span class="vg-m-chip vg-on">交換可 ✕</span>
+  </div>
+</section>
+
+</div>
+        <div class="vg-dots" id="vgDots"></div>
       </div>
     </div>
   </div>
@@ -167,6 +269,7 @@ body.admin #linkAdmin{display:block;}
     <div id="loginStep1">
       <div class="step-desc">下のボタンを押すと、管理者のメールにログインコード（6桁）が届きます。</div>
       <button class="big-btn" id="sendCodeBtn" data-act="send-code">ログインコードを送る</button>
+      <button class="link-btn" data-act="have-code">届いているコードを入力する</button>
     </div>
     <div id="loginStep2" style="display:none;">
       <div class="step-desc">メールに届いた6桁のコードを入力してください。</div>
@@ -380,9 +483,9 @@ async function sendCode(){
   setMsg('送信中…（数秒かかります）');
   try{
     const d=await jsonp({action:'requestAdminCode'},30000);
-    if(d&&d.ok){
+    if(d&&(d.ok||d.error==='too_soon')){
       $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';setStep(2);
-      setMsg('管理者のメールにコードを送りました。10分以内に入力してください。');
+      setMsg(d.ok?'管理者のメールにコードを送りました。10分以内に入力してください。':'直前にコードを送信済みです。メールに届いたコードを入力してください。');
       startCountdown(60);$('#codeInput').focus();
     }else{setMsg(ERR[d&&d.error]||('送信に失敗しました（'+((d&&d.error)||'応答なし')+'）'));b1.disabled=false;}
   }catch(err){setMsg('通信に失敗しました（'+err.message+'）。もう一度お試しください。');b1.disabled=false;}
@@ -423,13 +526,18 @@ document.addEventListener('click',async e=>{
   const act=el.dataset.act;
   if(act==='close-bg'){if(e.target===el)closeModals();return;}
   if(act==='close'){closeModals();return;}
-  if(act==='guide-toggle'){const t=$('#guideToggle');t.classList.toggle('open');if(t.classList.contains('open')&&!guideLoaded)loadGuide();return;}
+  if(act==='guide-toggle'){$('#guideToggle').classList.toggle('open');return;}
   if(act==='toggle'){
     const k=el.dataset.key;openSet.has(k)?openSet.delete(k):openSet.add(k);
     el.closest('.toggle').classList.toggle('open');return;
   }
   if(act==='open-rules'){openModal('rulesModal');return;}
   if(act==='send-code'){sendCode();return;}
+  if(act==='have-code'){
+    $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';setStep(2);
+    clearInterval(cdTimer);const rb=$('#resendBtn');rb.disabled=false;rb.textContent='コードを再送する';
+    setMsg('メールに届いた6桁のコードを入力してください。');$('#codeInput').focus();return;
+  }
   if(act==='verify'){verifyCode();return;}
   if(act==='logout'){logout();return;}
   if(!isAdmin)return;
@@ -481,36 +589,20 @@ document.addEventListener('click',async e=>{
 });
 $('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();});
 
-/* ---------- 見方ガイド：💎・説明文・遷移リンクを除いて表示 ---------- */
-const GUIDE_URL='https://noyu-web.github.io/video-list/view-guide/';
-let guideLoaded=false;
-async function loadGuide(){
-  guideLoaded=true;
-  const f=$('#guideFrame');
-  try{
-    const r=await fetch(GUIDE_URL,{cache:'no-cache'});
-    if(!r.ok)throw new Error('http');
-    const doc=new DOMParser().parseFromString(await r.text(),'text/html');
-    const tw=doc.createTreeWalker(doc.body,NodeFilter.SHOW_TEXT);
-    const kill=[];let n;
-    while((n=tw.nextNode())){
-      const t=n.nodeValue.trim();
-      if(t==='💎'||t.indexOf('使い方を簡単にご紹介')===0)kill.push(n);
-    }
-    kill.forEach(node=>{
-      const p=node.parentNode;p.removeChild(node);
-      if(p!==doc.body&&!p.textContent.trim()&&!p.querySelector('img,svg,a,button,input'))p.remove();
-    });
-    doc.querySelectorAll('a').forEach(a=>{
-      if(a.textContent.indexOf('所持リストを見る')!==-1||/\/video-list\/?$/.test(a.getAttribute('href')||'')){
-        const p=a.parentNode;a.remove();
-        if(p&&p!==doc.body&&!p.textContent.trim()&&!p.children.length)p.remove();
-      }
-    });
-    if(!doc.querySelector('base')){const b=doc.createElement('base');b.href=GUIDE_URL;doc.head.insertBefore(b,doc.head.firstChild);}
-    f.srcdoc='<!DOCTYPE html>'+doc.documentElement.outerHTML;
-  }catch{f.src=GUIDE_URL;}
-}
+/* ---------- 見方ガイド（埋め込み） ---------- */
+(function(){
+  const track=$('#vgTrack'),dots=$('#vgDots');
+  if(!track||!dots)return;
+  const slides=track.querySelectorAll('.vg-slide');
+  slides.forEach((_,i)=>{const d=document.createElement('div');d.className='vg-dot'+(i===0?' vg-on':'');dots.appendChild(d);});
+  function update(){
+    const s=slides[0];if(!s)return;
+    let i=Math.round(track.scrollLeft/(s.offsetWidth+12));
+    if(i>=slides.length)i=slides.length-1;
+    [...dots.children].forEach((d,k)=>d.classList.toggle('vg-on',k===i));
+  }
+  track.addEventListener('scroll',()=>window.requestAnimationFrame(update),{passive:true});
+})();
 
 /* ---------- 起動 ---------- */
 loadToken();
