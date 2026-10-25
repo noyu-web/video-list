@@ -77,7 +77,6 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
 
 /* NEW・所持照合・一括選択 */
 .new-badge{display:inline-block;background:var(--pink-dark);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:6px;letter-spacing:.06em;vertical-align:middle;}
-.card-owned{font-size:11px;color:#1f8a4c;background:#e8f8ef;border-radius:8px;padding:4px 8px;margin-top:6px;word-break:break-all;}
 .admin-bar{padding:0 0 10px;}
 .admin-bar button{background:var(--pink-light);color:var(--pink-dark);border:1.5px solid var(--pink);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
 .sel-box{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:7px;border:2px solid var(--border);color:transparent;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;background:#fff;}
@@ -271,7 +270,7 @@ const SIXT=['京本大我','ジェシー','田中樹','松村北斗','髙地優�
 const PRIO=[['high','高'],['mid','中'],['low','低'],['none','なし']];
 const STAT=[['active','探し中'],['trading','取引中'],['done','入手済み']];
 let items=[],editingId=null,isAdmin=false,token='',cbIdx=0;
-const F={q:'',members:new Set(),years:new Set(),prio:new Set(),status:new Set(),owned:new Set(),fresh:new Set()};
+const F={q:'',members:new Set(),years:new Set(),prio:new Set(),status:new Set(),fresh:new Set()};
 let selectMode=false,lastShown=[],bulkBusy=false;
 const selected=new Set();
 const NEW_DAYS=7;
@@ -279,52 +278,10 @@ function isNewW(it){const c=Number(it.createdAt)||0;const d=Date.now()-c;return 
 let _toastT;
 function toastMsg(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>el.classList.remove('show'),2200);}
 
-/* 所持リストとの照合 */
-const OWNED_KEY='wishlist_owned_cache';
-let owned=[],_matchCache=new Map();
 function normTitle(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');}
-function exLabel(e){return e==='ok'?'交換可':e==='partial'?'一部交換可':e==='consult'?'要相談':'交換不可';}
-function setOwned(list){owned=Array.isArray(list)?list:[];_matchCache=new Map();}
-function ownedMatches(it){
-  const key=it.id+'|'+it.title;
-  if(_matchCache.has(key))return _matchCache.get(key);
-  const n=normTitle(it.title);const exact=[],part=[];
-  if(n.length>=2){
-    for(const o of owned){
-      if(!o.n)continue;
-      if(o.n===n)exact.push(o);
-      else{const sh=Math.min(n.length,o.n.length);if(sh>=5&&(o.n.includes(n)||n.includes(o.n)))part.push(o);}
-    }
-  }
-  const res=exact.concat(part).slice(0,6);
-  _matchCache.set(key,res);return res;
-}
-function ownedLinesHTML(it){
-  const m=ownedMatches(it);if(!m.length)return'';
-  return m.slice(0,2).map(o=>`<div class="card-owned">📦 ${esc(o.l)}にあります：${esc(o.t)}（${exLabel(o.e)}）</div>`).join('')+(m.length>2?`<div class="card-owned">…ほか${m.length-2}件</div>`:'');
-}
-async function loadOwned(){
-  let ts=0;
-  try{const c=JSON.parse(localStorage.getItem(OWNED_KEY)||'null');if(c&&Array.isArray(c.list)){setOwned(c.list);ts=c.ts||0;}}catch{}
-  if(Date.now()-ts<10*60*1000)return;
-  const srcs=[['getVideos','所持リスト①'],['getVideos2','所持リスト②']];
-  const parts={};
-  await Promise.all(srcs.map(async([a,label])=>{
-    try{
-      const d=await jsonp({action:a},45000);
-      if(Array.isArray(d))parts[label]=d.map(v=>({l:label,t:String(v.title||''),n:normTitle(v.title),e:v.exchange||''}));
-    }catch{}
-  }));
-  if(Object.keys(parts).length===srcs.length){
-    const list=[].concat(...srcs.map(x=>parts[x[1]]));
-    setOwned(list);
-    try{localStorage.setItem(OWNED_KEY,JSON.stringify({ts:Date.now(),list}));}catch{}
-    renderList();syncFilterSheet();
-  }
-}
 
 /* 絞り込み条件をURLに保存・復元（共有用） */
-const HK=[['m','members'],['y','years'],['p','prio'],['s','status'],['o','owned'],['n','fresh']];
+const HK=[['m','members'],['y','years'],['p','prio'],['s','status'],['n','fresh']];
 function syncHash(){
   try{
     const o={};
@@ -438,25 +395,20 @@ function matchItem(it){
     if(!terms.every(t=>hay.includes(t)))return false;
   }
   if(F.fresh.size&&!isNewW(it))return false;
-  if(F.owned.size){
-    const has=ownedMatches(it).length>0;
-    if(!((F.owned.has('yes')&&has)||(F.owned.has('no')&&!has)))return false;
-  }
   return true;
 }
-function filterCount(){return F.members.size+F.years.size+F.prio.size+F.status.size+F.owned.size+F.fresh.size+(F.q?1:0);}
+function filterCount(){return F.members.size+F.years.size+F.prio.size+F.status.size+F.fresh.size+(F.q?1:0);}
 function labelOf(k,v){
   if(k==='years')return v+'年';
   if(k==='prio')return '優先度: '+(PRIO.find(x=>x[0]===v)||[0,v])[1];
   if(k==='status')return (STAT.find(x=>x[0]===v)||[0,v])[1];
-  if(k==='owned')return v==='yes'?'所持リストにある':'所持リストにない';
   if(k==='fresh')return '新着（7日以内）';
   return v;
 }
 function renderActiveBar(){
   const arr=[];
   if(F.q)arr.push({k:'q',v:F.q,label:'「'+F.q+'」'});
-  ['members','years','prio','status','owned','fresh'].forEach(k=>F[k].forEach(v=>arr.push({k,v,label:labelOf(k,v)})));
+  ['members','years','prio','status','fresh'].forEach(k=>F[k].forEach(v=>arr.push({k,v,label:labelOf(k,v)})));
   $('#activeBar').innerHTML=arr.map(a=>`<button type="button" class="af-chip" data-fk="${a.k}" data-fv="${esc(a.v)}">${esc(a.label)} ✕</button>`).join('');
   const n=filterCount();
   $('#filterBadge').textContent=n;
@@ -494,7 +446,6 @@ function renderFilterSheet(){
     secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
     secHTML('優先度','複数選択可','<div class="chips-grid">'+PRIO.map(p=>chipHTML('prio',p[0],p[1])).join('')+'</div>')+
     secHTML('ステータス','複数選択可','<div class="chips-grid">'+STAT.map(s=>chipHTML('status',s[0],s[1])).join('')+'</div>')+
-    secHTML('所持リスト','照合結果','<div class="chips-grid">'+chipHTML('owned','yes','所持リストにある')+chipHTML('owned','no','所持リストにない')+'</div>')+
     secHTML('新着','7日以内に追加','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>');
   body.scrollTop=prev;
   syncFilterSheet();
@@ -533,7 +484,7 @@ $('#filterShareBtn').addEventListener('click',async()=>{
   catch{prompt('このリンクをコピーしてください',url);}
 });
 $('#filterResetBtn').addEventListener('click',()=>{
-  F.q='';F.members.clear();F.years.clear();F.prio.clear();F.status.clear();F.owned.clear();F.fresh.clear();
+  F.q='';F.members.clear();F.years.clear();F.prio.clear();F.status.clear();F.fresh.clear();
   renderFilterSheet();renderList();
 });
 
@@ -563,10 +514,9 @@ function renderList(){
         ${it.status&&it.status!=='active'?`<span class="${statusTagClass(it.status)}">${statusLabel(it.status)}</span>`:''}
         ${it.priority?`<span class="tag ${priorityClass(it.priority)}">${priorityLabel(it.priority)}</span>`:''}
       </div>
-      ${ownedLinesHTML(it)}
       ${it.date?`<div class="card-date">📅 ${esc(it.date)}</div>`:''}
       ${it.note?`<div class="card-date">📝 ${esc(it.note)}</div>`:''}
-      ${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm" data-edit="${esc(it.id)}">編集</button>${it.status==='done'&&!ownedMatches(it).some(o=>o.n===normTitle(it.title))?`<button class="btn-sm" data-own="${esc(it.id)}">📦 所持リストへ</button>`:''}</div>`:''}
+      ${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm" data-edit="${esc(it.id)}">編集</button>${it.status==='done'?`<button class="btn-sm" data-own="${esc(it.id)}">📦 所持リストへ</button>`:''}</div>`:''}
     </div>`).join('');
   list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEditModal(b.dataset.edit)));
   list.querySelectorAll('[data-own]').forEach(b=>b.addEventListener('click',()=>{const it=items.find(x=>x.id===b.dataset.own);if(it)openOwnModal(it);}));
@@ -611,8 +561,6 @@ $('#saveBtn').addEventListener('click',async()=>{
   if(!orig||normTitle(orig.title)!==nt){
     const dup=items.find(x=>x.id!==editingId&&normTitle(x.title)===nt);
     if(dup&&!confirm('同じタイトルの項目がすでにあります：\n「'+dup.title+'」\nそれでも保存しますか？'))return;
-    const own=owned.find(o=>o.n===nt);
-    if(own&&!confirm(own.l+'にすでにあります：\n「'+own.t+'」\nそれでも追加しますか？'))return;
   }
   let item,isNew=false;
   if(editingId){
@@ -625,7 +573,7 @@ $('#saveBtn').addEventListener('click',async()=>{
   $('#editModal').classList.add('hidden');
   renderList();
   const savedOk=await saveItem(item,isNew);
-  if(savedOk&&status==='done'&&prevStatus!=='done'&&!ownedMatches(item).some(o=>o.n===nt))openOwnModal(item);
+  if(savedOk&&status==='done'&&prevStatus!=='done')openOwnModal(item);
 });
 $('#deleteBtn').addEventListener('click',async()=>{
   if(!confirm('削除しますか？'))return;
@@ -840,16 +788,12 @@ $('#ownAdd').addEventListener('click',async()=>{
   if(!title){alert('タイトルを入力してください');return;}
   const dest=$('#own-dest').value,ex=$('#own-ex').value,note=$('#own-note').value.trim();
   const label=dest==='2'?'所持リスト②':'所持リスト①';
-  const nt=normTitle(title);
-  if(owned.some(o=>o.l===label&&o.n===nt)&&!confirm(label+'にすでに同じタイトルがあります。それでも追加しますか？'))return;
   const video={id:Date.now().toString(),title,members:splitMembers(it.members),exchange:ex,genres:'[]',dates:it.date?JSON.stringify([{date:it.date,times:[]}]):'[]',note,tracks:'[]'};
   const btn=$('#ownAdd');btn.disabled=true;
   let okk=false;
   try{const d=await gasPost({action:dest==='2'?'saveVideo2':'saveVideo'},{video,isNew:true});okk=!!(d&&d.ok);}catch{}
   btn.disabled=false;
   if(!okk){if(isAdmin)toastMsg('所持リストへの追加に失敗しました。もう一度お試しください。');return;}
-  setOwned(owned.concat([{l:label,t:title,n:nt,e:ex}]));
-  try{localStorage.setItem(OWNED_KEY,JSON.stringify({ts:0,list:owned}));}catch{}
   $('#ownModal').classList.add('hidden');
   renderList();toastMsg(label+'に追加しました');
 });
@@ -862,7 +806,6 @@ $('#ownAdd').addEventListener('click',async()=>{
   $('#cardList').innerHTML=loadingHTML('読み込み中');
   await load();
   renderList();
-  loadOwned();
   if(isAdmin){
     jsonp({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();applyAdminUI();}}).catch(()=>{});
   }
