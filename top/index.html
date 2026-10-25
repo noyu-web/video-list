@@ -114,6 +114,17 @@ body.admin #linkAdmin{display:block;}
 .info-card{background:var(--white);border-radius:12px;padding:16px 18px;margin-bottom:12px;border:1.5px solid var(--border);}
 .info-title{font-size:14px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
 
+/* お知らせ */
+.notice{background:var(--pink-light);border-radius:12px;padding:14px 16px;margin-bottom:18px;}
+.notice-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.notice-label{font-size:13px;font-weight:800;color:var(--pink-dark);letter-spacing:.1em;}
+.notice-new{font-size:9px;font-weight:800;background:var(--pink-dark);color:#fff;border-radius:6px;padding:1px 6px;letter-spacing:.06em;}
+.notice-date{margin-left:auto;font-size:11px;color:var(--gray);}
+.notice-text{font-size:14px;line-height:1.8;color:var(--text);word-break:break-word;}
+.notice-edit{display:none;margin-bottom:18px;padding:12px;border:1.5px dashed var(--pink);border-radius:12px;background:var(--white);}
+body.admin .notice-edit{display:block;}
+.notice-edit .lbl{font-size:11px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
+
 /* ログイン */
 .steps{display:flex;align-items:center;gap:8px;margin-bottom:16px}
 .step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--gray);opacity:.55}
@@ -143,6 +154,19 @@ body.admin #linkAdmin{display:block;}
 </header>
 
 <main>
+  <div class="notice hidden" id="noticeBox">
+    <div class="notice-head"><span class="notice-label">お知らせ</span><span class="notice-new hidden" id="noticeNew">NEW</span><span class="notice-date" id="noticeDate"></span></div>
+    <div class="notice-text" id="noticeText"></div>
+  </div>
+  <div class="notice-edit" id="noticeEdit">
+    <div class="lbl">お知らせの編集（空にして保存すると非表示）</div>
+    <textarea class="edit-input" id="noticeInput" rows="3" placeholder="例: 新しい動画を追加しました"></textarea>
+    <div class="row">
+      <button class="btn-save" data-act="save-notice">保存</button>
+      <button class="btn-del" data-act="clear-notice">削除</button>
+    </div>
+  </div>
+
   <div class="guide-toggle" id="guideToggle">
     <button class="guide-head" data-act="guide-toggle"><span class="guide-title">所持リストの見方</span><span class="chev">›</span></button>
     <div class="guide-body">
@@ -313,6 +337,7 @@ const DEF={
 
 const clone=o=>JSON.parse(JSON.stringify(o));
 let contents=clone(DEF);   // links / mustread / rules
+contents.notice={text:'',date:''};
 let raw={};                // シート上のその他のキー（上書き消失防止）
 let isAdmin=false,token='';
 const openSet=new Set();
@@ -398,11 +423,23 @@ function renderLinks(){
       </div>
     </div>`).join('');
 }
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function renderNotice(){
+  const n=contents.notice||{text:'',date:''};
+  const has=!!n.text.trim();
+  $('#noticeBox').classList.toggle('hidden',!has);
+  $('#noticeText').innerHTML=fmt(n.text);
+  $('#noticeDate').textContent=n.date||'';
+  let isNewN=false;
+  if(n.date){const t=new Date(n.date+'T00:00:00').getTime();isNewN=!isNaN(t)&&Date.now()-t<8*86400000&&Date.now()-t>-86400000;}
+  $('#noticeNew').classList.toggle('hidden',!(has&&isNewN));
+  if(document.activeElement!==$('#noticeInput'))$('#noticeInput').value=n.text||'';
+}
 function render(){
   document.body.classList.toggle('admin',isAdmin);
   $('#adminBadge').classList.toggle('on',isAdmin);
   $('#loginBtn').classList.toggle('hidden',isAdmin);
-  renderMustread();renderLinks();renderRules();
+  renderMustread();renderLinks();renderRules();renderNotice();
 }
 
 /* ---------- データ読み込み・保存 ---------- */
@@ -418,6 +455,8 @@ async function loadContents(){
     }
     if(Array.isArray(M)&&M.length)contents.mustread=M;
     if(Array.isArray(R)&&R.length)contents.rules=R;
+    const N=parseVal(data.notice);
+    if(N&&typeof N==='object')contents.notice={text:String(N.text||''),date:String(N.date||'')};
     render();
   }catch{}
 }
@@ -425,7 +464,8 @@ async function saveContents(){
   const payload={...raw,
     links:JSON.stringify(contents.links),
     mustread:JSON.stringify(contents.mustread),
-    rules:JSON.stringify(contents.rules)};
+    rules:JSON.stringify(contents.rules),
+    notice:JSON.stringify(contents.notice)};
   try{
     const r=await fetch(GAS_URL+'?action=saveTopContents&token='+encodeURIComponent(token),{
       method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -565,6 +605,16 @@ document.addEventListener('click',async e=>{
     if(j<0||j>=a.length)return;
     [a[i],a[j]]=[a[j],a[i]];openSet.clear();render();await saveContents();return;
   }
+  if(act==='save-notice'){
+    const t=$('#noticeInput').value.trim();
+    contents.notice={text:t,date:t?todayStr():''};
+    render();await saveContents();return;
+  }
+  if(act==='clear-notice'){
+    if(!confirm('お知らせを削除しますか？'))return;
+    contents.notice={text:'',date:''};
+    render();await saveContents();return;
+  }
   if(act==='add-link'){
     contents.links.push({name:'新しいリンク',url:'https://'});render();
     const last=$('#linkEditList').lastElementChild;if(last)last.scrollIntoView({behavior:'smooth',block:'center'});return;
@@ -614,4 +664,3 @@ if(isAdmin){
 </script>
 </body>
 </html>
-
