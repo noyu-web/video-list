@@ -1,36 +1,22 @@
 
 
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>💎 アンケート</title>
+<title>💎 所持リストのアンケート</title>
 <style>
-:root{--pink:#e8749a;--pink-light:#f5c6d8;--pink-pale:#fdf0f5;--pink-dark:#c45580;--gray:#6b7280;--border:#e5e7eb;--text:#1f2937;--red:#d6455d}
+:root{--pink:#e8749a;--pink-light:#f5c6d8;--pink-pale:#fdf0f5;--pink-dark:#c45580;--gray:#6b7280;--text:#1f2937}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--pink-pale);color:var(--text);padding:calc(14px + env(safe-area-inset-top,0px)) 0 calc(24px + env(safe-area-inset-bottom,0px))}
-.wrap{max-width:520px;margin:0 auto;padding:0 16px}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
 h1{font-size:16px;font-weight:800;color:var(--pink-dark);text-align:center;letter-spacing:.06em}
-.hint{font-size:11px;color:var(--gray);text-align:center;margin:4px 0 12px}
-.card{background:#fff;border:1.5px solid var(--pink-light);border-radius:14px;padding:14px 14px 16px;margin-bottom:12px}
-.ico{font-size:22px;line-height:1;margin-bottom:6px}
-h2{font-size:14px;font-weight:800;color:var(--pink-dark);margin-bottom:4px}
-.req{font-size:10px;font-weight:700;color:#fff;background:var(--pink);border-radius:8px;padding:1px 7px;margin-left:6px;vertical-align:1px}
-.desc{font-size:12px;line-height:1.7;color:var(--gray);margin-bottom:10px}
-.mock{background:var(--pink-pale);border-radius:10px;padding:10px}
-.chip{display:inline-block;font-family:inherit;font-size:12px;padding:6px 14px;border-radius:14px;border:1.5px solid var(--border);background:#fff;color:var(--gray);margin:0 6px 6px 0;cursor:pointer}
-.chip.on{background:var(--pink-light);border-color:var(--pink);color:var(--pink-dark);font-weight:700}
-.chip:focus-visible,.btn:focus-visible,textarea:focus-visible{outline:2px solid var(--pink-dark);outline-offset:2px}
-textarea{width:100%;font-family:inherit;font-size:16px;border:1.5px solid var(--border);border-radius:10px;padding:9px 11px;background:#fff;color:var(--text)}
-textarea{min-height:100px;resize:vertical}
-.btn{display:block;width:100%;font-family:inherit;border:0;background:var(--pink);color:#fff;font-size:14px;font-weight:800;border-radius:20px;padding:12px;cursor:pointer}
-.btn:disabled{opacity:.5}
-.btn.sm{display:inline-block;width:auto;font-size:12px;padding:6px 14px;border-radius:14px}
-.err{font-size:12px;color:var(--red);margin-top:8px;min-height:1.2em;text-align:center}
-.done{display:none;text-align:center}
-.done.on{display:block}
+.hint{font-size:11px;color:var(--gray);text-align:center;margin:4px 0 12px;line-height:1.7}
+.card{background:#fff;border:1.5px solid var(--pink-light);border-radius:14px;padding:6px 6px 10px;overflow:hidden}
+iframe{display:block;width:100%;min-height:520px;border:0}
+.alt{font-size:11px;color:var(--gray);text-align:center;margin-top:12px;line-height:1.7}
+.alt a{color:var(--pink-dark)}
 </style>
 </head>
 <body>
@@ -38,90 +24,17 @@ textarea{min-height:100px;resize:vertical}
   <h1>💎 所持リストのアンケート</h1>
   <div class="hint">ご協力ありがとうございます（所要時間 約1分）</div>
 
-  <div id="formArea">
-    <section class="card" data-q="view">
-      <div class="ico">👀</div>
-      <h2>所持リストは見やすいですか？<span class="req">必須</span></h2>
-      <p class="desc">1つ選んでください。</p>
-      <div class="mock"><button type="button" class="chip" data-v="見やすい">見やすい</button><button type="button" class="chip" data-v="見にくい">見にくい</button></div>
-    </section>
-
-    <section class="card" data-q="group">
-      <div class="ico">🏷️</div>
-      <h2>改変前・改変後のグループの載せ方<span class="req">必須</span></h2>
-      <p class="desc">両方追加するか、どちらかだけにするか選んでください。両方の場合は、その時の名義に合わせて記載します。</p>
-      <div class="mock"><button type="button" class="chip" data-v="改変前のみ">改変前のみ</button><button type="button" class="chip" data-v="改変後のみ">改変後のみ</button><button type="button" class="chip" data-v="両方">両方</button></div>
-    </section>
-
-    <section class="card">
-      <div class="ico">💬</div>
-      <h2>その他のご意見</h2>
-      <p class="desc">自由にお書きください（任意）。</p>
-      <textarea id="opinion" maxlength="1000" aria-label="その他のご意見"></textarea>
-    </section>
-
-    <button class="btn" id="submit">回答を送信する</button>
-    <p class="err" id="err" role="alert"></p>
+  <div class="card">
+    <iframe data-tally-src="https://tally.so/embed/9NNGOV?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+            loading="lazy" title="所持リストについてのアンケート"></iframe>
   </div>
 
-  <section class="card done" id="done">
-    <div class="ico">✅</div>
-    <h2>送信しました</h2>
-    <p class="desc" style="margin-bottom:12px">回答ありがとうございました。</p>
-    <button class="btn sm" id="again">もう一度回答する</button>
-  </section>
-
-
+  <p class="alt">表示されない場合は<a href="https://tally.so/r/9NNGOV">こちらから回答</a>してください。</p>
 </div>
 
 <script>
-/* ===== 設定 ===== */
-// Formspree のフォームURL（例: https://formspree.io/f/xxxxxxxx）。空ならこの端末内のみに保存（動作確認用）。
-const ENDPOINT = 'https://formspree.io/f/xbggdnqz';
-/* ================= */
-
-const $ = s => document.querySelector(s);
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const LOCAL = 'survey:' + location.pathname;  // ENDPOINT未設定時の保存先
-const ans = {};
-
-/* 選択肢（1つ選択） */
-document.querySelectorAll('.card[data-q]').forEach(card => {
-  card.addEventListener('click', e => {
-    const b = e.target.closest('.chip'); if (!b) return;
-    const same = ans[card.dataset.q] === b.dataset.v;
-    ans[card.dataset.q] = same ? undefined : b.dataset.v;
-    card.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', !same && c === b));
-  });
-});
-
-/* 送信 */
-$('#submit').onclick = async () => {
-  if (!ans.view) return $('#err').textContent = '「所持リストは見やすいですか？」を選んでください。';
-  if (!ans.group) return $('#err').textContent = '「改変前・改変後のグループの載せ方」を選んでください。';
-  $('#err').textContent = '';
-  const rec = {view: ans.view, group: ans.group, opinion: $('#opinion').value.trim(), t: Date.now()};
-  $('#submit').disabled = true;
-  try {
-    if (ENDPOINT) {
-      const r = await fetch(ENDPOINT, {method:'POST', headers:{'Content-Type':'application/json','Accept':'application/json'},
-        body:JSON.stringify({'見やすさ':rec.view,'グループの載せ方':rec.group,'ご意見':rec.opinion||'（なし）'})});
-      if (!r.ok) throw new Error(r.status);
-    } else {
-      const a = JSON.parse(localStorage.getItem(LOCAL) || '[]'); a.push(rec);
-      localStorage.setItem(LOCAL, JSON.stringify(a));
-    }
-    $('#formArea').hidden = true; $('#done').classList.add('on');
-  } catch (e) {
-    $('#err').textContent = '送信に失敗しました。通信状況を確認してもう一度お試しください。';
-  }
-  $('#submit').disabled = false;
-};
-$('#again').onclick = () => {
-  delete ans.view; delete ans.group; $('#opinion').value = '';
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  $('#done').classList.remove('on'); $('#formArea').hidden = false;
-};
+var d=document,w="https://tally.so/widgets/embed.js",v=function(){"undefined"!=typeof Tally?Tally.loadEmbeds():d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach(function(e){e.src=e.dataset.tallySrc})};
+if("undefined"!=typeof Tally)v();else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");s.src=w;s.onload=v;s.onerror=v;d.body.appendChild(s)}
 </script>
 </body>
 </html>
