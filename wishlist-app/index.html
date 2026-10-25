@@ -180,6 +180,19 @@ body.selecting{padding-bottom:110px;}
     <div id="bulkProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
   </div>
 </div>
+<!-- 所持リストへ追加 -->
+<div class="modal-overlay hidden" id="ownModal">
+  <div class="modal">
+    <div class="modal-title">📦 所持リストに追加</div>
+    <div class="form-group"><label class="form-label">追加先</label>
+      <select class="form-select" id="own-dest"><option value="1">所持リスト①</option><option value="2">所持リスト②</option></select></div>
+    <div class="form-group"><label class="form-label">タイトル</label><input class="form-input" id="own-title"></div>
+    <div class="form-group"><label class="form-label">交換</label>
+      <select class="form-select" id="own-ex"><option value="consult">要相談</option><option value="ok">可</option><option value="partial">一部交換可</option><option value="ng">不可</option></select></div>
+    <div class="form-group"><label class="form-label">メモ</label><textarea class="form-textarea" id="own-note"></textarea></div>
+    <div class="modal-btns"><button class="btn-cancel" id="ownSkip">スキップ</button><button class="btn-save" id="ownAdd">追加</button></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <!-- 管理者ログイン（メール認証） -->
@@ -385,19 +398,32 @@ async function load(force){
     try{localStorage.setItem(CACHE_KEY,JSON.stringify(items));}catch{}
   }catch{items=[];}
 }
+async function gasPost(params,payload){
+  const url=GAS_URL+'?'+new URLSearchParams({...params,token});
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+  const d=await r.json();
+  if(d&&d.error==='unauthorized'){clearToken();applyAdminUI();alert('ログインの有効期限が切れました。もう一度ログインしてください。');}
+  return d;
+}
 async function saveItem(item,isNew){
-  try{
-    const d=await gasWrite({action:'saveWishlistItem',data:encodeURIComponent(JSON.stringify({item,isNew}))});
-    if(d&&d.error){await load(true);renderList();}
-    else try{localStorage.setItem(CACHE_KEY,JSON.stringify(items));}catch{}
-  }catch{}
+  let okk=false;
+  try{const d=await gasWrite({action:'saveWishlistItem',data:encodeURIComponent(JSON.stringify({item,isNew}))});okk=!!(d&&d.ok);}catch{}
+  if(okk){try{localStorage.setItem(CACHE_KEY,JSON.stringify(items));}catch{}}
+  else{
+    if(isAdmin)toastMsg('保存に失敗しました。もう一度お試しください。');
+    await load(true);renderList();
+  }
+  return okk;
 }
 async function deleteItemFromServer(id){
-  try{
-    const d=await gasWrite({action:'deleteWishlistItem',id});
-    if(d&&d.error){await load(true);renderList();}
-    else try{localStorage.setItem(CACHE_KEY,JSON.stringify(items));}catch{}
-  }catch{}
+  let okk=false;
+  try{const d=await gasWrite({action:'deleteWishlistItem',id});okk=!!(d&&d.ok);}catch{}
+  if(okk){try{localStorage.setItem(CACHE_KEY,JSON.stringify(items));}catch{}}
+  else{
+    if(isAdmin)toastMsg('削除に失敗しました。もう一度お試しください。');
+    await load(true);renderList();
+  }
+  return okk;
 }
 
 /* ---------- 絞り込み ---------- */
@@ -540,9 +566,10 @@ function renderList(){
       ${ownedLinesHTML(it)}
       ${it.date?`<div class="card-date">📅 ${esc(it.date)}</div>`:''}
       ${it.note?`<div class="card-date">📝 ${esc(it.note)}</div>`:''}
-      ${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm" data-edit="${esc(it.id)}">編集</button></div>`:''}
+      ${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm" data-edit="${esc(it.id)}">編集</button>${it.status==='done'&&!ownedMatches(it).some(o=>o.n===normTitle(it.title))?`<button class="btn-sm" data-own="${esc(it.id)}">📦 所持リストへ</button>`:''}</div>`:''}
     </div>`).join('');
   list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEditModal(b.dataset.edit)));
+  list.querySelectorAll('[data-own]').forEach(b=>b.addEventListener('click',()=>{const it=items.find(x=>x.id===b.dataset.own);if(it)openOwnModal(it);}));
   list.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>{if(selectMode)toggleSel(c);}));
 }
 
@@ -578,6 +605,15 @@ $('#saveBtn').addEventListener('click',async()=>{
   const date=$('#f-date').value;
   const members=$('#f-members').value.trim();
   const note=$('#f-note').value.trim();
+  const nt=normTitle(title);
+  const orig=editingId?items.find(x=>x.id===editingId):null;
+  const prevStatus=orig?orig.status:null;
+  if(!orig||normTitle(orig.title)!==nt){
+    const dup=items.find(x=>x.id!==editingId&&normTitle(x.title)===nt);
+    if(dup&&!confirm('同じタイトルの項目がすでにあります：\n「'+dup.title+'」\nそれでも保存しますか？'))return;
+    const own=owned.find(o=>o.n===nt);
+    if(own&&!confirm(own.l+'にすでにあります：\n「'+own.t+'」\nそれでも追加しますか？'))return;
+  }
   let item,isNew=false;
   if(editingId){
     item=items.find(x=>x.id===editingId);
@@ -588,7 +624,8 @@ $('#saveBtn').addEventListener('click',async()=>{
   }
   $('#editModal').classList.add('hidden');
   renderList();
-  await saveItem(item,isNew);
+  const savedOk=await saveItem(item,isNew);
+  if(savedOk&&status==='done'&&prevStatus!=='done'&&!ownedMatches(item).some(o=>o.n===nt))openOwnModal(item);
 });
 $('#deleteBtn').addEventListener('click',async()=>{
   if(!confirm('削除しますか？'))return;
@@ -759,7 +796,8 @@ async function bulkRun(mutate){
       let d;
       if(mutate==='delete')d=await gasWrite({action:'deleteWishlistItem',id:it.id});
       else d=await gasWrite({action:'saveWishlistItem',data:encodeURIComponent(JSON.stringify({item:mutate(it),isNew:false}))});
-      if(d&&d.error){fail++;if(d.error==='unauthorized')stop=true;}
+      if(!d||!d.ok){fail++;}
+      if(!isAdmin)stop=true;
     }catch{fail++;}
     done++;
     pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
@@ -784,6 +822,36 @@ $('#bulkPriorityApply').addEventListener('click',()=>{
 $('#bulkDelete').addEventListener('click',()=>{
   if(!confirm(selected.size+'件を削除します。元に戻せません。よろしいですか？'))return;
   bulkRun('delete');
+});
+
+
+/* ---------- 入手済み → 所持リストへ追加 ---------- */
+let ownTarget=null;
+function openOwnModal(it){
+  ownTarget=it;
+  $('#own-title').value=it.title;$('#own-note').value=it.note||'';
+  $('#own-ex').value='consult';$('#own-dest').value='1';
+  $('#ownModal').classList.remove('hidden');
+}
+$('#ownSkip').addEventListener('click',()=>$('#ownModal').classList.add('hidden'));
+$('#ownAdd').addEventListener('click',async()=>{
+  const it=ownTarget;if(!it)return;
+  const title=$('#own-title').value.trim();
+  if(!title){alert('タイトルを入力してください');return;}
+  const dest=$('#own-dest').value,ex=$('#own-ex').value,note=$('#own-note').value.trim();
+  const label=dest==='2'?'所持リスト②':'所持リスト①';
+  const nt=normTitle(title);
+  if(owned.some(o=>o.l===label&&o.n===nt)&&!confirm(label+'にすでに同じタイトルがあります。それでも追加しますか？'))return;
+  const video={id:Date.now().toString(),title,members:splitMembers(it.members),exchange:ex,genres:'[]',dates:it.date?JSON.stringify([{date:it.date,times:[]}]):'[]',note,tracks:'[]'};
+  const btn=$('#ownAdd');btn.disabled=true;
+  let okk=false;
+  try{const d=await gasPost({action:dest==='2'?'saveVideo2':'saveVideo'},{video,isNew:true});okk=!!(d&&d.ok);}catch{}
+  btn.disabled=false;
+  if(!okk){if(isAdmin)toastMsg('所持リストへの追加に失敗しました。もう一度お試しください。');return;}
+  setOwned(owned.concat([{l:label,t:title,n:nt,e:ex}]));
+  try{localStorage.setItem(OWNED_KEY,JSON.stringify({ts:0,list:owned}));}catch{}
+  $('#ownModal').classList.add('hidden');
+  renderList();toastMsg(label+'に追加しました');
 });
 
 /* ---------- 起動 ---------- */
