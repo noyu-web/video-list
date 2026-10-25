@@ -451,7 +451,7 @@ localStorage.setItem('cfg_subgenres2',JSON.stringify(cfg.subgenres));
 localStorage.setItem('cfg_members2',JSON.stringify(cfg.members));
 localStorage.setItem('cfg_other_members2',JSON.stringify(cfg.otherMembers));
 }catch{}
-gasWrite({action:'saveFullConfig2',data:encodeURIComponent(JSON.stringify(cfg))}).catch(()=>{});
+gasPost({action:'saveFullConfig2'},cfg).then(d=>{if(!d||!d.ok){if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');}}).catch(()=>failMsg('設定の保存'));
 }
 let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set()};
@@ -521,6 +521,24 @@ setTimeout(()=>{if(window[name]){delete window[name];s.remove();reject(new Error
 });
 }
 async function gasGet(params,timeout){return jsonp(params,timeout);}
+function normTitle(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');}
+function failMsg(what){toastMsg(what+'に失敗しました。もう一度お試しください。');}
+async function gasPost(params,payload){
+const url=GAS_URL+'?'+new URLSearchParams({...params,token});
+const r=await fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+const d=await r.json();
+if(d&&d.error==='unauthorized'){clearToken();updateAdminUI();alert('ログインの有効期限が切れました。もう一度ログインしてください。');}
+return d;
+}
+async function writeVideo(video,isNew){
+let d;
+try{d=await gasPost({action:'saveVideo2'},{video,isNew});}
+catch(e){
+if(isNew)return false;
+try{d=await gasWrite({action:'saveVideo2',data:encodeURIComponent(JSON.stringify({video,isNew})),id:''});}catch{return false;}
+}
+return !!(d&&d.ok);
+}
 async function gasWrite(params){
 const d=await jsonp({...params,token});
 if(d&&d.error==='unauthorized'){
@@ -816,9 +834,10 @@ list.querySelectorAll('[data-toggle]').forEach(inp=>inp.addEventListener('change
 e.stopPropagation();
 const all=await loadVideos();const item=all.find(d=>d.id===inp.dataset.toggle);
 if(item){
+const prevEx=item.exchange;
 item.exchange=inp.checked?'ok':'ng';
 renderList();
-try{await gasWrite({action:'saveVideo2',data:encodeURIComponent(JSON.stringify({video:item,isNew:false})),id:''});}catch(e){}
+if(!(await writeVideo(item,false))){item.exchange=prevEx;renderList();if(isAdmin)failMsg('保存');}
 }
 }));
 list.querySelectorAll('label.toggle').forEach(l=>l.addEventListener('click',e=>e.stopPropagation()));
@@ -1036,7 +1055,7 @@ cfg.genres[idx]=newName;
 if(currentGenre===oldName)currentGenre=newName;
 if(F.genres.has(oldName)){F.genres.delete(oldName);F.genres.add(newName);}
 saveConfig(cfg);
-try{await gasWrite({action:'renameGenre',from:oldName,to:newName})}catch(e){}
+{let okk=false;try{const d=await gasWrite({action:'renameGenre',from:oldName,to:newName});okk=!!(d&&d.ok);}catch{}if(!okk&&isAdmin)failMsg('ジャンル名の変更');}
 cachedVideos=null;await loadVideos(true);
 openSettingsModal();renderTabs();renderSubtabs();renderList();
 }));
@@ -1286,6 +1305,15 @@ document.getElementById('editCancelBtn').addEventListener('click',()=>document.g
 document.getElementById('editSaveBtn').addEventListener('click',async()=>{
 const title=document.getElementById('editTitle').value.trim();
 if(!title){alert('タイトルを入力してください');return;}
+{
+const nt=normTitle(title);
+const all0=await loadVideos();
+const orig=editingId?all0.find(x=>x.id===editingId):null;
+if(!orig||normTitle(orig.title)!==nt){
+const dup=all0.find(x=>x.id!==editingId&&normTitle(x.title)===nt);
+if(dup&&!confirm('同じタイトルの動画がすでにあります：\n「'+dup.title+'」\nそれでも保存しますか？'))return;
+}
+}
 const exchange=document.getElementById('editExchange').value;
 const note=document.getElementById('editNote').value.trim();
 const members=[
@@ -1298,22 +1326,21 @@ const tracks=getTracks();
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks)};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
-try{
-await gasWrite({action:'saveVideo2',data:encodeURIComponent(JSON.stringify({video,isNew:!editingId})),id:''});
-}catch(e){}
+const savedOk=await writeVideo(video,!editingId);
 cachedVideos=null;
 await loadVideos(true);
 renderList();
+if(!savedOk&&isAdmin)failMsg('保存');
 });
 async function deleteItem(id){
 if(!confirm('削除しますか？'))return;
 document.getElementById('cardList').innerHTML=loadingHTML('削除中');
-try{
-await gasWrite({action:'deleteVideo2',data:'',id});
-}catch(e){}
+let delOk=false;
+try{const d=await gasWrite({action:'deleteVideo2',data:'',id});delOk=!!(d&&d.ok);}catch{}
 cachedVideos=null;
 await loadVideos(true);
 renderList();
+if(!delOk&&isAdmin)failMsg('削除');
 }
 
 
@@ -1380,8 +1407,9 @@ if(stop)break;
 try{
 let d;
 if(mutate==='delete')d=await gasWrite({action:'deleteVideo2',data:'',id:it.id});
-else d=await gasWrite({action:'saveVideo2',data:encodeURIComponent(JSON.stringify({video:mutate(it),isNew:false})),id:''});
-if(d&&d.error){fail++;if(d.error==='unauthorized')stop=true;}
+else d=(await writeVideo(mutate(it),false))?{ok:true}:{error:'fail'};
+if(!d||!d.ok){fail++;}
+if(!isAdmin)stop=true;
 }catch{fail++;}
 done++;
 pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
@@ -1431,4 +1459,3 @@ gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAd
 </script>
 </body>
 </html>
-
