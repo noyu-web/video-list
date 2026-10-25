@@ -58,6 +58,15 @@ body.admin .add-btn{display:inline-block;}
 .vg-m-note{font-size:10.5px;line-height:1.6;color:var(--gray);margin-top:6px;}
 .vg-m-eq{font-size:11px;line-height:1.7;}
 .vg-m-eq b{color:var(--pink-dark);}
+.vg-m-arrow{text-align:center;font-size:10px;font-weight:700;color:var(--pink-dark);margin:6px 0;}
+.vg-m-detail{background:#fff;border:1.5px solid var(--pink-light);border-radius:10px;padding:9px 10px;}
+.vg-m-dt{font-size:12px;font-weight:800;color:var(--pink-dark);margin-bottom:4px;}
+.vg-m-ex{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:#dcfce7;color:#166534;}
+.vg-m-dl{font-size:10px;font-weight:800;color:var(--gray);margin:7px 0 3px;}
+.vg-m-dbox{background:var(--pink-pale);border-radius:7px;padding:5px 8px;font-size:11px;}
+.vg-m-sec{font-size:9.5px;font-weight:800;color:var(--pink-dark);border-bottom:1px solid var(--pink-light);padding-bottom:2px;margin-bottom:2px;}
+.vg-m-trk{font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);}
+.vg-m-b{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#dcfce7;color:#166534;margin-left:4px;}
 
 
 /* 必読トグル */
@@ -178,14 +187,33 @@ body.admin .notice-edit{display:block;}
   <div class="vg-ico">📂</div>
   <h2>ジャンルタブで切り替え</h2>
   <p>画面上部のタブでジャンルを切り替えられます。一番右には「SixTONES以外」（Snow Manなど他グループの動画）もあります。</p>
-  <div class="vg-mock"><div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">バラエティー</span><span class="vg-m-tab">…</span><span class="vg-m-tab">SixTONES以外</span></div></div>
+  <div class="vg-mock"><div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">バラエティー番組</span><span class="vg-m-tab">ドラマ・映画</span><span class="vg-m-tab">Radio</span><span class="vg-m-tab">FC・FCweb</span><span class="vg-m-tab">SixTONES以外</span></div></div>
 </section>
 
 <section class="vg-slide">
   <div class="vg-ico">🗂️</div>
   <h2>カードの見方</h2>
   <p>1件ずつのカードには、タイトルと出演者タグが表示されます。カードをタップすると詳細（日付・収録内容など）が見られます。</p>
-  <div class="vg-mock"><div class="vg-m-card">こっから<br><span class="vg-m-tag">SixTONES</span></div></div>
+  <div class="vg-mock">
+      <div class="vg-m-card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div>こっから<br><span class="vg-m-tag">SixTONES</span></div><span class="vg-m-ex">交換可</span></div>
+      <div class="vg-m-arrow">▼ タップすると、詳細が開きます</div>
+      <div class="vg-m-detail">
+        <div class="vg-m-dt">こっから</div>
+        <div><span class="vg-m-tag">SixTONES</span></div>
+        <div style="margin-top:5px"><span class="vg-m-ex">交換可</span></div>
+        <div class="vg-m-dl">収録内容,詳細</div>
+        <div class="vg-m-dbox">
+          <div class="vg-m-sec">音源</div>
+          <div class="vg-m-trk">こっから</div>
+          <div class="vg-m-trk">雨</div>
+          <div class="vg-m-trk">Medley from「慣声の法則」at 横浜アリーナ (S.I.X ~ Special Order ~ フィギュア ~ RAM-PAM-PAM ~ WHIP THAT ~ Outrageous)</div>
+          <div class="vg-m-trk">FIREWORKS</div>
+          <div class="vg-m-trk">Tu-tu-lu</div>
+          <div class="vg-m-trk">ABARERO -Dark Electro Rock Remix-</div>
+          <div class="vg-m-trk" style="border-bottom:none">こっから -Instrumental-</div>
+        </div>
+      </div>
+    </div>
 </section>
 
 <section class="vg-slide">
@@ -193,10 +221,11 @@ body.admin .notice-edit{display:block;}
   <h2>出演者タグでまたぎ表示</h2>
   <p>出演者タグをタップすると、その人が出演している作品をジャンルをまたいで一覧表示できます。</p>
   <div class="vg-mock">
-    <div class="vg-m-lbl">田中樹 の出演作品</div>
-    <div class="vg-m-line">円盤 / こっから</div>
-    <div class="vg-m-line">バラエティー番組 / しゃべくり7</div>
-    <div class="vg-m-line" style="border-bottom:none">Radio / ANN</div>
+    <div class="vg-m-lbl" style="margin-bottom:6px">京本大我 の出演作品</div>
+    <div class="vg-m-sec" style="margin-top:0px">配信関連 / Instagram Live</div><div class="vg-m-line">きょもじゅりインライ</div>
+    <div class="vg-m-sec" style="margin-top:7px">円盤 / ART-PUT</div><div class="vg-m-line">𝐏𝐑𝐎𝐓.𝟑𝟎</div>
+    <div class="vg-m-sec" style="margin-top:7px">バラエティー番組 / バラエティー</div><div class="vg-m-line">14/06/06 徹子の部屋</div>
+    <div class="vg-m-sec" style="margin-top:7px">ドラマ・映画</div><div class="vg-m-line" style="border-bottom:none">お迎え渋谷くん</div>
   </div>
 </section>
 
