@@ -5,124 +5,165 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>見方ガイド</title>
 <style>
-:root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--gray:#999;--border:#eee;--white:#fff;}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;color:#333;overflow:hidden;}
-.scroller{height:100vh;width:100vw;display:flex;overflow-x:scroll;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;}
-.scroller::-webkit-scrollbar{display:none;}
-.slide{flex:0 0 100vw;height:100vh;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center;position:relative;}
-.slide:nth-child(odd){background:#fff8fb;}
-.slide:nth-child(even){background:#ffffff;}
-.emoji{font-size:48px;margin-bottom:14px;}
-.emoji.small{font-size:30px;margin-bottom:6px;}
-h1{font-size:22px;color:var(--pink-dark);margin:0 0 6px;}
-h2{font-size:16px;color:var(--pink-dark);margin:0 0 10px;font-weight:700;}
-p{font-size:14px;line-height:1.85;color:#555;max-width:340px;margin:0;}
-.compact p{font-size:12.5px;line-height:1.7;max-width:320px;}
-.sub{font-size:12px;color:var(--gray);margin-top:6px;}
+:root{--pink:#e8749a;--pink-light:#f5c6d8;--pink-pale:#fdf0f5;--pink-dark:#c45580;--gray:#6b7280;--gray-light:#f3f4f6;--border:#e5e7eb;--text:#1f2937;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--pink-pale);color:var(--text);padding:14px 0 12px;}
+h1{font-size:15px;font-weight:800;color:var(--pink-dark);text-align:center;letter-spacing:.06em;}
+.hint{font-size:11px;color:var(--gray);text-align:center;margin:4px 0 10px;}
+.track{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.track::-webkit-scrollbar{display:none;}
+.slide{flex:0 0 84%;scroll-snap-align:center;background:#fff;border:1.5px solid var(--pink-light);border-radius:14px;padding:14px 14px 16px;}
+.slide:last-child{margin-right:8px;}
+.ico{font-size:22px;line-height:1;margin-bottom:6px;}
+h2{font-size:14px;font-weight:800;color:var(--pink-dark);margin-bottom:6px;}
+.slide p{font-size:12px;line-height:1.7;color:var(--text);}
+.mock{margin-top:10px;background:var(--pink-pale);border-radius:10px;padding:10px;}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:6px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--pink-light);transition:.2s;}
+.dot.on{background:var(--pink);width:16px;border-radius:4px;}
 
-/* サンプルUI */
-.demo{margin-top:14px;width:100%;max-width:340px;}
-.demo.small{margin-top:8px;margin-bottom:14px;}
-.demo-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:10px;}
-.demo-tab{padding:6px 14px;border-radius:16px;font-size:12px;background:var(--white);border:1.5px solid var(--border);}
-.demo-tab.active{background:var(--pink);color:#fff;border-color:var(--pink);}
-.demo-card{background:var(--white);border-radius:12px;padding:10px 12px;box-shadow:0 1px 6px rgba(0,0,0,.06);text-align:left;}
-.demo-card.small{padding:8px 10px;}
-.demo-card-title{font-size:13px;font-weight:700;margin-bottom:6px;}
-.demo-card.small .demo-card-title{font-size:12px;margin-bottom:4px;}
-.demo-tags{display:flex;gap:5px;flex-wrap:wrap;}
-.demo-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--pink-light);color:var(--pink-dark);}
-.demo-tag.gray{background:#f0f0f0;color:#666;}
-.demo-list{font-size:11.5px;color:var(--gray);text-align:left;line-height:1.8;}
-
-/* ページインジケーター(下中央・横並び) */
-.dots{position:fixed;bottom:16px;left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:10;pointer-events:none;}
-.dots span{width:6px;height:6px;border-radius:50%;background:var(--border);transition:.2s;}
-.dots span.active{background:var(--pink);width:8px;height:8px;}
-
-.scroll-hint{position:absolute;bottom:34px;font-size:11px;color:var(--gray);display:flex;align-items:center;gap:5px;}
-.scroll-hint .arrow{animation:bob 1.4s infinite;display:inline-block;}
-@keyframes bob{0%,100%{transform:translateX(0);}50%{transform:translateX(-6px);}}
-
-.link-btn{display:inline-block;margin-top:18px;background:var(--pink);color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:24px;box-shadow:0 4px 12px rgba(244,167,192,.4);}
+/* モック部品 */
+.m-tabs{display:flex;gap:4px;flex-wrap:wrap;}
+.m-tab{font-size:10px;font-weight:700;color:var(--gray);padding:3px 8px;border-radius:12px;background:#fff;border:1px solid var(--border);}
+.m-tab.on{color:var(--pink-dark);border-color:var(--pink);background:var(--pink-light);}
+.m-chip{display:inline-block;font-size:10px;padding:3px 9px;border-radius:12px;border:1.5px solid var(--border);background:#fff;color:var(--gray);margin:0 3px 4px 0;}
+.m-chip.on{background:var(--pink-light);border-color:var(--pink);color:var(--pink-dark);font-weight:700;}
+.m-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:11px;font-weight:700;}
+.m-tag{display:inline-block;font-size:9px;padding:1px 7px;border-radius:9px;background:#e0e0e0;color:#555;margin-top:4px;font-weight:500;}
+.m-btn{display:inline-block;background:var(--pink);color:#fff;font-size:11px;font-weight:800;border-radius:14px;padding:5px 12px;}
+.m-lbl{font-size:10px;font-weight:800;color:var(--pink-dark);margin:6px 0 3px;}
+.m-lbl:first-child{margin-top:0;}
+.m-line{font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);}
+.m-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.m-note{font-size:10.5px;line-height:1.6;color:var(--gray);margin-top:6px;}
+.m-eq{font-size:11px;line-height:1.7;}
+.m-eq b{color:var(--pink-dark);}
+.m-arrow{text-align:center;font-size:10px;font-weight:700;color:var(--pink-dark);margin:6px 0;}
+.m-detail{background:#fff;border:1.5px solid var(--pink-light);border-radius:10px;padding:9px 10px;}
+.m-dt{font-size:12px;font-weight:800;color:var(--pink-dark);margin-bottom:4px;}
+.m-ex{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:9px;background:#dcfce7;color:#166534;}
+.m-dl{font-size:10px;font-weight:800;color:var(--gray);margin:7px 0 3px;}
+.m-dbox{background:var(--pink-pale);border-radius:7px;padding:5px 8px;font-size:11px;}
+.m-sec{font-size:9.5px;font-weight:800;color:var(--pink-dark);border-bottom:1px solid var(--pink-light);padding-bottom:2px;margin-bottom:2px;}
+.m-trk{font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);}
+.m-b{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:#dcfce7;color:#166534;margin-left:4px;}
 </style>
 </head>
 <body>
 
-<div class="dots" id="dots"></div>
+<h1>所持リストの見方</h1>
+<div class="hint">←スワイプして進む</div>
 
-<div class="scroller" id="scroller">
+<div class="track" id="track">
 
-  <div class="slide">
-    <div class="emoji">💎</div>
-    <h1>所持リストの見方</h1>
-    <p>使い方を簡単にご紹介します。</p>
-    <div class="scroll-hint"><span class="arrow">←</span>スワイプして進む</div>
-  </div>
+<section class="slide">
+  <div class="ico">📂</div>
+  <h2>ジャンルタブで切り替え</h2>
+  <p>画面上部のタブでジャンルを切り替えられます。一番右には「SixTONES以外」（Snow Manなど他グループの動画）もあります。</p>
+  <div class="mock"><div class="m-tabs"><span class="m-tab on">配信関連</span><span class="m-tab">円盤</span><span class="m-tab">バラエティー番組</span><span class="m-tab">ドラマ・映画</span><span class="m-tab">Radio</span><span class="m-tab">FC・FCweb</span><span class="m-tab">SixTONES以外</span></div></div>
+</section>
 
-  <div class="slide">
-    <div class="emoji">📂</div>
-    <h2>ジャンルタブで切り替え</h2>
-    <p>画面上部のタブでジャンルを切り替えられます。一番右には「SixTONES以外」(Snow Manなど他グループの動画)もあります。</p>
-    <div class="demo">
-      <div class="demo-tabs">
-        <div class="demo-tab active">配信関連</div>
-        <div class="demo-tab">円盤</div>
-        <div class="demo-tab">バラエティー</div>
-        <div class="demo-tab">…</div>
-        <div class="demo-tab">SixTONES以外</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="slide">
-    <div class="emoji">🗂️</div>
-    <h2>カードの見方</h2>
-    <p>1件ずつのカードには、タイトルと出演者タグが表示されます。カードをタップすると詳細(日付・収録内容など)が見られます。</p>
-    <div class="demo">
-      <div class="demo-card">
-        <div class="demo-card-title">こっから</div>
-        <div class="demo-tags">
-          <span class="demo-tag">SixTONES</span>
+<section class="slide">
+  <div class="ico">🗂️</div>
+  <h2>カードの見方</h2>
+  <p>1件ずつのカードには、タイトルと出演者タグが表示されます。カードをタップすると詳細（日付・収録内容など）が見られます。</p>
+  <div class="mock">
+      <div class="m-card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div>こっから<br><span class="m-tag">SixTONES</span></div><span class="m-ex">交換可</span></div>
+      <div class="m-arrow">▼ タップすると、詳細が開きます</div>
+      <div class="m-detail">
+        <div class="m-dt">こっから</div>
+        <div><span class="m-tag">SixTONES</span></div>
+        <div style="margin-top:5px"><span class="m-ex">交換可</span></div>
+        <div class="m-dl">収録内容,詳細</div>
+        <div class="m-dbox">
+          <div class="m-sec">音源</div>
+          <div class="m-trk">こっから</div>
+          <div class="m-trk">雨</div>
+          <div class="m-trk">Medley from「慣声の法則」at 横浜アリーナ (S.I.X ~ Special Order ~ フィギュア ~ RAM-PAM-PAM ~ WHIP THAT ~ Outrageous)</div>
+          <div class="m-trk">FIREWORKS</div>
+          <div class="m-trk">Tu-tu-lu</div>
+          <div class="m-trk">ABARERO -Dark Electro Rock Remix-</div>
+          <div class="m-trk" style="border-bottom:none">こっから -Instrumental-</div>
         </div>
       </div>
     </div>
-  </div>
+</section>
 
-  <div class="slide">
-    <div class="emoji">🔍</div>
-    <h2>出演者タグでまたぎ表示</h2>
-    <p>出演者タグをタップすると、その人が出演している作品をジャンルをまたいで一覧表示できます。</p>
-    <div class="demo">
-      <div class="demo-card">
-        <div class="demo-card-title">田中樹 の出演作品</div>
-        <div class="demo-list">
-          円盤 / こっから<br>
-          バラエティー番組 / しゃべくり7<br>
-          Radio / ANN
-        </div>
-      </div>
-    </div>
-    <a class="link-btn" href="https://noyu-web.github.io/video-list/" style="margin-top:20px">💎 所持リストを見る</a>
+<section class="slide">
+  <div class="ico">👤</div>
+  <h2>出演者タグでまたぎ表示</h2>
+  <p>出演者タグをタップすると、その人が出演している作品をジャンルをまたいで一覧表示できます。</p>
+  <div class="mock">
+    <div class="m-lbl" style="margin-bottom:6px">京本大我 の出演作品</div>
+    <div class="m-sec" style="margin-top:0px">配信関連 / Instagram Live</div><div class="m-line">きょもじゅりインライ</div>
+    <div class="m-sec" style="margin-top:7px">円盤 / ART-PUT</div><div class="m-line">𝐏𝐑𝐎𝐓.𝟑𝟎</div>
+    <div class="m-sec" style="margin-top:7px">バラエティー番組 / バラエティー</div><div class="m-line">14/06/06 徹子の部屋</div>
+    <div class="m-sec" style="margin-top:7px">ドラマ・映画</div><div class="m-line" style="border-bottom:none">お迎え渋谷くん</div>
   </div>
+</section>
+
+<section class="slide">
+  <div class="ico">🔍</div>
+  <h2>検索ボタンで絞り込み</h2>
+  <p>画面右上の「検索」ボタンを押すと、絞り込みの画面が開きます。条件を選ぶと、後ろの一覧がその場で変わります。</p>
+  <div class="mock">
+    <div class="m-row"><span class="m-note" style="margin:0">タブのジャンルとあわせて使えます</span><span class="m-btn">🔍 検索</span></div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="ico">✅</div>
+  <h2>5つの条件を選べます</h2>
+  <p>それぞれ複数選べて、選ばない項目は絞り込みません。</p>
+  <div class="mock">
+    <div class="m-lbl">文字検索</div><span class="m-chip">タイトル・出演者・メモ・収録内容</span>
+    <div class="m-lbl">ジャンル名</div><span class="m-chip on">円盤</span><span class="m-chip">配信関連</span>
+    <div class="m-lbl">出演者</div><span class="m-chip on">田中樹</span><span class="m-chip">ジェシー</span>
+    <div class="m-lbl">年代</div><span class="m-chip on">2020年</span><span class="m-chip">2021年</span>
+    <div class="m-lbl">配布の可否</div><span class="m-chip on">交換可</span><span class="m-chip">交換不可</span>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="ico">🧩</div>
+  <h2>組み合わせのルール</h2>
+  <p>同じ項目の中は「どれか1つでも当てはまる」、別の項目どうしは「すべて当てはまる」作品が出ます。</p>
+  <div class="mock m-eq">
+    出演者 <b>田中樹・ジェシー</b><br>
+    ＋ 年代 <b>2020年</b><br>
+    ＝ 田中樹またはジェシーが出ている、2020年の作品
+    <div class="m-note">文字検索は、スペースで区切ると「すべて含む」で探します。</div>
+  </div>
+</section>
+
+<section class="slide">
+  <div class="ico">↩️</div>
+  <h2>条件を解除する</h2>
+  <p>選んだ条件は一覧の上に表示されます。タップで1つずつ外せます。絞り込み画面の「リセット」で、まとめて解除できます。</p>
+  <div class="mock">
+    <span class="m-chip on">田中樹 ✕</span><span class="m-chip on">2020年 ✕</span><span class="m-chip on">交換可 ✕</span>
+  </div>
+</section>
 
 </div>
 
+<div class="dots" id="dots"></div>
+
 <script>
-const slides=document.querySelectorAll('.slide');
-const dotsWrap=document.getElementById('dots');
-slides.forEach((_,i)=>{
-  const d=document.createElement('span');
-  if(i===0)d.classList.add('active');
-  dotsWrap.appendChild(d);
-});
-const dots=dotsWrap.querySelectorAll('span');
-const scroller=document.getElementById('scroller');
-scroller.addEventListener('scroll',()=>{
-  const idx=Math.round(scroller.scrollLeft/window.innerWidth);
-  dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
-});
+(function(){
+  var track=document.getElementById('track');
+  var slides=track.querySelectorAll('.slide');
+  var dots=document.getElementById('dots');
+  slides.forEach(function(_,i){var d=document.createElement('div');d.className='dot'+(i===0?' on':'');dots.appendChild(d);});
+  function update(){
+    var s=slides[0];if(!s)return;
+    var step=s.offsetWidth+12;
+    var i=Math.round(track.scrollLeft/step);
+    if(i>=slides.length)i=slides.length-1;
+    Array.prototype.forEach.call(dots.children,function(d,k){d.classList.toggle('on',k===i);});
+  }
+  track.addEventListener('scroll',function(){window.requestAnimationFrame(update);},{passive:true});
+})();
 </script>
 </body>
 </html>
