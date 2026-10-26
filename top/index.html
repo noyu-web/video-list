@@ -123,6 +123,25 @@ body.admin #linkAdmin{display:block;}
 .info-card{background:var(--white);border-radius:12px;padding:16px 18px;margin-bottom:12px;border:1.5px solid var(--border);}
 .info-title{font-size:14px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
 
+/* ハンバーガーメニュー・料金表 */
+.hdr-right{display:flex;align-items:center;gap:6px;}
+#secMust,#secLink{scroll-margin-top:64px;}
+.menu-btn{width:42px;height:42px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;border-radius:10px;}
+.menu-btn span{display:block;width:22px;height:2.5px;background:var(--pink-dark);border-radius:2px;}
+.drawer-ov{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:250;opacity:0;pointer-events:none;transition:opacity .2s;}
+.drawer-ov.open{opacity:1;pointer-events:auto;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(78vw,300px);background:var(--bg);z-index:260;transform:translateX(100%);transition:transform .25s;padding:calc(14px + env(safe-area-inset-top)) 0 calc(18px + env(safe-area-inset-bottom));box-shadow:-6px 0 24px rgba(0,0,0,.12);display:flex;flex-direction:column;visibility:hidden;}
+.drawer.open{transform:none;visibility:visible;}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:0 18px 12px;border-bottom:1px solid var(--border);}
+.drawer-title{font-size:14px;font-weight:800;color:var(--pink-dark);letter-spacing:.12em;}
+.drawer-item{display:flex;align-items:center;justify-content:space-between;width:100%;padding:17px 18px;background:none;border:none;border-bottom:1px solid var(--border);font-size:16px;font-weight:700;color:var(--pink-dark);cursor:pointer;font-family:inherit;text-align:left;}
+.drawer-item .chev{font-size:20px;}
+.price-sheet{position:fixed;inset:0;z-index:300;background:#fff7fa;display:none;flex-direction:column;}
+.price-sheet.open{display:flex;}
+.price-head{display:flex;align-items:center;justify-content:space-between;padding:calc(8px + env(safe-area-inset-top)) 16px 8px;border-bottom:1px solid var(--border);background:var(--bg);}
+.price-title{font-size:16px;font-weight:800;color:var(--pink-dark);letter-spacing:.1em;}
+.price-sheet iframe{flex:1;width:100%;border:0;background:#fff7fa;}
+
 /* お知らせ */
 .notice{background:var(--pink-light);border-radius:12px;padding:14px 16px;margin-bottom:18px;}
 .notice-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
@@ -159,8 +178,25 @@ body.admin .notice-edit{display:block;}
 
 <header>
   <div class="logo-area"><button class="login-btn" id="loginBtn">ログイン</button></div>
-  <div class="admin-badge" id="adminBadge"><span>編集モード</span><button data-act="logout">ログアウト</button></div>
+  <div class="hdr-right">
+    <div class="admin-badge" id="adminBadge"><span>編集モード</span><button data-act="logout">ログアウト</button></div>
+    <button class="menu-btn" data-act="open-menu" aria-label="メニュー"><span></span><span></span><span></span></button>
+  </div>
 </header>
+
+<div class="drawer-ov" id="drawerOv" data-act="close-menu"></div>
+<nav class="drawer" id="drawer" aria-label="メニュー">
+  <div class="drawer-head"><span class="drawer-title">メニュー</span><button class="x-btn" data-act="close-menu">✕</button></div>
+  <button class="drawer-item" data-act="open-price"><span>料金表</span><span class="chev">›</span></button>
+  <button class="drawer-item" data-act="go" data-target="#secMust"><span>必読</span><span class="chev">›</span></button>
+  <button class="drawer-item" data-act="go" data-target="#secLink"><span>LINK</span><span class="chev">›</span></button>
+  <button class="drawer-item" data-act="menu-rules"><span>免責事項</span><span class="chev">›</span></button>
+</nav>
+
+<div class="price-sheet" id="priceSheet">
+  <div class="price-head"><span class="price-title">料金表</span><button class="x-btn" data-act="close-price">✕</button></div>
+  <iframe id="priceFrame" title="料金表"></iframe>
+</div>
 
 <main>
   <div class="notice hidden" id="noticeBox">
@@ -278,13 +314,13 @@ body.admin .notice-edit{display:block;}
     </div>
   </div>
 
-  <div class="section-header">
+  <div class="section-header" id="secMust">
     <div class="section-label big">必読</div>
     <button class="add-btn" data-act="add-item" data-kind="mustread">＋ 追加</button>
   </div>
   <div id="mustreadList"></div>
 
-  <div class="section-header">
+  <div class="section-header" id="secLink">
     <div class="section-label">LINK</div>
     <button class="add-btn" data-act="add-link">＋ 追加</button>
   </div>
@@ -595,6 +631,17 @@ document.addEventListener('click',async e=>{
   const act=el.dataset.act;
   if(act==='close-bg'){if(e.target===el)closeModals();return;}
   if(act==='close'){closeModals();return;}
+  if(act==='open-menu'){openMenu();return;}
+  if(act==='close-menu'){closeMenu();return;}
+  if(act==='open-price'){closeMenu();openPrice();return;}
+  if(act==='close-price'){closePrice();return;}
+  if(act==='menu-rules'){closeMenu();openModal('rulesModal');return;}
+  if(act==='go'){
+    closeMenu();
+    const t=document.querySelector(el.dataset.target);
+    if(t)setTimeout(()=>t.scrollIntoView({behavior:'smooth',block:'start'}),120);
+    return;
+  }
   if(act==='guide-toggle'){$('#guideToggle').classList.toggle('open');return;}
   if(act==='toggle'){
     const k=el.dataset.key;openSet.has(k)?openSet.delete(k):openSet.add(k);
@@ -682,6 +729,29 @@ $('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();}
   }
   track.addEventListener('scroll',()=>window.requestAnimationFrame(update),{passive:true});
 })();
+
+/* ---------- ハンバーガーメニュー・料金表 ---------- */
+const PRICE_HTML="<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>料金表<\/title><style>:root{--pink:#f58aae;--deep:#d94f78;--light:#fff4f7;--text:#5d3b48;--line:#f7c7d5;--white:#fff}*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,\"Hiragino Kaku Gothic ProN\",\"Yu Gothic\",Meiryo,sans-serif;background:linear-gradient(135deg,#fff7fa 0%,#ffe8f0 50%,#fff 100%);line-height:1.75}.wrap{max-width:1080px;margin:auto;padding:32px 18px 60px}.hero{text-align:center;padding:42px 20px 32px;position:relative}.eyebrow{color:var(--deep);font-size:13px;letter-spacing:.2em;font-weight:bold}.hero h1{margin:8px 0;color:var(--deep);font-size:clamp(30px,6vw,52px);letter-spacing:.08em}.hero p{margin:0;color:#9c6878}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.card{background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:20px;padding:22px 23px;box-shadow:0 8px 24px rgba(217,79,120,.1);transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(217,79,120,.16)}.card.wide{grid-column:span 2}@media(max-width:650px){.card.wide{grid-column:span 1}}h2{display:flex;align-items:center;gap:9px;margin:0 0 15px;color:var(--deep);font-size:20px;border-bottom:2px dashed #f5cad6;padding-bottom:10px}.row{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px dotted #edc5d0}.row:last-child{border-bottom:0}.label{font-weight:500}.price{color:var(--deep);font-weight:bold;white-space:nowrap;text-align:right}.note{margin:12px 0 0;padding:10px 12px;background:var(--light);border-radius:10px;color:#8c596b;font-size:13px}.sub{margin:16px 0 7px;color:#b04f70;font-weight:bold;font-size:14px}.footer{margin-top:26px;padding:18px;text-align:center;background:#fff0f5;border-radius:16px;color:#9c6878;font-size:13px}.badge{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:20px;background:#ffe0ea;color:var(--deep);font-size:11px}@media(max-width:500px){.wrap{padding:15px 12px 40px}.hero{padding:32px 8px 25px}.card{padding:18px}.row{font-size:14px}}<\/style><\/head><body><main class=\"wrap\"><header class=\"hero\"><div class=\"eyebrow\">PRICE LIST<\/div><\/header><section class=\"grid\"><article class=\"card\"><h2>テレビバラエティ<\/h2><div class=\"row\"><span class=\"label\">〜2020年<\/span><span class=\"price\">300円〜<\/span><\/div><div class=\"note\">画質により100円〜<\/div><div class=\"row\"><span class=\"label\">2020年〜2022年<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">2023年以降<\/span><span class=\"price\">50円〜<\/span><\/div><\/article><article class=\"card\"><h2>配信<\/h2><div class=\"row\"><span class=\"label\">無料配信<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">有料配信<\/span><span class=\"price\">150円〜<\/span><\/div><div class=\"note\">有料配信はお問い合わせください。<br>※サブスクの場合は「その他」をご覧ください。<\/div><\/article><article class=\"card\"><h2>CD円盤<\/h2><div class=\"row\"><span class=\"label\">1曲<\/span><span class=\"price\">30円<\/span><\/div><div class=\"row\"><span class=\"label\">シングル1枚（1形態）<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">アルバム1枚（1形態）<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像のみ<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">全てセット（シングル）<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">全てセット（アルバム）<\/span><span class=\"price\">800円<\/span><\/div><\/article><article class=\"card\"><h2>DVD円盤<\/h2><div class=\"row\"><span class=\"label\">1形態<\/span><span class=\"price\">300円<\/span><\/div><div class=\"row\"><span class=\"label\">2形態セット<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">1つの動画<\/span><span class=\"price\">200円<\/span><\/div><\/article><article class=\"card\"><h2>ドラマ円盤<\/h2><div class=\"row\"><span class=\"label\">1話ごと<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">全話まとめて<\/span><span class=\"price\">300円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像付<\/span><span class=\"price\">500円〜<\/span><\/div><\/article><article class=\"card\"><h2>映画円盤<\/h2><div class=\"row\"><span class=\"label\">本編のみ<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像付き<\/span><span class=\"price\">500円〜<\/span><\/div><\/article><article class=\"card\"><h2>FC等<\/h2><div class=\"row\"><span class=\"label\">情報局<\/span><span class=\"price\">150円<\/span><\/div><div class=\"row\"><span class=\"label\">2022年以前<\/span><span class=\"price\">120円<\/span><\/div><div class=\"row\"><span class=\"label\">2023年以降<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">誕生日動画7点セット<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">ストカレ1年セット<\/span><span class=\"price\">600円<\/span><\/div><\/article><article class=\"card\"><h2>RADIO<\/h2><div class=\"row\"><span class=\"label\">サタスペ回以外（1放送）<\/span><span class=\"price\">80円<\/span><\/div><div class=\"row\"><span class=\"label\">通常回（1放送）<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">通常回（1ヶ月分）<\/span><span class=\"price\">50円×放送回−50円<\/span><\/div><div class=\"note\">例：4回放送の場合 150円<\/div><\/article><article class=\"card\"><h2>その他<\/h2><div class=\"row\"><span class=\"label\">有償サイト1つ<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">無償サイト1つ<\/span><span class=\"price\">50円〜<\/span><\/div><\/article><article class=\"card\"><h2>保存代行<\/h2><div class=\"row\"><span class=\"label\">無償サイト（アーカイブあり）<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">無償サイト（アーカイブなし）<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">有償サイト<\/span><span class=\"price\">500円<\/span><\/div><\/article><article class=\"card wide\"><h2>お渡し方法<\/h2><div class=\"note\"><strong>指定の場合プラス＠<\/strong><br>期限切れ再リンクの場合、数（容量）に応じて100円〜<\/div><div class=\"sub\">指定変更<\/div><div class=\"row\"><span class=\"label\">ギガファイル便<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">ギガわた<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">Googleフォト<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">楽天ドライブ<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">mega<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">その他<\/span><span class=\"price\">100円〜<\/span><\/div><\/article><article class=\"card wide\"><h2>支払い方法<\/h2><div class=\"row\"><span class=\"label\">PayPay<\/span><span class=\"price\">追加料金なし<\/span><\/div><div class=\"note\">マネーライトはご確認をお願いします。<\/div><div class=\"row\"><span class=\"label\">メルカリ等<\/span><span class=\"price\">100円＋手数料10％<\/span><\/div><div class=\"note\"><strong>購入者様の先送りのみ<\/strong><\/div><\/article><\/section><div class=\"footer\">各種OCルールに則って販売でのお譲りはできないことがあります。<\/div><\/main><\/body><\/html>";
+function openMenu(){$('#drawer').classList.add('open');$('#drawerOv').classList.add('open');document.body.style.overflow='hidden';}
+function closeMenu(){
+  $('#drawer').classList.remove('open');$('#drawerOv').classList.remove('open');
+  if(!$('#priceSheet').classList.contains('open')&&!document.querySelector('.modal.open'))document.body.style.overflow='';
+}
+function openPrice(){
+  const f=$('#priceFrame');
+  if(!f.srcdoc)f.srcdoc=PRICE_HTML;
+  $('#priceSheet').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closePrice(){
+  $('#priceSheet').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if($('#priceSheet').classList.contains('open'))closePrice();
+  else if($('#drawer').classList.contains('open'))closeMenu();
+});
 
 /* ---------- 起動 ---------- */
 loadToken();
