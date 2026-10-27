@@ -139,6 +139,14 @@ body.selecting .list-wrap{padding-bottom:90px}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:400}
 .toast.show{opacity:1;transform:translateX(-50%)}
 
+/* 並び替え */
+.mv-bar{display:flex;gap:6px;padding:0 13px 10px;justify-content:flex-end;align-items:center}
+.mv-bar .mv-no{margin-right:auto;font-size:12px;font-weight:800;color:var(--pink-dark)}
+.mv-bar button{min-width:40px;height:34px;border-radius:8px;border:1.5px solid var(--pink-light);background:var(--pink-pale);color:var(--pink-dark);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.mv-bar button:disabled{opacity:.35;cursor:default}
+.card.moved{animation:moved 1s ease}
+@keyframes moved{0%{background:var(--pink-light)}100%{background:var(--white)}}
+
 /* ログイン */
 .steps{display:flex;align-items:center;gap:8px;margin-bottom:16px}
 .step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--gray);opacity:.55}
@@ -175,6 +183,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="adminToolbar" class="toolbar hidden">
 <button class="btn btn-primary" id="addBtn">＋ 追加</button>
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">☑ 選択</button>
+<button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">↕ 並び替え</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -209,6 +218,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn-save" id="filterApplyBtn">表示する</button>
 </div>
 </div>
+</div>
+
+<!-- Reorder Bar -->
+<div class="bulk-bar hidden" id="reorderBar">
+<span class="bulk-count" style="font-size:12px;line-height:1.5">並び替え中：↑↓で順番を変えます（表示中の範囲の中で入れ替わります）</span>
+<button id="reorderDoneBtn" style="background:var(--pink);color:#fff">完了</button>
 </div>
 
 <!-- Bulk Bar -->
@@ -455,7 +470,7 @@ gasPost({action:'saveFullConfig2'},cfg).then(d=>{if(!d||!d.ok){if(!(d&&d.error==
 }
 let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set()};
-let selectMode=false,lastShown=[],bulkBusy=false;
+let selectMode=false,reorderMode=false,lastShown=[],bulkBusy=false;
 const selected=new Set();
 const NEW_DAYS=7;
 function createdMs(item){const id=String(item.id||'');return /^[0-9]{13}$/.test(id)?Number(id):0;}
@@ -830,16 +845,18 @@ data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 lastShown=data.map(d=>d.id);
 document.getElementById('listCount').textContent=data.length+' 件';
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
-list.innerHTML=data.map(item=>{
+list.innerHTML=data.map((item,idx)=>{
 return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
 ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
 </div>
-${isAdmin&&!selectMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
+${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
 </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
-${isAdmin&&!selectMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
+${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
+${isAdmin&&!selectMode&&!reorderMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
+list.querySelectorAll('[data-mv]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();moveItem(b.dataset.id,b.dataset.mv);}));
 list.querySelectorAll('[data-toggle]').forEach(inp=>inp.addEventListener('change',async(e)=>{
 e.stopPropagation();
 const all=await loadVideos();const item=all.find(d=>d.id===inp.dataset.toggle);
@@ -854,6 +871,7 @@ list.querySelectorAll('label.toggle').forEach(l=>l.addEventListener('click',e=>e
 list.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();openEditModal(b.dataset.edit);}));
 list.querySelectorAll('[data-delete]').forEach(b=>b.addEventListener('click',(e)=>{e.stopPropagation();deleteItem(b.dataset.delete);}));
 list.querySelectorAll('[data-detail]').forEach(card=>card.addEventListener('click',async()=>{
+if(reorderMode)return;
 if(selectMode){toggleSel(card);return;}
 const data=await loadVideos();const item=data.find(d=>d.id===card.dataset.detail);if(item)openDetailModal(item);
 }));
@@ -866,7 +884,7 @@ badge.className='mode-badge '+(isAdmin?'admin':'view');
 document.getElementById('loginBtn').classList.toggle('hidden',isAdmin);
 document.getElementById('settingsBtn').style.display=isAdmin?'':'none';
 document.getElementById('adminToolbar').classList.toggle('hidden',!isAdmin);
-if(!isAdmin){selectMode=false;selected.clear();}
+if(!isAdmin){selectMode=false;selected.clear();if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;}updateReorderBar();}
 updateBulkBar();
 renderTabs();renderSubtabs();renderList();
 }
@@ -1370,7 +1388,7 @@ updateBulkBar();
 function exitSelect(){selectMode=false;selected.clear();updateBulkBar();renderList();}
 document.getElementById('selectBtn').addEventListener('click',()=>{
 if(!isAdmin)return;
-if(selectMode){exitSelect();}else{selectMode=true;selected.clear();updateBulkBar();renderList();}
+if(selectMode){exitSelect();}else{if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;updateReorderBar();}selectMode=true;selected.clear();updateBulkBar();renderList();}
 });
 document.getElementById('bulkDoneBtn').addEventListener('click',exitSelect);
 document.getElementById('bulkAllBtn').addEventListener('click',()=>{
@@ -1455,6 +1473,61 @@ document.getElementById('bulkDelete').addEventListener('click',()=>{
 if(!confirm(selected.size+'件を削除します。元に戻せません。よろしいですか？'))return;
 bulkRun('delete');
 });
+
+
+/* ===== 並び替え（管理者・ジャンル内の順番を手動で変更） ===== */
+let orderQueue=Promise.resolve();
+function updateReorderBar(){
+document.getElementById('reorderBar').classList.toggle('hidden',!reorderMode);
+document.body.classList.toggle('selecting',reorderMode||selectMode);
+document.getElementById('reorderBtn').textContent=reorderMode?'↕ 並び替え中':'↕ 並び替え';
+}
+function enterReorder(){
+if(!isAdmin)return;
+selectMode=false;selected.clear();updateBulkBar();
+reorderMode=true;
+sortOrder='default';
+const ss=document.getElementById('sortSelect');ss.value='default';ss.disabled=true;
+updateReorderBar();renderList();
+}
+function exitReorder(){
+reorderMode=false;
+document.getElementById('sortSelect').disabled=false;
+updateReorderBar();renderList();
+}
+document.getElementById('reorderBtn').addEventListener('click',()=>{reorderMode?exitReorder():enterReorder();});
+document.getElementById('reorderDoneBtn').addEventListener('click',exitReorder);
+function applyOrderLocally(ids){
+const set=new Set(ids);const slots=[];
+cachedVideos.forEach((v,k)=>{if(set.has(v.id))slots.push(k);});
+if(slots.length!==ids.length)return false;
+const byId=new Map(cachedVideos.map(v=>[v.id,v]));
+ids.forEach((id,k)=>{cachedVideos[slots[k]]=byId.get(id);});
+try{localStorage.setItem('videos_ls_cache2',JSON.stringify(cachedVideos));}catch{}
+return true;
+}
+async function sendOrder(ids){
+let okk=false;
+try{const d=await gasPost({action:'reorderVideos2'},{ids});okk=!!(d&&d.ok);}catch{}
+if(okk){toastMsg('並び順を保存しました');}
+else{
+if(isAdmin)failMsg('並び順の保存');
+cachedVideos=null;await loadVideos(true);renderList();
+}
+}
+async function moveItem(id,dir){
+const ids=lastShown.slice();
+const i=ids.indexOf(id);if(i<0)return;
+let j=i;
+if(dir==='up')j=i-1;else if(dir==='down')j=i+1;else if(dir==='top')j=0;else if(dir==='bottom')j=ids.length-1;
+if(j<0||j>=ids.length||j===i)return;
+ids.splice(i,1);ids.splice(j,0,id);
+if(!applyOrderLocally(ids))return;
+await renderList();
+const el=document.querySelector('[data-detail="'+id+'"]');
+if(el){el.classList.add('moved');el.scrollIntoView({block:'nearest',behavior:'smooth'});}
+orderQueue=orderQueue.then(()=>sendOrder(ids));
+}
 
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
