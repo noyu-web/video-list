@@ -421,8 +421,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbzcQk2qXHLkun0bAgOYsFJiATESW-eju6s8ZqplZwvxXr94hpmZKmzLqIu5UaHRDTzU/exec';
 const TOKEN_KEY='top_admin_token';
-const DEFAULT_GENRES=['すべて','ガムシャラ','ISLAND TV(ショート動画)','GOスト'];
-const DEFAULT_SUBGENRES={'ガムシャラ':[],'ISLAND TV(ショート動画)':[],'GOスト':[]};
+const DEFAULT_GENRES=['すべて','ガムシャラ','ISLAND TV(ショート動画)','ANN'];
+const DEFAULT_SUBGENRES={'ガムシャラ':[],'ISLAND TV(ショート動画)':[],'ANN':[]};
 const DEFAULT_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 const DEFAULT_OTHER_MEMBERS={'DOMOTO(KinKi kids)':['堂本光一','堂本剛'],'V6':['坂本昌行','長野博','井ノ原快彦','森田剛','三宅健','岡田准一'],'嵐':['大野智','櫻井翔','相葉雅紀','二宮和也','松本潤'],'Snow Man':['ラウール','向井康二','目黒蓮','渡辺翔太','岩本照','深澤辰哉','阿部亮平','宮舘涼太','佐久間大介'],'なにわ男子':['道枝駿佑','高橋恭平','西畑大吾','大橋和也','藤原丈一郎','長尾謙杜','小島健']};
 let _cfg=null;
@@ -1535,7 +1535,14 @@ loadToken();
 applyHash();
 document.getElementById('cardList').innerHTML=loadingHTML('読み込み中');
 updateAdminUI();
-loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();});
+{
+let hadCfg=true;
+try{hadCfg=!!localStorage.getItem('cfg_genres2');}catch{}
+const tw=document.querySelector('.tabs-wrap');
+const showTabs=()=>{tw.style.visibility='';};
+if(!hadCfg){tw.style.visibility='hidden';setTimeout(showTabs,3000);}
+loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();showTabs();});
+}
 if(isAdmin){
 gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAdminUI();}}).catch(()=>{});
 }
