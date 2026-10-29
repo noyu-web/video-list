@@ -268,6 +268,19 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div class="toast" id="toast"></div>
 
+<!-- Member Fix Modal -->
+<div class="modal-overlay hidden" id="memberFixModal" style="z-index:210">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0">出演者名の整理</div>
+<button class="btn-icon" id="memberFixCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">「変更・統合」を押して新しい名前を入れると、すべての動画の出演者名が書き換わります。すでにある名前を入れると、1つにまとまります。</div>
+<div id="memberFixList"></div>
+<div id="memberFixProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+</div>
+</div>
+
 <!-- Detail Modal -->
 <div class="modal-overlay hidden" id="detailModal">
 <div class="modal">
@@ -332,6 +345,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 <input class="form-input" id="newOtherMemberInput" placeholder="新しい名前" style="flex:1">
 <button class="btn btn-primary" id="addOtherMemberBtn" style="border-radius:8px;padding:8px 14px">追加</button>
 </div>
+</div>
+<div class="form-group">
+<div class="section-title">出演者名の整理（表記ゆれの統合）</div>
+<div style="font-size:11px;color:var(--gray);margin-bottom:8px;line-height:1.6">「光一」と「堂本光一」のような表記の違いを、まとめて直します。</div>
+<button class="btn btn-primary" id="memberFixOpenBtn" style="border-radius:8px;padding:8px 14px">名前の一覧を開く</button>
 </div>
 <div class="modal-footer">
 <button class="btn-save" id="settingsCloseBtn">閉じる</button>
@@ -537,6 +555,7 @@ setTimeout(()=>{if(window[name]){delete window[name];s.remove();reject(new Error
 }
 async function gasGet(params,timeout){return jsonp(params,timeout);}
 function normTitle(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');}
+function fold(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
 function failMsg(what){toastMsg(what+'に失敗しました。もう一度お試しください。');}
 async function gasPost(params,payload){
 const url=GAS_URL+'?'+new URLSearchParams({...params,token});
@@ -653,9 +672,10 @@ F.years.forEach(y=>{if(ys.has(y))ok=true;});
 if(!ok)return false;
 }
 if(F.q){
-const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item)].join(' ').toLowerCase();
-const terms=F.q.toLowerCase().split(/\s+/).filter(Boolean);
-if(!terms.every(t=>hay.includes(t)))return false;
+const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item)].join(' ');
+const hayF=fold(hay);
+const terms=fold(F.q).split(/\s+/).filter(Boolean);
+if(!terms.every(t=>hayF.includes(t)))return false;
 }
 if(F.gaps.size){
 const gs0=parseGenres(item.genres||item.genre||'');
@@ -1527,6 +1547,90 @@ await renderList();
 const el=document.querySelector('[data-detail="'+id+'"]');
 if(el){el.classList.add('moved');el.scrollIntoView({block:'nearest',behavior:'smooth'});}
 orderQueue=orderQueue.then(()=>sendOrder(ids));
+}
+
+
+/* ===== 出演者名の整理（表記ゆれの統合） ===== */
+let memberFixBusy=false;
+function parseTracks(v){try{const a=JSON.parse(v.tracks||'[]');return Array.isArray(a)?a:[];}catch{return [];}}
+function collectMemberCounts(){
+const cnt=new Map();
+(cachedVideos||[]).forEach(v=>{
+const names=new Set(v.members||[]);
+parseTracks(v).forEach(t=>{if(t&&Array.isArray(t.members))t.members.forEach(m=>names.add(m));});
+names.forEach(n=>cnt.set(n,(cnt.get(n)||0)+1));
+});
+return cnt;
+}
+function registeredNames(){
+cfg=loadConfig();
+const set=new Set(cfg.members);
+Object.values(cfg.otherMembers||{}).forEach(a=>(a||[]).forEach(n=>set.add(n)));
+return set;
+}
+function renderMemberFix(){
+const cnt=collectMemberCounts();const reg=registeredNames();
+const names=[...cnt.keys()].sort((a,b)=>a.localeCompare(b,'ja'));
+const unreg=names.filter(n=>!reg.has(n)),regd=names.filter(n=>reg.has(n));
+const row=n=>`<div class="manage-item"><span>${esc(n)} <span style="color:var(--gray);font-size:11px">（${cnt.get(n)}件）</span></span><button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark)" data-mfix="${esc(n)}">変更・統合</button></div>`;
+document.getElementById('memberFixList').innerHTML=
+(unreg.length?`<div class="section-title">未登録の名前（設定にない名前）</div><div class="manage-list" style="max-height:none">${unreg.map(row).join('')}</div>`:'<div style="font-size:12px;color:var(--gray);margin-bottom:8px">未登録の名前はありません</div>')+
+`<div class="section-title" style="margin-top:14px">登録済みの名前</div><div class="manage-list" style="max-height:none">${regd.map(row).join('')||'<div style="font-size:12px;color:var(--gray)">なし</div>'}</div>`;
+}
+async function openMemberFix(){
+await loadVideos();
+document.getElementById('memberFixList').classList.remove('hidden');
+document.getElementById('memberFixProgress').classList.add('hidden');
+renderMemberFix();
+document.getElementById('memberFixModal').classList.remove('hidden');
+}
+document.getElementById('memberFixOpenBtn').addEventListener('click',openMemberFix);
+function closeMemberFix(){if(memberFixBusy)return;document.getElementById('memberFixModal').classList.add('hidden');}
+document.getElementById('memberFixCloseBtn').addEventListener('click',closeMemberFix);
+document.getElementById('memberFixModal').addEventListener('click',function(e){if(e.target===this)closeMemberFix();});
+document.getElementById('memberFixList').addEventListener('click',e=>{
+const b=e.target.closest('[data-mfix]');if(!b||!isAdmin)return;
+const old=b.dataset.mfix;
+const nw=prompt('「'+old+'」の新しい名前\n（すでにある名前を入れると、1つにまとまります）',old);
+if(nw===null)return;
+mergeMember(old,nw.trim());
+});
+async function mergeMember(oldName,newName){
+if(memberFixBusy||!newName||newName===oldName)return;
+const all=await loadVideos();
+const hasOld=v=>(v.members||[]).includes(oldName)||parseTracks(v).some(t=>t&&Array.isArray(t.members)&&t.members.includes(oldName));
+const targets=all.filter(hasOld);
+if(!targets.length){alert('該当する動画がありません');return;}
+if(!confirm('「'+oldName+'」→「'+newName+'」\n'+targets.length+'件の動画の出演者名を書き換えます。よろしいですか？'))return;
+memberFixBusy=true;
+document.getElementById('memberFixList').classList.add('hidden');
+const pg=document.getElementById('memberFixProgress');pg.classList.remove('hidden');
+const swap=a=>{const out=[];(a||[]).forEach(n=>{const x=n===oldName?newName:n;if(!out.includes(x))out.push(x);});return out;};
+let done=0,fail=0;
+pg.textContent='0 / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+for(const v of targets){
+const tr=parseTracks(v).map(t=>(t&&Array.isArray(t.members))?{...t,members:swap(t.members)}:t);
+const v2={...v,members:swap(v.members),tracks:JSON.stringify(tr)};
+let okk=false;
+try{okk=await writeVideo(v2,false);}catch{}
+if(!okk)fail++;
+done++;
+pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+if(!isAdmin)break;
+}
+if(done-fail>0){
+cfg=loadConfig();
+cfg.members=swap(cfg.members);
+Object.keys(cfg.otherMembers||{}).forEach(g=>{cfg.otherMembers[g]=swap(cfg.otherMembers[g]);});
+saveConfig(cfg);
+if(F.members.has(oldName)){F.members.delete(oldName);F.members.add(newName);}
+}
+memberFixBusy=false;
+cachedVideos=null;await loadVideos(true);
+renderList();
+document.getElementById('memberFixList').classList.remove('hidden');pg.classList.add('hidden');
+renderMemberFix();
+toastMsg(fail?`${done-fail}件完了／${fail}件失敗`:`${done}件を書き換えました`);
 }
 
 /* ===== 起動 ===== */
