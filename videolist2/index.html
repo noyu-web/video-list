@@ -1259,10 +1259,10 @@ document.getElementById('editTitle').value=item?item.title:'';
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
 const sel=item?item.members:[];
-function renderMemberChips(){
+function renderMemberChips(initial){
 cfg=loadConfig();
-const nowSel=[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
-const effectiveSel=nowSel.length?nowSel:sel;
+const nowSel=initial?[]:[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
+const effectiveSel=initial?sel:nowSel;
 document.getElementById('memberChips').innerHTML=cfg.members.map(m=>`<button type="button" class="chip${effectiveSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
 document.getElementById('memberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 const selectedGenres2=getSelectedGenres();
@@ -1272,8 +1272,9 @@ otherSubs.forEach(sub=>{if(cfg.otherMembers[sub])extraMembers=[...new Set([...ex
 const otherGroup=document.getElementById('otherMemberGroup');
 if(extraMembers.length){
 otherGroup.classList.remove('hidden');
+const hadOther=!initial&&document.getElementById('otherMemberChips').children.length>0;
 const nowOtherSel=[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
-const effectiveOtherSel=nowOtherSel.length?nowOtherSel:sel;
+const effectiveOtherSel=hadOther?nowOtherSel:sel;
 document.getElementById('otherMemberChips').innerHTML=extraMembers.map(m=>`<button type="button" class="chip${effectiveOtherSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
 document.getElementById('otherMemberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 }else{
@@ -1281,12 +1282,12 @@ otherGroup.classList.add('hidden');
 document.getElementById('otherMemberChips').innerHTML='';
 }
 }
-renderMemberChips();
-setTimeout(()=>{
-document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(renderMemberChips,50)));
-},100);
 const selectedGenres=item?parseGenres(item.genres||item.genre||''):[];
 renderGenreSections(selectedGenres);
+document.getElementById('memberChips').innerHTML='';
+document.getElementById('otherMemberChips').innerHTML='';
+renderMemberChips(true);
+document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?formatSchedules(item.dates):[];
 if(schedules.length)schedules.forEach(s=>addDateGroup(s.date,s.times||[]));
