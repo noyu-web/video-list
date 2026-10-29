@@ -75,6 +75,11 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
 .fs-others summary{font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;padding:4px 0;margin-bottom:6px;}
 .x-btn{background:none;border:none;font-size:20px;color:var(--gray);cursor:pointer;}
 
+/* 所持リストへ追加：ジャンル */
+.own-gsec{border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:6px;background:#fff8fb;}
+.own-gtitle{font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
+.own-note{font-size:11px;color:var(--gray);margin-top:2px;}
+
 /* NEW・所持照合・一括選択 */
 .new-badge{display:inline-block;background:var(--pink-dark);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:6px;letter-spacing:.06em;vertical-align:middle;}
 .admin-bar{padding:0 0 10px;}
@@ -188,6 +193,9 @@ body.selecting{padding-bottom:110px;}
     <div class="form-group"><label class="form-label">タイトル</label><input class="form-input" id="own-title"></div>
     <div class="form-group"><label class="form-label">交換</label>
       <select class="form-select" id="own-ex"><option value="consult">要相談</option><option value="ok">可</option><option value="partial">一部交換可</option><option value="ng">不可</option></select></div>
+    <div class="form-group"><label class="form-label">出演者（カンマ区切り）</label><input class="form-input" id="own-members" placeholder="例: 田中樹, ジェシー"></div>
+    <div class="form-group"><label class="form-label">ジャンル・小ジャンル（複数選択可）</label><div id="own-genres"></div></div>
+    <div class="form-group"><label class="form-label">配信・放送日</label><input class="form-input" id="own-date" type="date"></div>
     <div class="form-group"><label class="form-label">メモ</label><textarea class="form-textarea" id="own-note"></textarea></div>
     <div class="modal-btns"><button class="btn-cancel" id="ownSkip">スキップ</button><button class="btn-save" id="ownAdd">追加</button></div>
   </div>
@@ -776,11 +784,50 @@ $('#bulkDelete').addEventListener('click',()=>{
 
 /* ---------- 入手済み → 所持リストへ追加 ---------- */
 let ownTarget=null;
+const OWN_DEF={
+  '1':{genres:['すべて','配信関連','円盤','テレビ番組','ドラマ・映画','Radio','FC・FCweb','SixTONES以外'].filter(g=>g!=='すべて'),subgenres:{'配信関連':['ISLAND TV','Johnnys online・FAMILY CLUB online','Hulu・FOD・TELASA・Netflix','WOWWOW','Instagram Live','X SPACE','滝CHANnel','other'],'円盤':['Jr時代円盤','SixTONES CD円盤','SixTONES Live DVD円盤','ART-PUT'],'テレビ番組':['Jr時代 レギュラー・準レギュラー番組','レギュラー番組','バラエティー'],'ドラマ・映画':[],'Radio':['ANN','らじらー','その他'],'FC・FCweb':['情報局','SixTONES...','FC web'],'SixTONES以外':['DOMOTO(KinKi kids)','V6','嵐','KAT-TUN','NEWS','SUPER EIGHT','Hey! Say! JUMP','Kis-My-Ft2','Sexy Zone','WEST.','King&Prince','Snow Man','なにわ男子','Travis Japan','Aえ！group','HiHi Jets','美少年','7 MEN 侍','少年忍者','Lilかんさい','ふぉ〜ゆ〜＆俳優部＆無所']}},
+  '2':{genres:['すべて','ガムシャラ','ISLAND TV(ショート動画)','ANN'].filter(g=>g!=='すべて'),subgenres:{'ガムシャラ':[],'ISLAND TV(ショート動画)':[],'ANN':[]}}
+};
+const ownCfgCache={};
+async function loadOwnCfg(dest){
+  if(ownCfgCache[dest])return ownCfgCache[dest];
+  let cfgv=null;
+  try{
+    const d=await jsonp({action:dest==='2'?'getFullConfig2':'getFullConfig'},12000);
+    if(d&&Array.isArray(d.genres)&&d.genres.length)cfgv={genres:d.genres.filter(g=>g!=='すべて'),subgenres:d.subgenres||{}};
+  }catch{}
+  if(!cfgv){
+    try{
+      const sfx=dest==='2'?'2':'';
+      const gs=JSON.parse(localStorage.getItem('cfg_genres'+sfx)||'null');
+      const sg=JSON.parse(localStorage.getItem('cfg_subgenres'+sfx)||'null');
+      if(Array.isArray(gs)&&gs.length)cfgv={genres:gs.filter(g=>g!=='すべて'),subgenres:sg||{}};
+    }catch{}
+  }
+  if(!cfgv)cfgv=OWN_DEF[dest];
+  ownCfgCache[dest]=cfgv;
+  return cfgv;
+}
+async function renderOwnGenres(){
+  const dest=$('#own-dest').value;const box=$('#own-genres');
+  box.innerHTML='<div class="own-note">ジャンルを読み込み中…</div>';
+  const c=await loadOwnCfg(dest);
+  if($('#own-dest').value!==dest)return;
+  box.innerHTML=c.genres.map(g=>{
+    const subs=c.subgenres[g]||[];
+    if(subs.length)return `<div class="own-gsec"><div class="own-gtitle">${esc(g)}</div><div class="chips-grid">${subs.map(sg=>`<button type="button" class="chip" data-g="${esc(g)}" data-s="${esc(sg)}">${esc(sg)}</button>`).join('')}</div></div>`;
+    return `<div class="own-gsec"><div class="chips-grid"><button type="button" class="chip" data-g="${esc(g)}" data-s="">${esc(g)}</button></div></div>`;
+  }).join('');
+}
+$('#own-genres').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('selected');});
+$('#own-dest').addEventListener('change',renderOwnGenres);
 function openOwnModal(it){
   ownTarget=it;
   $('#own-title').value=it.title;$('#own-note').value=it.note||'';
+  $('#own-members').value=it.members||'';$('#own-date').value=it.date||'';
   $('#own-ex').value='consult';$('#own-dest').value='1';
   $('#ownModal').classList.remove('hidden');
+  renderOwnGenres();
 }
 $('#ownSkip').addEventListener('click',()=>$('#ownModal').classList.add('hidden'));
 $('#ownAdd').addEventListener('click',async()=>{
@@ -789,14 +836,16 @@ $('#ownAdd').addEventListener('click',async()=>{
   if(!title){alert('タイトルを入力してください');return;}
   const dest=$('#own-dest').value,ex=$('#own-ex').value,note=$('#own-note').value.trim();
   const label=dest==='2'?'所持リスト②':'所持リスト①';
-  const video={id:Date.now().toString(),title,members:splitMembers(it.members),exchange:ex,genres:'[]',dates:it.date?JSON.stringify([{date:it.date,times:[]}]):'[]',note,tracks:'[]'};
+  const genres=[...document.querySelectorAll('#own-genres .chip.selected')].map(c=>({genre:c.dataset.g,subgenre:c.dataset.s||''}));
+  const date=$('#own-date').value;
+  const video={id:Date.now().toString(),title,members:splitMembers($('#own-members').value),exchange:ex,genres:JSON.stringify(genres),dates:date?JSON.stringify([{date,times:[]}]):'[]',note,tracks:'[]'};
   const btn=$('#ownAdd');btn.disabled=true;
   let okk=false;
   try{const d=await gasPost({action:dest==='2'?'saveVideo2':'saveVideo'},{video,isNew:true});okk=!!(d&&d.ok);}catch{}
   btn.disabled=false;
   if(!okk){if(isAdmin)toastMsg('所持リストへの追加に失敗しました。もう一度お試しください。');return;}
   $('#ownModal').classList.add('hidden');
-  renderList();toastMsg(label+'に追加しました');
+  toastMsg(label+'に追加しました');
 });
 
 /* ---------- 起動 ---------- */
