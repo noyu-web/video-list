@@ -279,6 +279,7 @@ let _toastT;
 function toastMsg(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>el.classList.remove('show'),2200);}
 
 function normTitle(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');}
+function fold(s){return String(s||'').normalize('NFKC').toLowerCase().replace(/[ァ-ヶ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
 
 /* 絞り込み条件をURLに保存・復元（共有用） */
 const HK=[['m','members'],['y','years'],['p','prio'],['s','status'],['n','fresh']];
@@ -390,8 +391,8 @@ function matchItem(it){
   if(F.members.size&&!splitMembers(it.members).some(m=>F.members.has(m)))return false;
   if(F.years.size&&!F.years.has(yearOf(it)))return false;
   if(F.q){
-    const hay=[it.title,it.members,it.note,it.date].join(' ').toLowerCase();
-    const terms=F.q.toLowerCase().split(/\s+/).filter(Boolean);
+    const hay=fold([it.title,it.members,it.note,it.date].join(' '));
+    const terms=fold(F.q).split(/\s+/).filter(Boolean);
     if(!terms.every(t=>hay.includes(t)))return false;
   }
   if(F.fresh.size&&!isNewW(it))return false;
