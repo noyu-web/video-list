@@ -139,6 +139,29 @@ body.selecting .list-wrap{padding-bottom:90px}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:400}
 .toast.show{opacity:1;transform:translateX(-50%)}
 
+/* お気に入り・進捗・診断・重複・貼り付け */
+.card-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.fav-btn{border:none;background:none;font-size:22px;line-height:1;color:#cbd5e1;cursor:pointer;padding:2px 4px;font-family:inherit}
+.fav-btn.on{color:#f5b301}
+.fav-only{margin-left:auto;font-size:12px;font-weight:700;padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);background:var(--white);color:var(--gray);cursor:pointer;font-family:inherit}
+.fav-only.on{background:#fff7d6;border-color:#f5b301;color:#8a6500}
+.tab-prog{display:block;font-size:9px;font-weight:700;color:var(--gray);margin-top:1px;text-align:center}
+.tab-prog.full{color:#166534}
+.check-progress{margin:0 0 10px;font-size:12px;font-weight:700;color:#166534}
+.check-progress .bar{height:6px;border-radius:4px;background:#e5e7eb;margin-top:4px;overflow:hidden}
+.check-progress .bar i{display:block;height:100%;background:#22c55e}
+.health-row{display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 14px;margin-bottom:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--white);font-size:14px;font-weight:700;color:var(--text);cursor:pointer;font-family:inherit;text-align:left}
+.health-n{font-size:13px;font-weight:800;padding:2px 10px;border-radius:12px}
+.health-n.warn{background:#fee2e2;color:#991b1b}
+.health-n.okc{background:#dcfce7;color:#166534}
+.dup-group{border:1.5px solid var(--pink-light);border-radius:10px;padding:10px;margin-bottom:12px;background:var(--pink-pale)}
+.dup-title{font-size:13px;font-weight:800;color:var(--pink-dark);margin-bottom:8px;word-break:break-all}
+.dup-item{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;line-height:1.6}
+.dup-item b{font-size:13px}
+.dup-actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.dup-actions button{padding:5px 10px;border-radius:8px;border:1.5px solid var(--pink-light);background:var(--pink-pale);color:var(--pink-dark);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.paste-prev{background:var(--gray-light);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.7;max-height:150px;overflow-y:auto;margin-top:8px}
+
 /* 確認済みチェック */
 .chk-wrap{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;font-weight:700;color:var(--gray);cursor:pointer}
 .chk-wrap input{width:20px;height:20px;accent-color:#22c55e}
@@ -190,6 +213,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn btn-primary" id="addBtn">＋ 追加</button>
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">☑ 選択</button>
 <button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">↕ 並び替え</button>
+<button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">🩺 診断</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -203,10 +227,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 <option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
 </select>
+<button type="button" class="fav-only" id="favOnlyBtn">☆ お気に入りだけ</button>
 </div>
 
 <div class="list-wrap">
 <div class="list-count" id="listCount"></div>
+<div class="check-progress hidden" id="checkProgress"></div>
 <div id="cardList"></div>
 </div>
 
@@ -291,6 +317,54 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">「変更・統合」を押して新しい名前を入れると、すべての動画の出演者名が書き換わります。すでにある名前を入れると、1つにまとまります。</div>
 <div id="memberFixList"></div>
 <div id="memberFixProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+</div>
+</div>
+
+<!-- Health Modal -->
+<div class="modal-overlay hidden" id="healthModal" style="z-index:205">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0">🩺 データの診断</div>
+<button class="btn-icon" id="healthCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">気になる項目をタップすると、該当する動画の一覧（または整理の画面）が開きます。</div>
+<div id="healthList"></div>
+</div>
+</div>
+
+<!-- Dup Modal -->
+<div class="modal-overlay hidden" id="dupModal" style="z-index:205">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0">重複タイトルの整理</div>
+<button class="btn-icon" id="dupCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">同じタイトル（全角半角・記号の違いは同じとみなします）の動画です。残す1件を選ぶと、ほかは削除されます。</div>
+<div id="dupList"></div>
+<div id="dupProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+<button class="btn-add-small" id="dupCrossBtn" type="button">所持リスト②にも同じタイトルがあるか調べる</button>
+<div id="dupCross" style="margin-top:8px"></div>
+</div>
+</div>
+</div>
+
+<!-- Paste Tracks Modal -->
+<div class="modal-overlay hidden" id="pasteModal" style="z-index:215">
+<div class="modal">
+<div class="modal-title">収録内容をまとめて貼り付け</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:8px;line-height:1.6">1行に1つずつ貼り付けてください。「音源」「特典映像」などの見出しの行があると、その下の行は自動でその区分になります。</div>
+<textarea class="form-textarea" id="pasteText" style="min-height:140px" placeholder="例：&#10;音源&#10;1. こっから&#10;2. 雨&#10;特典映像&#10;3. こっから -Music Video-"></textarea>
+<div style="display:flex;gap:6px;margin-top:8px">
+<select class="form-select" id="pasteSection"><option value="">区分なし</option><option value="音源">音源</option><option value="映像">映像</option><option value="特典映像">特典映像</option><option value="ドキュメント">ドキュメント</option><option value="メイキング">メイキング</option><option value="その他">その他</option></select>
+<select class="form-select" id="pasteDist"><option value="none">配布なし</option><option value="ok">配布可</option><option value="ng">配布不可</option></select>
+</div>
+<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px"><input type="checkbox" id="pasteStrip" checked> 行頭の番号（1. や 01 など）を取り除く</label>
+<div class="paste-prev" id="pastePrev">貼り付けると、ここに内容が表示されます</div>
+<div class="modal-footer">
+<button class="btn-cancel" id="pasteCancelBtn">キャンセル</button>
+<button class="btn-save" id="pasteAddBtn">追加</button>
+</div>
 </div>
 </div>
 
@@ -437,6 +511,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">収録内容,詳細</label>
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
+<button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
 </div>
 <div class="form-group">
 <label class="form-label">メモ</label>
@@ -500,9 +575,14 @@ localStorage.setItem('cfg_other_members',JSON.stringify(cfg.otherMembers));
 gasPost({action:'saveFullConfig'},cfg).then(d=>{if(!d||!d.ok){if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');}}).catch(()=>failMsg('設定の保存'));
 }
 let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
-const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set()};
+const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set(),fav:new Set()};
 const CHECK_LIST='1';
 const checkedSet=new Set();let checksLoaded=false;
+const FAV_KEY='fav_ids_'+CHECK_LIST;
+const favSet=new Set();
+try{JSON.parse(localStorage.getItem(FAV_KEY)||'[]').forEach(i=>favSet.add(String(i)));}catch{}
+function saveFav(){try{localStorage.setItem(FAV_KEY,JSON.stringify([...favSet]));}catch{}}
+const OTHER_ACTION='getVideos2',OTHER_LABEL='所持リスト②';
 let selectMode=false,reorderMode=false,lastShown=[],bulkBusy=false;
 const selected=new Set();
 const NEW_DAYS=7;
@@ -642,7 +722,7 @@ return str?str.split(',').filter(d=>d&&d.trim()&&d!=='ok'&&d!=='ng').map(d=>({da
 function renderTabs(){
 cfg=loadConfig();
 const t=document.getElementById('tabs');
-t.innerHTML=cfg.genres.map(g=>`<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+t.innerHTML=cfg.genres.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
 t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
 function renderSubtabs(){
@@ -697,9 +777,11 @@ const gs0=parseGenres(item.genres||item.genre||'');
 const c0=loadConfig();
 let hit=false;
 if(F.gaps.has('nogenre')&&gs0.length===0)hit=true;
+if(F.gaps.has('nomember')&&(item.members||[]).length===0)hit=true;
 if(F.gaps.has('nosub')&&gs0.some(g=>((c0.subgenres[g.genre]||[]).length>0)&&!g.subgenre))hit=true;
 if(!hit)return false;
 }
+if(F.fav.size&&!favSet.has(item.id))return false;
 if(F.chk.size&&isAdmin){
 const c1=checkedSet.has(item.id);
 if(!((F.chk.has('yes')&&c1)||(F.chk.has('no')&&!c1)))return false;
@@ -708,7 +790,7 @@ if(F.fresh.size&&!isNew(item))return false;
 return true;
 }
 function filterCount(){
-return F.genres.size+F.members.size+F.years.size+F.ex.size+F.fresh.size+F.gaps.size+(isAdmin?F.chk.size:0)+(F.q?1:0);
+return F.genres.size+F.members.size+F.years.size+F.ex.size+F.fresh.size+F.gaps.size+(isAdmin?F.chk.size:0)+F.fav.size+(F.q?1:0);
 }
 function renderActiveBar(){
 const items=[];
@@ -718,8 +800,9 @@ F.members.forEach(v=>items.push({k:'members',v,label:v}));
 F.years.forEach(v=>items.push({k:'years',v,label:v+'年'}));
 F.ex.forEach(v=>items.push({k:'ex',v,label:exchangeLabel(v)}));
 F.fresh.forEach(v=>items.push({k:'fresh',v,label:'新着（7日以内）'}));
+F.fav.forEach(v=>items.push({k:'fav',v,label:'★ お気に入り'}));
 if(isAdmin)F.chk.forEach(v=>items.push({k:'chk',v,label:v==='yes'?'確認済み':'未確認'}));
-F.gaps.forEach(v=>items.push({k:'gaps',v,label:v==='nogenre'?'ジャンル未設定':'小ジャンル未設定'}));
+F.gaps.forEach(v=>items.push({k:'gaps',v,label:v==='nogenre'?'ジャンル未設定':v==='nomember'?'出演者なし':'小ジャンル未設定'}));
 document.getElementById('activeBar').innerHTML=items.map(it=>`<button type="button" class="af-chip" data-fk="${it.k}" data-fv="${esc(it.v)}">${esc(it.label)} ✕</button>`).join('');
 const n=filterCount();
 document.getElementById('filterBadge').textContent=n;
@@ -768,7 +851,8 @@ secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/�
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
 secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
 secHTML('新着','7日以内に追加された動画','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>')+
-(isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+'</div>'):'')+
+secHTML('お気に入り','この端末に保存されます','<div class="chips-grid">'+chipHTML('fav','yes','★ お気に入りのみ')+'</div>')+
+(isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+chipHTML('gaps','nomember','出演者なし')+'</div>'):'')+
 (isAdmin?secHTML('確認状況','管理者向け・チェックの有無で絞り込み','<div class="chips-grid">'+chipHTML('chk','yes','確認済み')+chipHTML('chk','no','未確認')+'</div>'):'');
 body.innerHTML=html;
 body.scrollTop=prevScroll;
@@ -837,7 +921,7 @@ try{await navigator.clipboard.writeText(url);toastMsg('この条件のリンク�
 catch{prompt('このリンクをコピーしてください',url);}
 });
 document.getElementById('filterResetBtn').addEventListener('click',()=>{
-F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.clear();F.gaps.clear();F.chk.clear();
+F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.clear();F.gaps.clear();F.chk.clear();F.fav.clear();
 renderFilterSheet();renderList();
 });
 
@@ -884,6 +968,7 @@ const o={ok:0,partial:1,consult:2,ng:3};
 data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 }
 lastShown=data.map(d=>d.id);
+updateProgressLine(data);
 document.getElementById('listCount').textContent=data.length+' 件';
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 list.innerHTML=data.map((item,idx)=>{
@@ -894,10 +979,11 @@ ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${m
 </div>
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
-</div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
+</div><div class="card-side"><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>${selectMode||reorderMode?'':`<button type="button" class="fav-btn${favSet.has(item.id)?' on':''}" data-fav="${item.id}" aria-label="お気に入り">${favSet.has(item.id)?'★':'☆'}</button>`}</div></div>
 ${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
+list.querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleFav(b.dataset.fav,b);}));
 list.querySelectorAll('[data-chk]').forEach(inp=>{
 inp.closest('label').addEventListener('click',e=>e.stopPropagation());
 inp.addEventListener('change',()=>toggleCheck(inp.dataset.chk,inp.checked,inp));
@@ -1669,12 +1755,13 @@ try{
 const d=await jsonp({action:'getChecks',list:CHECK_LIST,token});
 if(d&&d.ok&&Array.isArray(d.ids)){
 checkedSet.clear();d.ids.forEach(i=>checkedSet.add(String(i)));
-checksLoaded=true;renderList();syncFilterSheet();
+checksLoaded=true;renderTabs();renderList();syncFilterSheet();
 }
 }catch{}
 }
 async function toggleCheck(id,value,inp){
 value?checkedSet.add(id):checkedSet.delete(id);
+renderTabs();updateProgressLine();
 const card=inp.closest('.card');
 if(card)card.classList.toggle('checked',value);
 let okk=false;
@@ -1683,6 +1770,7 @@ if(!okk){
 value?checkedSet.delete(id):checkedSet.add(id);
 inp.checked=!value;
 if(card)card.classList.toggle('checked',!value);
+renderTabs();updateProgressLine();
 if(isAdmin)failMsg('チェックの保存');
 }
 }
@@ -1696,13 +1784,225 @@ bulkBusy=false;
 if(okk){ids.forEach(id=>value?checkedSet.add(id):checkedSet.delete(id));toastMsg(ids.length+'件を'+(value?'確認済み':'未確認')+'にしました');}
 else if(isAdmin)failMsg('チェックの保存');
 document.getElementById('bulkModal').classList.add('hidden');
-selected.clear();selectMode=false;updateBulkBar();renderList();
+selected.clear();selectMode=false;updateBulkBar();renderTabs();renderList();
 }
 document.getElementById('bulkCheckOn').addEventListener('click',()=>bulkSetCheck(true));
 document.getElementById('bulkCheckOff').addEventListener('click',()=>bulkSetCheck(false));
 
+
+/* ===== お気に入り（閲覧者・この端末に保存） ===== */
+function updateFavOnlyBtn(){
+const b=document.getElementById('favOnlyBtn');if(!b)return;
+const on=F.fav.has('yes');
+b.classList.toggle('on',on);
+b.textContent=(on?'★':'☆')+' お気に入りだけ'+(favSet.size?'（'+favSet.size+'）':'');
+}
+function toggleFav(id,btn){
+if(favSet.has(id))favSet.delete(id);else favSet.add(id);
+saveFav();
+const on=favSet.has(id);
+btn.classList.toggle('on',on);btn.textContent=on?'★':'☆';
+updateFavOnlyBtn();
+if(F.fav.size)renderList();
+}
+document.getElementById('favOnlyBtn').addEventListener('click',()=>{
+if(F.fav.has('yes'))F.fav.delete('yes');else F.fav.add('yes');
+renderList();syncFilterSheet();
+});
+
+/* ===== 確認の進捗（管理者） ===== */
+function progressFor(g){
+if(!isAdmin||!checksLoaded||!cachedVideos)return null;
+const arr=g==='すべて'?cachedVideos:cachedVideos.filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===g));
+if(!arr.length)return null;
+return{done:arr.filter(it=>checkedSet.has(it.id)).length,total:arr.length};
+}
+function updateProgressLine(dataArr){
+const el=document.getElementById('checkProgress');if(!el)return;
+if(!isAdmin||!checksLoaded){el.classList.add('hidden');return;}
+const arr=dataArr||lastShownItems||[];
+if(dataArr)lastShownItems=dataArr;
+const total=arr.length;
+if(!total){el.classList.add('hidden');return;}
+const done=arr.filter(it=>checkedSet.has(it.id)).length;
+const pct=Math.round(done*100/total);
+el.classList.remove('hidden');
+el.innerHTML='確認済み '+done+' / '+total+'（'+pct+'%）<div class="bar"><i style="width:'+pct+'%"></i></div>';
+}
+let lastShownItems=[];
+
+/* ===== データの診断（管理者） ===== */
+function itemGaps(item){
+const gs=parseGenres(item.genres||item.genre||'');
+const c=loadConfig();
+return{nogenre:gs.length===0,nosub:gs.some(g=>((c.subgenres[g.genre]||[]).length>0)&&!g.subgenre),nomember:(item.members||[]).length===0};
+}
+function resetAllFilters(){
+F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.clear();F.gaps.clear();F.chk.clear();F.fav.clear();
+currentGenre='すべて';currentSubgenre='すべて';
+}
+function applyDiag(kind,val){
+resetAllFilters();
+F[kind].add(val);
+closeAllDiagModals();
+renderTabs();renderSubtabs();renderList();syncFilterSheet();
+toastMsg('該当する動画を表示しました');
+}
+function closeAllDiagModals(){['healthModal','dupModal'].forEach(id=>document.getElementById(id).classList.add('hidden'));}
+function healthRows(){
+const all=cachedVideos||[];
+const g=all.map(itemGaps);
+const reg=registeredNames();
+const unreg=[...collectMemberCounts().keys()].filter(n=>!reg.has(n)).length;
+const dups=dupGroups().length;
+const unchecked=all.filter(it=>!checkedSet.has(it.id)).length;
+return[
+{k:'nogenre',label:'ジャンル未設定',n:g.filter(x=>x.nogenre).length,act:()=>applyDiag('gaps','nogenre')},
+{k:'nosub',label:'小ジャンル未設定',n:g.filter(x=>x.nosub).length,act:()=>applyDiag('gaps','nosub')},
+{k:'nomember',label:'出演者なし',n:g.filter(x=>x.nomember).length,act:()=>applyDiag('gaps','nomember')},
+{k:'unreg',label:'未登録の出演者名（表記ゆれの可能性）',n:unreg,act:()=>{closeAllDiagModals();openMemberFix();}},
+{k:'dups',label:'同じタイトルの重複',n:dups,act:()=>{closeAllDiagModals();openDup();}},
+{k:'unchecked',label:'未確認（チェックなし）',n:unchecked,act:()=>applyDiag('chk','no')}
+];
+}
+let _healthRows=[];
+async function openHealth(){
+await loadVideos();
+if(!checksLoaded)await loadChecks();
+_healthRows=healthRows();
+document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button type="button" class="health-row" data-hi="${i}"><span>${esc(r.label)}</span><span class="health-n ${r.n?'warn':'okc'}">${r.n?r.n+'件':'✓ 問題なし'}</span></button>`).join('');
+document.getElementById('healthModal').classList.remove('hidden');
+}
+document.getElementById('healthBtn').addEventListener('click',openHealth);
+document.getElementById('healthCloseBtn').addEventListener('click',()=>document.getElementById('healthModal').classList.add('hidden'));
+document.getElementById('healthModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+document.getElementById('healthList').addEventListener('click',e=>{
+const b=e.target.closest('[data-hi]');if(!b)return;
+const r=_healthRows[+b.dataset.hi];if(r&&r.n)r.act();
+});
+
+/* ===== 重複タイトルの整理（管理者） ===== */
+const DUP_IGN_KEY='dup_ignore_'+CHECK_LIST;
+const dupIgnore=new Set();
+try{JSON.parse(localStorage.getItem(DUP_IGN_KEY)||'[]').forEach(k=>dupIgnore.add(k));}catch{}
+function saveDupIgnore(){try{localStorage.setItem(DUP_IGN_KEY,JSON.stringify([...dupIgnore]));}catch{}}
+function dupGroups(){
+const map=new Map();
+(cachedVideos||[]).forEach(it=>{
+const k=normTitle(it.title);if(!k)return;
+if(!map.has(k))map.set(k,[]);
+map.get(k).push(it);
+});
+return[...map.entries()].filter(([k,a])=>a.length>=2&&!dupIgnore.has(k)).map(([k,a])=>({key:k,items:a}));
+}
+function dupItemHTML(it,k){
+const gs=parseGenres(it.genres||it.genre||'').map(g=>g.genre+(g.subgenre?' / '+g.subgenre:'')).join('、')||'ジャンルなし';
+const tr=(()=>{try{return JSON.parse(it.tracks||'[]').length;}catch{return 0;}})();
+const when=createdMs(it)?new Date(createdMs(it)).toLocaleDateString('ja-JP'):'';
+return`<div class="dup-item"><b>${esc(it.title)}</b><br>${esc(gs)}<br>出演者：${esc((it.members||[]).join('、')||'なし')}／${exchangeLabel(it.exchange)}／収録内容 ${tr}件${when?'／追加 '+esc(when):''}${checkedSet.has(it.id)?'／確認済み':''}
+<div class="dup-actions"><button type="button" data-keep="${esc(it.id)}" data-gk="${esc(k)}">この1件を残して、ほかを削除</button></div></div>`;
+}
+function renderDup(){
+const gs=dupGroups();
+document.getElementById('dupList').innerHTML=gs.length?gs.map(g=>`<div class="dup-group"><div class="dup-title">${esc(g.items[0].title)}（${g.items.length}件）</div>${g.items.map(it=>dupItemHTML(it,g.key)).join('')}<div class="dup-actions"><button type="button" data-ign="${esc(g.key)}">重複ではない（今後表示しない）</button></div></div>`).join(''):'<div style="font-size:13px;color:#166534;font-weight:700;padding:10px 0">✓ 重複しているタイトルはありません</div>';
+}
+async function openDup(){
+await loadVideos();
+document.getElementById('dupCross').innerHTML='';
+document.getElementById('dupList').classList.remove('hidden');
+document.getElementById('dupProgress').classList.add('hidden');
+renderDup();
+document.getElementById('dupModal').classList.remove('hidden');
+}
+let dupBusy=false;
+function closeDup(){if(dupBusy)return;document.getElementById('dupModal').classList.add('hidden');}
+document.getElementById('dupCloseBtn').addEventListener('click',closeDup);
+document.getElementById('dupModal').addEventListener('click',function(e){if(e.target===this)closeDup();});
+document.getElementById('dupList').addEventListener('click',async e=>{
+if(!isAdmin||dupBusy)return;
+const ign=e.target.closest('[data-ign]');
+if(ign){dupIgnore.add(ign.dataset.ign);saveDupIgnore();renderDup();return;}
+const keep=e.target.closest('[data-keep]');
+if(!keep)return;
+const grp=dupGroups().find(g=>g.key===keep.dataset.gk);if(!grp)return;
+const del=grp.items.filter(it=>it.id!==keep.dataset.keep);
+if(!del.length)return;
+if(!confirm('「'+grp.items[0].title+'」を1件だけ残し、ほかの'+del.length+'件を削除します。元に戻せません。よろしいですか？'))return;
+dupBusy=true;
+const pg=document.getElementById('dupProgress');
+document.getElementById('dupList').classList.add('hidden');pg.classList.remove('hidden');
+let done=0,fail=0;
+pg.textContent='0 / '+del.length+' 件 削除中…（閉じずにお待ちください）';
+for(const it of del){
+let okk=false;
+try{const d=await gasWrite({action:'deleteVideo',data:'',id:it.id});okk=!!(d&&d.ok);}catch{}
+if(!okk)fail++;
+done++;
+pg.textContent=done+' / '+del.length+' 件 削除中…（閉じずにお待ちください）';
+if(!isAdmin)break;
+}
+dupBusy=false;
+cachedVideos=null;await loadVideos(true);
+renderTabs();renderList();
+document.getElementById('dupList').classList.remove('hidden');pg.classList.add('hidden');
+renderDup();
+toastMsg(fail?`${done-fail}件削除／${fail}件失敗`:`${done}件を削除しました`);
+});
+document.getElementById('dupCrossBtn').addEventListener('click',async()=>{
+const box=document.getElementById('dupCross');
+box.innerHTML='<div style="font-size:12px;color:var(--gray)">'+esc(OTHER_LABEL)+'を読み込み中…</div>';
+let other=null;
+try{other=await jsonp({action:OTHER_ACTION},45000);}catch{}
+if(!Array.isArray(other)){box.innerHTML='<div style="font-size:12px;color:#991b1b">読み込みに失敗しました。もう一度お試しください。</div>';return;}
+const names=new Map();
+other.forEach(v=>{const k=normTitle(v.title);if(k&&!names.has(k))names.set(k,v.title);});
+const hit=(cachedVideos||[]).filter(it=>names.has(normTitle(it.title)));
+box.innerHTML=hit.length?`<div style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px">${esc(OTHER_LABEL)}にも同じタイトルがあります（${hit.length}件）</div><div style="font-size:12px;line-height:1.8;max-height:200px;overflow-y:auto;background:var(--gray-light);border-radius:8px;padding:8px 10px">${hit.map(it=>esc(it.title)).join('<br>')}</div>`:'<div style="font-size:12px;color:#166534;font-weight:700">✓ '+esc(OTHER_LABEL)+'と重なるタイトルはありません</div>';
+});
+
+/* ===== 収録内容をまとめて貼り付け（管理者） ===== */
+const PASTE_SECS=['音源','映像','特典映像','ドキュメント','メイキング','その他'];
+function parseTrackLines(text,defSection,strip){
+let sec=defSection;const out=[];
+String(text||'').split(/\r?\n/).forEach(raw=>{
+let line=raw.replace(/\u3000/g,' ').trim();
+if(!line)return;
+const h=line.replace(/^[【\[■◆●▼◎]\s*/,'').replace(/\s*[】\]]\s*$/,'').replace(/[:：]$/,'').trim();
+if(PASTE_SECS.includes(h)&&line.length<=h.length+4){sec=h;return;}
+if(strip)line=line.replace(/^(?:[#＃]?\s*[0-9０-９]{1,3}\s*[.．、)）:：\-－]\s*|[0-9０-９]{1,3}\s+|[・•●○]\s*)/,'');
+line=line.trim();
+if(!line)return;
+out.push({title:line,section:sec});
+});
+return out;
+}
+function updatePastePreview(){
+const rows=parseTrackLines(document.getElementById('pasteText').value,document.getElementById('pasteSection').value,document.getElementById('pasteStrip').checked);
+const el=document.getElementById('pastePrev');
+if(!rows.length){el.textContent='貼り付けると、ここに内容が表示されます';return;}
+el.innerHTML='<b>'+rows.length+'件</b>を追加します<br>'+rows.slice(0,40).map(r=>(r.section?'<span style="color:var(--pink-dark)">['+esc(r.section)+']</span> ':'')+esc(r.title)).join('<br>')+(rows.length>40?'<br>…':'');
+}
+document.getElementById('pasteTracksBtn').addEventListener('click',()=>{
+document.getElementById('pasteText').value='';
+document.getElementById('pasteSection').value='';document.getElementById('pasteDist').value='none';
+updatePastePreview();
+document.getElementById('pasteModal').classList.remove('hidden');
+setTimeout(()=>document.getElementById('pasteText').focus(),50);
+});
+['pasteText','pasteSection','pasteStrip'].forEach(id=>document.getElementById(id).addEventListener(id==='pasteText'?'input':'change',updatePastePreview));
+document.getElementById('pasteCancelBtn').addEventListener('click',()=>document.getElementById('pasteModal').classList.add('hidden'));
+document.getElementById('pasteAddBtn').addEventListener('click',()=>{
+const rows=parseTrackLines(document.getElementById('pasteText').value,document.getElementById('pasteSection').value,document.getElementById('pasteStrip').checked);
+if(!rows.length){alert('追加する行がありません');return;}
+const dist=document.getElementById('pasteDist').value;
+rows.forEach(r=>addTrackRow(r.title,dist,'',[],r.section));
+document.getElementById('pasteModal').classList.add('hidden');
+toastMsg(rows.length+'件の収録内容を追加しました');
+});
+
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
+updateFavOnlyBtn();
 loadToken();
 applyHash();
 document.getElementById('cardList').innerHTML=loadingHTML('読み込み中');
