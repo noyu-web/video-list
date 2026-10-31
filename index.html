@@ -139,6 +139,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 .toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:400}
 .toast.show{opacity:1;transform:translateX(-50%)}
 
+/* 確認済みチェック */
+.chk-wrap{display:inline-flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;font-weight:700;color:var(--gray);cursor:pointer}
+.chk-wrap input{width:20px;height:20px;accent-color:#22c55e}
+.card.checked{border-color:#86d9a3;background:#f6fdf8}
+.card.checked .chk-wrap{color:#166534}
+
 /* 並び替え */
 .mv-bar{display:flex;gap:6px;padding:0 13px 10px;justify-content:flex-end;align-items:center}
 .mv-bar .mv-no{margin-right:auto;font-size:12px;font-weight:800;color:var(--pink-dark)}
@@ -256,6 +262,13 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="display:flex;gap:6px">
 <select class="form-select" id="bulkMode"><option value="replace">今のジャンルを置き換え</option><option value="add">今のジャンルに追加</option></select>
 <button class="btn-save" id="bulkGenreApply" style="flex-shrink:0">設定</button>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">確認済みチェック</label>
+<div style="display:flex;gap:6px">
+<button class="btn-save" id="bulkCheckOn" style="flex:1">確認済みにする</button>
+<button class="btn-cancel" id="bulkCheckOff" style="flex:1">未確認に戻す</button>
 </div>
 </div>
 <div class="form-group">
@@ -487,7 +500,9 @@ localStorage.setItem('cfg_other_members',JSON.stringify(cfg.otherMembers));
 gasPost({action:'saveFullConfig'},cfg).then(d=>{if(!d||!d.ok){if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');}}).catch(()=>failMsg('設定の保存'));
 }
 let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
-const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set()};
+const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set()};
+const CHECK_LIST='1';
+const checkedSet=new Set();let checksLoaded=false;
 let selectMode=false,reorderMode=false,lastShown=[],bulkBusy=false;
 const selected=new Set();
 const NEW_DAYS=7;
@@ -502,7 +517,7 @@ if(currentGenre!=='すべて')o.t=currentGenre;
 if(currentSubgenre!=='すべて')o.u=currentSubgenre;
 if(sortOrder!=='default')o.o=sortOrder;
 if(F.q)o.q=F.q;
-[['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps']].forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
+[['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
 return o;
 }
 function syncHash(){
@@ -520,7 +535,7 @@ if(typeof o.t==='string'&&loadConfig().genres.includes(o.t))currentGenre=o.t;
 if(typeof o.u==='string'&&currentGenre!=='すべて')currentSubgenre=o.u;
 if(['default','date_new','date_old','title','exchange'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
 if(typeof o.q==='string')F.q=o.q;
-[['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps']].forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
+[['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
 }catch{}
 }
 let cfg=loadConfig();
@@ -685,11 +700,15 @@ if(F.gaps.has('nogenre')&&gs0.length===0)hit=true;
 if(F.gaps.has('nosub')&&gs0.some(g=>((c0.subgenres[g.genre]||[]).length>0)&&!g.subgenre))hit=true;
 if(!hit)return false;
 }
+if(F.chk.size&&isAdmin){
+const c1=checkedSet.has(item.id);
+if(!((F.chk.has('yes')&&c1)||(F.chk.has('no')&&!c1)))return false;
+}
 if(F.fresh.size&&!isNew(item))return false;
 return true;
 }
 function filterCount(){
-return F.genres.size+F.members.size+F.years.size+F.ex.size+F.fresh.size+F.gaps.size+(F.q?1:0);
+return F.genres.size+F.members.size+F.years.size+F.ex.size+F.fresh.size+F.gaps.size+(isAdmin?F.chk.size:0)+(F.q?1:0);
 }
 function renderActiveBar(){
 const items=[];
@@ -699,6 +718,7 @@ F.members.forEach(v=>items.push({k:'members',v,label:v}));
 F.years.forEach(v=>items.push({k:'years',v,label:v+'年'}));
 F.ex.forEach(v=>items.push({k:'ex',v,label:exchangeLabel(v)}));
 F.fresh.forEach(v=>items.push({k:'fresh',v,label:'新着（7日以内）'}));
+if(isAdmin)F.chk.forEach(v=>items.push({k:'chk',v,label:v==='yes'?'確認済み':'未確認'}));
 F.gaps.forEach(v=>items.push({k:'gaps',v,label:v==='nogenre'?'ジャンル未設定':'小ジャンル未設定'}));
 document.getElementById('activeBar').innerHTML=items.map(it=>`<button type="button" class="af-chip" data-fk="${it.k}" data-fv="${esc(it.v)}">${esc(it.label)} ✕</button>`).join('');
 const n=filterCount();
@@ -748,7 +768,8 @@ secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/�
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
 secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
 secHTML('新着','7日以内に追加された動画','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>')+
-(isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+'</div>'):'');
+(isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+'</div>'):'')+
+(isAdmin?secHTML('確認状況','管理者向け・チェックの有無で絞り込み','<div class="chips-grid">'+chipHTML('chk','yes','確認済み')+chipHTML('chk','no','未確認')+'</div>'):'');
 body.innerHTML=html;
 body.scrollTop=prevScroll;
 syncFilterSheet();
@@ -816,7 +837,7 @@ try{await navigator.clipboard.writeText(url);toastMsg('この条件のリンク�
 catch{prompt('このリンクをコピーしてください',url);}
 });
 document.getElementById('filterResetBtn').addEventListener('click',()=>{
-F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.clear();F.gaps.clear();
+F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.clear();F.gaps.clear();F.chk.clear();
 renderFilterSheet();renderList();
 });
 
@@ -866,16 +887,21 @@ lastShown=data.map(d=>d.id);
 document.getElementById('listCount').textContent=data.length+' 件';
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 list.innerHTML=data.map((item,idx)=>{
-return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
+return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
 ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
 </div>
+${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
 </div><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span></div>
 ${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
+list.querySelectorAll('[data-chk]').forEach(inp=>{
+inp.closest('label').addEventListener('click',e=>e.stopPropagation());
+inp.addEventListener('change',()=>toggleCheck(inp.dataset.chk,inp.checked,inp));
+});
 list.querySelectorAll('[data-mv]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();moveItem(b.dataset.id,b.dataset.mv);}));
 list.querySelectorAll('[data-toggle]').forEach(inp=>inp.addEventListener('change',async(e)=>{
 e.stopPropagation();
@@ -904,8 +930,9 @@ badge.className='mode-badge '+(isAdmin?'admin':'view');
 document.getElementById('loginBtn').classList.toggle('hidden',isAdmin);
 document.getElementById('settingsBtn').style.display=isAdmin?'':'none';
 document.getElementById('adminToolbar').classList.toggle('hidden',!isAdmin);
-if(!isAdmin){selectMode=false;selected.clear();if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;}updateReorderBar();}
+if(!isAdmin){checkedSet.clear();checksLoaded=false;selectMode=false;selected.clear();if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;}updateReorderBar();}
 updateBulkBar();
+if(isAdmin&&!checksLoaded)loadChecks();
 renderTabs();renderSubtabs();renderList();
 }
 
@@ -1633,6 +1660,46 @@ document.getElementById('memberFixList').classList.remove('hidden');pg.classList
 renderMemberFix();
 toastMsg(fail?`${done-fail}件完了／${fail}件失敗`:`${done}件を書き換えました`);
 }
+
+
+/* ===== 確認済みチェック（管理者） ===== */
+async function loadChecks(){
+if(!isAdmin)return;
+try{
+const d=await jsonp({action:'getChecks',list:CHECK_LIST,token});
+if(d&&d.ok&&Array.isArray(d.ids)){
+checkedSet.clear();d.ids.forEach(i=>checkedSet.add(String(i)));
+checksLoaded=true;renderList();syncFilterSheet();
+}
+}catch{}
+}
+async function toggleCheck(id,value,inp){
+value?checkedSet.add(id):checkedSet.delete(id);
+const card=inp.closest('.card');
+if(card)card.classList.toggle('checked',value);
+let okk=false;
+try{const d=await gasPost({action:'setChecks'},{list:CHECK_LIST,ids:[id],value});okk=!!(d&&d.ok);}catch{}
+if(!okk){
+value?checkedSet.delete(id):checkedSet.add(id);
+inp.checked=!value;
+if(card)card.classList.toggle('checked',!value);
+if(isAdmin)failMsg('チェックの保存');
+}
+}
+async function bulkSetCheck(value){
+if(bulkBusy||!selected.size)return;
+const ids=[...selected];
+bulkBusy=true;
+let okk=false;
+try{const d=await gasPost({action:'setChecks'},{list:CHECK_LIST,ids,value});okk=!!(d&&d.ok);}catch{}
+bulkBusy=false;
+if(okk){ids.forEach(id=>value?checkedSet.add(id):checkedSet.delete(id));toastMsg(ids.length+'件を'+(value?'確認済み':'未確認')+'にしました');}
+else if(isAdmin)failMsg('チェックの保存');
+document.getElementById('bulkModal').classList.add('hidden');
+selected.clear();selectMode=false;updateBulkBar();renderList();
+}
+document.getElementById('bulkCheckOn').addEventListener('click',()=>bulkSetCheck(true));
+document.getElementById('bulkCheckOff').addEventListener('click',()=>bulkSetCheck(false));
 
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
