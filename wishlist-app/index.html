@@ -80,6 +80,13 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
 .own-gtitle{font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;}
 .own-note{font-size:11px;color:var(--gray);margin-top:2px;}
 
+/* ジャンルタブ */
+.tabs-wrap{background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:var(--hh,56px);z-index:49;}
+.tabs-wrap::-webkit-scrollbar{display:none;}
+.tabs{display:flex;padding:0 8px;min-width:max-content;}
+.tab{padding:12px 14px;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit;}
+.tab.active{color:var(--pink-dark);border-bottom-color:var(--pink-dark);}
+
 /* NEW・所持照合・一括選択 */
 .new-badge{display:inline-block;background:var(--pink-dark);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:6px;letter-spacing:.06em;vertical-align:middle;}
 .admin-bar{padding:0 0 10px;}
@@ -123,6 +130,7 @@ body.selecting{padding-bottom:110px;}
     <button class="search-btn" id="searchBtn">🔍 検索<span class="fb" id="filterBadge">0</span></button>
   </div>
 </header>
+<div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
 
 <div class="page">
   <div class="admin-bar hidden" id="adminBar"><button id="selectBtn">☑ 選択</button></div>
@@ -168,6 +176,13 @@ body.selecting{padding-bottom:110px;}
         <div style="display:flex;gap:6px">
           <select class="form-select" id="bulkStatus"><option value="active">探し中</option><option value="trading">取引中</option><option value="done">入手済み</option></select>
           <button class="btn-save" id="bulkStatusApply" style="flex-shrink:0;padding:0 16px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit">変更</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ジャンルをまとめて変更</label>
+        <div style="display:flex;gap:6px">
+          <select class="form-select" id="bulkGenreSel"></select>
+          <button class="btn-save" id="bulkGenreApply" style="flex-shrink:0;padding:0 16px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit">変更</button>
         </div>
       </div>
       <div class="form-group">
@@ -251,6 +266,10 @@ body.selecting{padding-bottom:110px;}
       </div>
     </div>
     <div class="form-group">
+      <label class="form-label">ジャンル（任意・複数選択可）</label>
+      <div class="chip-row" id="f-genre-chips"></div>
+    </div>
+    <div class="form-group">
       <label class="form-label">ステータス</label>
       <div class="chip-row" id="f-status-chips">
         <button class="chip selected" data-status="active">探し中</button>
@@ -279,6 +298,41 @@ const PRIO=[['high','高'],['mid','中'],['low','低'],['none','なし']];
 const STAT=[['active','探し中'],['trading','取引中'],['done','入手済み']];
 let items=[],editingId=null,isAdmin=false,token='',cbIdx=0;
 const F={q:'',members:new Set(),years:new Set(),prio:new Set(),status:new Set(),fresh:new Set()};
+let currentTab='全部',baseGenres=[];
+function genresOf(it){return String(it.genre||'').split(/[,、，]/).map(x=>x.trim()).filter(Boolean);}
+function tabList(){
+  const list=['全部',...baseGenres];
+  const extra=new Set();let hasNone=false;
+  items.forEach(it=>{const g=genresOf(it);if(!g.length)hasNone=true;g.forEach(x=>{if(!baseGenres.includes(x))extra.add(x);});});
+  extra.forEach(x=>list.push(x));
+  if(hasNone)list.push('未設定');
+  return list;
+}
+function allGenreChoices(){return tabList().filter(x=>x!=='全部'&&x!=='未設定');}
+let dataReady=false,readyParts=0;
+function partReady(){readyParts++;if(readyParts>=2){dataReady=true;renderTabs();renderList();}}
+function renderTabs(){
+  const list=tabList();
+  if(!list.includes(currentTab)){
+    if(dataReady)currentTab='全部';
+    else list.push(currentTab);   // データ読み込み前は、URLで指定されたタブをそのまま保持
+  }
+  document.getElementById('tabs').innerHTML=list.map(g=>`<button class="tab${g===currentTab?' active':''}" data-t="${esc(g)}">${esc(g)}</button>`).join('');
+}
+async function initTabs(){
+  try{const c=await loadOwnCfg('1');baseGenres=c.genres.slice();}catch{baseGenres=[];}
+  renderTabs();renderList();
+  partReady();
+}
+function fixTabsOffset(){document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px');}
+function bindTabs(){
+  document.getElementById('tabs').addEventListener('click',e=>{
+    const b=e.target.closest('.tab');if(!b)return;
+    currentTab=b.dataset.t;renderTabs();renderList();syncFilterSheet();
+    const a=document.querySelector('#tabs .tab.active');if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest'});
+  });
+  window.addEventListener('resize',fixTabsOffset);
+}
 let selectMode=false,lastShown=[],bulkBusy=false;
 const selected=new Set();
 const NEW_DAYS=7;
@@ -295,6 +349,7 @@ function syncHash(){
   try{
     const o={};
     if(F.q)o.q=F.q;
+    if(currentTab!=='全部')o.t=currentTab;
     HK.forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
     const h=Object.keys(o).length?'#s='+encodeURIComponent(JSON.stringify(o)):'';
     history.replaceState(null,'',location.pathname+location.search+h);
@@ -305,6 +360,7 @@ function applyHash(){
     const m=/^#s=(.+)$/.exec(location.hash);if(!m)return;
     const o=JSON.parse(decodeURIComponent(m[1]));
     if(typeof o.q==='string')F.q=o.q;
+    if(typeof o.t==='string')currentTab=o.t;
     HK.forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
   }catch{}
 }
@@ -394,6 +450,11 @@ async function deleteItemFromServer(id){
 
 /* ---------- 絞り込み ---------- */
 function matchItem(it){
+  if(currentTab!=='全部'){
+    const g=genresOf(it);
+    if(currentTab==='未設定'){if(g.length)return false;}
+    else if(!g.includes(currentTab))return false;
+  }
   if(F.status.size&&!F.status.has(it.status||'active'))return false;
   if(F.prio.size&&!F.prio.has(it.priority||'none'))return false;
   if(F.members.size&&!splitMembers(it.members).some(m=>F.members.has(m)))return false;
@@ -499,6 +560,7 @@ $('#filterResetBtn').addEventListener('click',()=>{
 
 /* ---------- 一覧 ---------- */
 function renderList(){
+  renderTabs();
   renderActiveBar();
   syncHash();
   const list=$('#cardList');
@@ -543,6 +605,12 @@ function openEditModal(id){
   $('#f-note').value=it?(it.note||''):'';
   document.querySelectorAll('#f-priority-chips .chip').forEach(c=>c.classList.toggle('selected',c.dataset.priority===(it?(it.priority||''):'')));
   document.querySelectorAll('#f-status-chips .chip').forEach(c=>c.classList.toggle('selected',c.dataset.status===(it?(it.status||'active'):'active')));
+  {
+    const cur=it?genresOf(it):((currentTab!=='全部'&&currentTab!=='未設定')?[currentTab]:[]);
+    const choices=[...allGenreChoices()];
+    cur.forEach(x=>{if(!choices.includes(x))choices.push(x);});
+    $('#f-genre-chips').innerHTML=choices.map(g=>`<button type="button" class="chip${cur.includes(g)?' selected':''}" data-genre="${esc(g)}">${esc(g)}</button>`).join('')||'<span class="own-note">ジャンルを読み込み中…</span>';
+  }
   $('#deleteBtn').classList.toggle('hidden',!it);
   $('#editModal').classList.remove('hidden');
 }
@@ -554,6 +622,7 @@ document.querySelectorAll('#f-status-chips .chip').forEach(c=>c.addEventListener
   document.querySelectorAll('#f-status-chips .chip').forEach(x=>x.classList.remove('selected'));
   c.classList.add('selected');
 }));
+$('#f-genre-chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(b)b.classList.toggle('selected');});
 $('#addBtn').addEventListener('click',()=>openEditModal());
 $('#cancelBtn').addEventListener('click',()=>$('#editModal').classList.add('hidden'));
 $('#saveBtn').addEventListener('click',async()=>{
@@ -564,6 +633,7 @@ $('#saveBtn').addEventListener('click',async()=>{
   const date=$('#f-date').value;
   const members=$('#f-members').value.trim();
   const note=$('#f-note').value.trim();
+  const genre=[...document.querySelectorAll('#f-genre-chips .chip.selected')].map(c=>c.dataset.genre).join(',');
   const nt=normTitle(title);
   const orig=editingId?items.find(x=>x.id===editingId):null;
   const prevStatus=orig?orig.status:null;
@@ -574,9 +644,9 @@ $('#saveBtn').addEventListener('click',async()=>{
   let item,isNew=false;
   if(editingId){
     item=items.find(x=>x.id===editingId);
-    Object.assign(item,{title,priority,status,date,members,note});
+    Object.assign(item,{title,genre,priority,status,date,members,note});
   }else{
-    item={id:Date.now().toString(),title,genre:'',priority,status,date,members,note,createdAt:Date.now()};
+    item={id:Date.now().toString(),title,genre,priority,status,date,members,note,createdAt:Date.now()};
     items.push(item);isNew=true;
   }
   $('#editModal').classList.add('hidden');
@@ -728,7 +798,16 @@ $('#bulkAllBtn').addEventListener('click',()=>{
   else lastShown.forEach(id=>selected.add(id));
   updateBulkBar();renderList();
 });
+function fillBulkGenre(){
+  $('#bulkGenreSel').innerHTML='<option value="">（ジャンルなし）</option>'+allGenreChoices().map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+}
+$('#bulkGenreApply').addEventListener('click',()=>{
+  const v=$('#bulkGenreSel').value;
+  if(!confirm(selected.size+'件のジャンルを「'+(v||'なし')+'」にします。よろしいですか？'))return;
+  bulkRun(it=>({...it,genre:v}));
+});
 $('#bulkActBtn').addEventListener('click',()=>{
+  fillBulkGenre();
   if(!selected.size){alert('項目を選んでください');return;}
   $('#bulkTitle').textContent=selected.size+'件をまとめて操作';
   $('#bulkForm').classList.remove('hidden');
@@ -853,9 +932,13 @@ $('#ownAdd').addEventListener('click',async()=>{
   loadToken();
   applyHash();
   applyAdminUI();
+  bindTabs();
+  fixTabsOffset();
+  initTabs();
   $('#cardList').innerHTML=loadingHTML('読み込み中');
   await load();
   renderList();
+  partReady();
   if(isAdmin){
     jsonp({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();applyAdminUI();}}).catch(()=>{});
   }
