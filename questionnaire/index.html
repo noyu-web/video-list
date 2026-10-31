@@ -2,32 +2,321 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>💎 所持リストのアンケート</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My File Box</title>
 <style>
-:root{--pink:#e8749a;--pink-light:#f5c6d8;--pink-pale:#fdf0f5;--pink-dark:#c45580;--gray:#6b7280;--text:#1f2937}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--pink-pale);color:var(--text);padding:calc(14px + env(safe-area-inset-top,0px)) 0 calc(24px + env(safe-area-inset-bottom,0px))}
-.wrap{max-width:560px;margin:0 auto;padding:0 16px}
-h1{font-size:16px;font-weight:800;color:var(--pink-dark);text-align:center;letter-spacing:.06em}
-.hint{font-size:11px;color:var(--gray);text-align:center;margin:4px 0 12px;line-height:1.7}
-.card{background:var(--pink-pale);border:1.5px solid var(--pink-light);border-radius:14px;padding:6px 6px 10px;overflow:hidden}
-iframe{display:block;width:100%;height:900px;border:0}
-.alt{font-size:11px;color:var(--gray);text-align:center;margin-top:12px;line-height:1.7}
-.alt a{color:var(--pink-dark)}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: #f7f7f7;
+  color: #333;
+}
+header {
+  background: #ff6fae;
+  color: white;
+  padding: 18px 20px;
+  text-align: center;
+}
+header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+header p {
+  margin: 5px 0 0;
+  font-size: 13px;
+}
+.container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 0 15px;
+}
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 25px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+.drop-area {
+  border: 2px dashed #ff8abb;
+  border-radius: 15px;
+  padding: 45px 20px;
+  text-align: center;
+  background: #fff7fa;
+  cursor: pointer;
+}
+.drop-area:hover {
+  background: #fff0f6;
+}
+.drop-icon {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+.drop-area strong {
+  display: block;
+  font-size: 17px;
+  margin-bottom: 8px;
+}
+.drop-area span {
+  color: #888;
+  font-size: 13px;
+}
+input[type="file"] {
+  display: none;
+}
+.file-list {
+  margin-top: 20px;
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px;
+  background: #fafafa;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.file-icon {
+  font-size: 25px;
+}
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+.file-name {
+  font-size: 14px;
+  font-weight: bold;
+  word-break: break-all;
+}
+.file-size {
+  color: #999;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.remove {
+  border: none;
+  background: none;
+  color: #ff5d8f;
+  font-size: 20px;
+  cursor: pointer;
+}
+.label {
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+input[type="text"],
+input[type="password"],
+select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  background: white;
+}
+.form-group {
+  margin-top: 20px;
+}
+.upload-button {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 25px;
+  background: #ff6fae;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.upload-button:hover {
+  background: #f45d9f;
+}
+.result {
+  display: none;
+  text-align: center;
+}
+.url-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+}
+.url-box input {
+  flex: 1;
+}
+.copy-button {
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  background: #ff6fae;
+  color: white;
+  font-weight: bold;
+}
+.notice {
+  background: #fff8e8;
+  border-radius: 12px;
+  padding: 13px;
+  font-size: 12px;
+  color: #777;
+  margin-top: 20px;
+}
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #aaa;
+  font-size: 11px;
+}
+@media (max-width: 500px) {
+  .container {
+    margin-top: 20px;
+  }
+  .card {
+    padding: 18px;
+  }
+  .drop-area {
+    padding: 35px 15px;
+  }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>💎 所持リストのアンケート</h1>
-  <div class="hint">ご協力ありがとうございます（所要時間 約1分）</div>
-
+<header>
+  <h1>♡ My File Box ♡</h1>
+  <p>かんたんファイル送信</p>
+</header>
+<div class="container">
   <div class="card">
-    <iframe src="https://tally.so/embed/9NNGOV?alignLeft=1&hideTitle=1&transparentBackground=1" title="所持リストについてのアンケート"></iframe>
+    <div class="drop-area" id="dropArea">
+      <div class="drop-icon">📁</div>
+      <strong>ファイルを選択してください</strong>
+      <span>タップしてファイルを追加</span>
+      <input type="file" id="fileInput" multiple>
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <div class="form-group">
+      <label class="label">保存期間</label>
+      <select id="period">
+        <option value="1">1日</option>
+        <option value="3">3日</option>
+        <option value="5">5日</option>
+        <option value="7" selected>7日</option>
+        <option value="30">30日</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="label">ダウンロードパスワード（任意）</label>
+      <input
+        type="password"
+        id="password"
+        placeholder="パスワードを設定できます"
+      >
+    </div>
+    <button class="upload-button" id="uploadButton">
+      ファイルをアップロード
+    </button>
+    <div class="notice">
+      ※現在は画面部分のみの試作です。<br>
+      保存先を接続すると、実際のファイル送信ができるようになります。
+    </div>
   </div>
-
-  <p class="alt">表示されない場合は<a href="https://tally.so/r/9NNGOV">こちらから回答</a>してください。</p>
+  <div class="card result" id="result">
+    <h2>アップロード完了 ♡</h2>
+    <p>以下のURLを相手に送ってください。</p>
+    <div class="url-box">
+      <input type="text" id="downloadUrl" readonly>
+      <button class="copy-button" id="copyButton">コピー</button>
+    </div>
+    <p id="expiration" style="font-size:13px;color:#888;"></p>
+  </div>
 </div>
-
+<footer>
+  My File Box
+</footer>
+<script>
+const fileInput = document.getElementById("fileInput");
+const dropArea = document.getElementById("dropArea");
+const fileList = document.getElementById("fileList");
+const uploadButton = document.getElementById("uploadButton");
+const result = document.getElementById("result");
+const downloadUrl = document.getElementById("downloadUrl");
+const copyButton = document.getElementById("copyButton");
+let selectedFiles = [];
+dropArea.addEventListener("click", () => {
+  fileInput.click();
+});
+fileInput.addEventListener("change", () => {
+  addFiles([...fileInput.files]);
+});
+function addFiles(files) {
+  selectedFiles.push(...files);
+  renderFiles();
+}
+function renderFiles() {
+  fileList.innerHTML = "";
+  selectedFiles.forEach((file, index) => {
+    const item = document.createElement("div");
+    item.className = "file-item";
+    item.innerHTML = `
+      <div class="file-icon">📄</div>
+      <div class="file-info">
+        <div class="file-name">${escapeHtml(file.name)}</div>
+        <div class="file-size">${formatSize(file.size)}</div>
+      </div>
+      <button class="remove" onclick="removeFile(${index})">×</button>
+    `;
+    fileList.appendChild(item);
+  });
+}
+function removeFile(index) {
+  selectedFiles.splice(index, 1);
+  renderFiles();
+}
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024)
+    return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 * 1024 * 1024)
+    return (bytes / 1024 / 1024).toFixed(1) + " MB";
+  return (bytes / 1024 / 1024 / 1024).toFixed(2) + " GB";
+}
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+uploadButton.addEventListener("click", () => {
+  if (selectedFiles.length === 0) {
+    alert("ファイルを選択してください。");
+    return;
+  }
+  // 保存先接続前の仮動作
+  const fakeId =
+    Math.random().toString(36).substring(2, 12);
+  downloadUrl.value =
+    location.href.split("#")[0] + "#download/" + fakeId;
+  const period =
+    document.getElementById("period").value;
+  expiration.textContent =
+    "保存期間：" + period + "日";
+  result.style.display = "block";
+  result.scrollIntoView({
+    behavior: "smooth"
+  });
+});
+copyButton.addEventListener("click", async () => {
+  await navigator.clipboard.writeText(
+    downloadUrl.value
+  );
+  copyButton.textContent = "コピーしました！";
+  setTimeout(() => {
+    copyButton.textContent = "コピー";
+  }, 1500);
+});
+</script>
 </body>
-</html>
+</htm
