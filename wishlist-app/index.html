@@ -87,6 +87,14 @@ header{background:var(--white);padding:10px 14px;min-height:56px;border-bottom:1
 .tab{padding:12px 14px;font-size:13px;font-weight:700;color:var(--gray);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit;}
 .tab.active{color:var(--pink-dark);border-bottom-color:var(--pink-dark);}
 
+/* タブの編集 */
+.te-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:#fff;font-size:13px;}
+.te-row small{color:var(--gray);}
+.te-btns{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.te-btns button{padding:4px 9px;border-radius:7px;border:1.5px solid var(--pink-light);background:var(--pink-light);color:var(--pink-dark);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.te-btns button.red{background:#fdecec;border-color:#fdecec;color:#d33;}
+.te-sec{font-size:12px;font-weight:800;color:var(--pink-dark);margin:14px 0 6px;}
+
 /* NEW・所持照合・一括選択 */
 .new-badge{display:inline-block;background:var(--pink-dark);color:#fff;font-size:9px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:6px;letter-spacing:.06em;vertical-align:middle;}
 .admin-bar{padding:0 0 10px;}
@@ -133,7 +141,7 @@ body.selecting{padding-bottom:110px;}
 <div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
 
 <div class="page">
-  <div class="admin-bar hidden" id="adminBar"><button id="selectBtn">☑ 選択</button></div>
+  <div class="admin-bar hidden" id="adminBar"><button id="selectBtn">☑ 選択</button> <button id="tabEditBtn">✎ タブの編集</button></div>
   <div class="active-bar" id="activeBar"></div>
   <div class="list-count" id="listCount"></div>
   <div id="cardList"></div>
@@ -199,6 +207,23 @@ body.selecting{padding-bottom:110px;}
     <div id="bulkProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
   </div>
 </div>
+<!-- タブの編集 -->
+<div class="modal-overlay hidden" id="tabEditModal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="modal-title" style="margin-bottom:0">タブの編集</div>
+      <button class="x-btn" id="tabEditCloseBtn">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:10px;line-height:1.6">ここで決めたジャンルが、画面上部のタブになります。名前を変えたり削除すると、そのジャンルが付いている項目も一緒に書き換わります。</div>
+    <div id="tabEditList"></div>
+    <div style="display:flex;gap:6px;margin-top:10px">
+      <input class="form-input" id="tabNewInput" placeholder="新しいタブ（ジャンル）名">
+      <button class="btn-save" id="tabNewBtn" style="flex-shrink:0;padding:0 16px;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit">追加</button>
+    </div>
+    <div id="tabEditProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+  </div>
+</div>
+
 <!-- 所持リストへ追加 -->
 <div class="modal-overlay hidden" id="ownModal">
   <div class="modal">
@@ -300,11 +325,10 @@ let items=[],editingId=null,isAdmin=false,token='',cbIdx=0;
 const F={q:'',members:new Set(),years:new Set(),prio:new Set(),status:new Set(),fresh:new Set()};
 let currentTab='全部',baseGenres=[];
 function genresOf(it){return String(it.genre||'').split(/[,、，]/).map(x=>x.trim()).filter(Boolean);}
+let tabsManaged=false;
 function tabList(){
   const list=['全部',...baseGenres];
-  const extra=new Set();let hasNone=false;
-  items.forEach(it=>{const g=genresOf(it);if(!g.length)hasNone=true;g.forEach(x=>{if(!baseGenres.includes(x))extra.add(x);});});
-  extra.forEach(x=>list.push(x));
+  const hasNone=items.some(it=>!genresOf(it).some(x=>baseGenres.includes(x)));
   if(hasNone)list.push('未設定');
   return list;
 }
@@ -320,7 +344,13 @@ function renderTabs(){
   document.getElementById('tabs').innerHTML=list.map(g=>`<button class="tab${g===currentTab?' active':''}" data-t="${esc(g)}">${esc(g)}</button>`).join('');
 }
 async function initTabs(){
-  try{const c=await loadOwnCfg('1');baseGenres=c.genres.slice();}catch{baseGenres=[];}
+  let saved=null;
+  try{
+    const lb=await jsonp({action:'getTabLabels'},12000);
+    if(lb&&typeof lb.genres==='string'){const arr=JSON.parse(lb.genres);if(Array.isArray(arr))saved=arr.map(String).filter(Boolean);}
+  }catch{}
+  if(saved){baseGenres=saved;tabsManaged=true;}
+  else{try{const c=await loadOwnCfg('1');baseGenres=c.genres.slice();}catch{baseGenres=[];}}
   renderTabs();renderList();
   partReady();
 }
@@ -927,12 +957,125 @@ $('#ownAdd').addEventListener('click',async()=>{
   toastMsg(label+'に追加しました');
 });
 
+
+/* ---------- タブの編集（管理者） ---------- */
+function dedupe(a){const out=[];a.forEach(x=>{if(x&&!out.includes(x))out.push(x);});return out;}
+async function saveTabs(){
+  let okk=false;
+  try{const d=await gasWrite({action:'saveTabLabels',data:encodeURIComponent(JSON.stringify({genres:JSON.stringify(baseGenres)}))});okk=!!(d&&d.ok);}catch{}
+  if(okk)tabsManaged=true;
+  else if(isAdmin)toastMsg('タブの保存に失敗しました。もう一度お試しください。');
+  return okk;
+}
+function genreCounts(){
+  const m=new Map();
+  items.forEach(it=>genresOf(it).forEach(x=>m.set(x,(m.get(x)||0)+1)));
+  return m;
+}
+function renderTabEditor(){
+  const cnt=genreCounts();
+  const rows=baseGenres.map((g,i)=>`<div class="te-row"><span>${esc(g)} <small>（${cnt.get(g)||0}件）</small></span><span class="te-btns"><button data-te="up" data-i="${i}" ${i===0?'disabled':''}>↑</button><button data-te="down" data-i="${i}" ${i===baseGenres.length-1?'disabled':''}>↓</button><button data-te="ren" data-i="${i}">名前変更</button><button class="red" data-te="del" data-i="${i}">削除</button></span></div>`).join('');
+  const extras=[...cnt.keys()].filter(x=>!baseGenres.includes(x));
+  document.getElementById('tabEditList').innerHTML=
+    '<div class="te-sec">表示するタブ（上から順に並びます）</div>'+(rows||'<div style="font-size:12px;color:var(--gray)">タブがありません。下から追加してください。</div>')+
+    (extras.length?'<div class="te-sec">タブにないジャンル（項目に付いているもの）</div>'+extras.map(x=>`<div class="te-row"><span>${esc(x)} <small>（${cnt.get(x)}件）</small></span><span class="te-btns"><button data-te="xadd" data-g="${esc(x)}">タブに追加</button><button data-te="xmove" data-g="${esc(x)}">付け替え</button><button class="red" data-te="xdel" data-g="${esc(x)}">外す</button></span></div>`).join(''):'');
+}
+let tabBusy=false;
+async function rewriteGenres(mapTokens){
+  const targets=items.filter(it=>mapTokens(genresOf(it)).join(',')!==genresOf(it).join(','));
+  if(!targets.length)return 0;
+  tabBusy=true;
+  const pg=document.getElementById('tabEditProgress');
+  document.getElementById('tabEditList').classList.add('hidden');pg.classList.remove('hidden');
+  let done=0,fail=0;
+  pg.textContent='0 / '+targets.length+' 件 書き換え中…（閉じずにお待ちください）';
+  for(const it of targets){
+    let okk=false;
+    try{const d=await gasWrite({action:'saveWishlistItem',data:encodeURIComponent(JSON.stringify({item:{...it,genre:mapTokens(genresOf(it)).join(',')},isNew:false}))});okk=!!(d&&d.ok);}catch{}
+    if(!okk)fail++;
+    done++;
+    pg.textContent=done+' / '+targets.length+' 件 書き換え中…（閉じずにお待ちください）';
+    if(!isAdmin)break;
+  }
+  tabBusy=false;
+  await load(true);
+  document.getElementById('tabEditList').classList.remove('hidden');pg.classList.add('hidden');
+  if(fail)toastMsg(fail+'件の書き換えに失敗しました');
+  return done-fail;
+}
+function afterTabChange(){renderTabs();renderList();renderTabEditor();}
+function bindTabEditor(){
+  document.getElementById('tabEditBtn').addEventListener('click',()=>{
+    if(!isAdmin)return;
+    renderTabEditor();
+    document.getElementById('tabEditModal').classList.remove('hidden');
+  });
+  const close=()=>{if(!tabBusy)document.getElementById('tabEditModal').classList.add('hidden');};
+  document.getElementById('tabEditCloseBtn').addEventListener('click',close);
+  document.getElementById('tabEditModal').addEventListener('click',function(e){if(e.target===this)close();});
+  document.getElementById('tabNewBtn').addEventListener('click',async()=>{
+    const inp=document.getElementById('tabNewInput');const v=inp.value.trim();
+    if(!v||!isAdmin)return;
+    if(baseGenres.includes(v)){alert('すでにあるタブです');return;}
+    baseGenres.push(v);inp.value='';
+    await saveTabs();afterTabChange();
+  });
+  document.getElementById('tabEditList').addEventListener('click',async e=>{
+    const b=e.target.closest('[data-te]');if(!b||!isAdmin||tabBusy)return;
+    const act=b.dataset.te,i=parseInt(b.dataset.i),g=b.dataset.g;
+    const cnt=genreCounts();
+    if(act==='up'||act==='down'){
+      const j=act==='up'?i-1:i+1;
+      if(j<0||j>=baseGenres.length)return;
+      [baseGenres[i],baseGenres[j]]=[baseGenres[j],baseGenres[i]];
+      await saveTabs();afterTabChange();return;
+    }
+    if(act==='ren'){
+      const old=baseGenres[i];
+      const nw=(prompt('「'+old+'」の新しい名前\n（すでにあるタブの名前を入れると、1つにまとまります）',old)||'').trim();
+      if(!nw||nw===old)return;
+      const n=cnt.get(old)||0;
+      if(!confirm('「'+old+'」→「'+nw+'」\n'+n+'件の項目のジャンルも書き換えます。よろしいですか？'))return;
+      baseGenres=dedupe(baseGenres.map(x=>x===old?nw:x));
+      await saveTabs();
+      await rewriteGenres(a=>dedupe(a.map(x=>x===old?nw:x)));
+      afterTabChange();return;
+    }
+    if(act==='del'){
+      const old=baseGenres[i];
+      const n=cnt.get(old)||0;
+      if(!confirm('タブ「'+old+'」を削除します。\nこのジャンルが付いている'+n+'件は、このジャンルが外れます。よろしいですか？'))return;
+      baseGenres=baseGenres.filter(x=>x!==old);
+      await saveTabs();
+      await rewriteGenres(a=>a.filter(x=>x!==old));
+      afterTabChange();return;
+    }
+    if(act==='xadd'){
+      if(!baseGenres.includes(g))baseGenres.push(g);
+      await saveTabs();afterTabChange();return;
+    }
+    if(act==='xmove'){
+      const nw=(prompt('「'+g+'」を、どのジャンルに付け替えますか？\n（'+(cnt.get(g)||0)+'件の項目が書き換わります）',baseGenres[0]||'')||'').trim();
+      if(!nw||nw===g)return;
+      if(!baseGenres.includes(nw)){if(!confirm('「'+nw+'」はタブにありません。新しいタブとして追加しますか？'))return;baseGenres.push(nw);await saveTabs();}
+      await rewriteGenres(a=>dedupe(a.map(x=>x===g?nw:x)));
+      afterTabChange();return;
+    }
+    if(act==='xdel'){
+      if(!confirm('「'+g+'」を、'+(cnt.get(g)||0)+'件の項目から外します。よろしいですか？'))return;
+      await rewriteGenres(a=>a.filter(x=>x!==g));
+      afterTabChange();return;
+    }
+  });
+}
+
 /* ---------- 起動 ---------- */
 (async()=>{
   loadToken();
   applyHash();
   applyAdminUI();
   bindTabs();
+  bindTabEditor();
   fixTabsOffset();
   initTabs();
   $('#cardList').innerHTML=loadingHTML('読み込み中');
