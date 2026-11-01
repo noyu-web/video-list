@@ -439,6 +439,16 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="section-title">SixTONES以外 出演者管理</div>
 <div style="font-size:11px;color:var(--gray);margin-bottom:8px">グループを選んで個人名を管理</div>
 <select class="form-select" id="otherGroupSelect" style="margin-bottom:8px"></select>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+<button class="btn btn-primary" id="grpRenBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">名前変更</button>
+<button class="btn btn-primary" id="grpUpBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">↑</button>
+<button class="btn btn-primary" id="grpDownBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">↓</button>
+<button class="btn btn-primary" id="grpDelBtn" style="border-radius:8px;padding:6px 10px;font-size:12px;background:#e57373">グループ削除</button>
+</div>
+<div style="display:flex;gap:6px;margin-bottom:10px">
+<input class="form-input" id="newGroupInput" placeholder="新しいグループ名" style="flex:1">
+<button class="btn btn-primary" id="addGroupBtn" style="border-radius:8px;padding:8px 14px">グループ追加</button>
+</div>
 <div class="manage-list" id="otherMemberManageList"></div>
 <div style="display:flex;gap:6px;margin-top:8px">
 <input class="form-input" id="newOtherMemberInput" placeholder="新しい名前" style="flex:1">
@@ -1276,6 +1286,49 @@ cfg.otherMembers[grp].splice(parseInt(b.dataset.omi),1);saveConfig(cfg);renderOt
 }
 ogSel.onchange=renderOtherMembers;
 renderOtherMembers();
+(function(){
+const reopen=()=>{openSettingsModal();renderTabs();renderSubtabs();};
+const subs=()=>{if(!cfg.subgenres[OG])cfg.subgenres[OG]=[];return cfg.subgenres[OG];};
+const usedBy=g=>(cachedVideos||[]).filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===OG&&x.subgenre===g));
+ogSel.value=window._lastOgSel&&subs().includes(window._lastOgSel)?window._lastOgSel:ogSel.value;renderOtherMembers();
+ogSel.addEventListener('change',()=>{window._lastOgSel=ogSel.value;});
+document.getElementById('addGroupBtn').onclick=()=>{
+const v=document.getElementById('newGroupInput').value.trim();if(!v)return;
+if(subs().includes(v)){toastMsg('すでにあるグループです');return;}
+subs().push(v);if(!cfg.genres.includes(OG))cfg.genres.push(OG);
+if(!cfg.otherMembers)cfg.otherMembers={};if(!cfg.otherMembers[v])cfg.otherMembers[v]=[];
+if(saveConfig(cfg)===false)return;window._lastOgSel=v;reopen();toastMsg('「'+v+'」を追加しました');
+};
+document.getElementById('grpUpBtn').onclick=()=>{const l=subs(),i=l.indexOf(ogSel.value);if(i<1)return;[l[i-1],l[i]]=[l[i],l[i-1]];window._lastOgSel=ogSel.value;if(saveConfig(cfg)!==false)reopen();};
+document.getElementById('grpDownBtn').onclick=()=>{const l=subs(),i=l.indexOf(ogSel.value);if(i<0||i>=l.length-1)return;[l[i+1],l[i]]=[l[i],l[i+1]];window._lastOgSel=ogSel.value;if(saveConfig(cfg)!==false)reopen();};
+document.getElementById('grpDelBtn').onclick=()=>{
+const g=ogSel.value;if(!g)return;const n=usedBy(g).length;
+if(!confirm('グループ「'+g+'」を一覧から削除します。'+(n?'このグループが付いた動画が'+n+'件あります（動画のデータは消えません）。':'')+'よろしいですか？'))return;
+cfg.subgenres[OG]=subs().filter(x=>x!==g);if(cfg.otherMembers)delete cfg.otherMembers[g];
+if(saveConfig(cfg)===false)return;window._lastOgSel='';reopen();toastMsg('「'+g+'」を削除しました');
+};
+document.getElementById('grpRenBtn').onclick=async()=>{
+const old=ogSel.value;if(!old)return;
+const nn=(prompt('新しいグループ名',old)||'').trim();if(!nn||nn===old)return;
+if(subs().includes(nn)){toastMsg('すでにあるグループです');return;}
+await loadVideos();
+const targets=usedBy(old);
+if(!confirm('「'+old+'」を「'+nn+'」に変更します。'+(targets.length?'該当の動画'+targets.length+'件も書き換えます。':'')+'よろしいですか？'))return;
+const l=subs();l[l.indexOf(old)]=nn;
+if(cfg.otherMembers&&cfg.otherMembers[old]){cfg.otherMembers[nn]=cfg.otherMembers[old];delete cfg.otherMembers[old];}
+if(F.subs&&F.subs.has&&F.subs.has(old)){F.subs.delete(old);F.subs.add(nn);}
+if(saveConfig(cfg)===false)return;
+let fail=0,done=0;
+for(const it of targets){
+const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===OG&&x.subgenre===old?{...x,subgenre:nn}:x);
+const ok=await writeVideo({...it,genres:JSON.stringify(gs)},false);
+if(!ok)fail++;done++;toastMsg('書き換え中 '+done+' / '+targets.length);
+}
+cachedVideos=null;await loadVideos(true);
+window._lastOgSel=nn;reopen();renderList();
+toastMsg(fail?('一部（'+fail+'件）の書き換えに失敗しました。もう一度お試しください'):'「'+nn+'」に変更しました');
+};
+})();
 document.getElementById('addOtherMemberBtn').onclick=()=>{
 const v=document.getElementById('newOtherMemberInput').value.trim();if(!v)return;
 const grp=ogSel.value;if(!cfg.otherMembers[grp])cfg.otherMembers[grp]=[];
