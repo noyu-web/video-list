@@ -320,6 +320,19 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 
 <!-- Member Fix Modal -->
+<div class="modal-overlay hidden" id="splitOgModal" style="z-index:210">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0">「SixTONES以外」をタブに分ける</div>
+<button class="btn-icon" id="splitOgCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">グループごとに、入れるタブを選んでください。動画のデータも一括で書き換わります。</div>
+<div id="splitOgList"></div>
+<button class="btn btn-primary" id="splitOgApplyBtn" style="border-radius:8px;padding:10px 14px;width:100%;margin-top:12px">この内容で分ける</button>
+<div id="splitOgProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+</div>
+</div>
+
 <div class="modal-overlay hidden" id="memberFixModal" style="z-index:210">
 <div class="modal">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -441,11 +454,13 @@ body.selecting .list-wrap{padding-bottom:90px}
 <select class="form-select" id="otherGroupSelect" style="margin-bottom:8px"></select>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
 <button class="btn btn-primary" id="grpRenBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">名前変更</button>
+<button class="btn btn-primary" id="grpMoveBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">別タブへ移動</button>
 <button class="btn btn-primary" id="grpUpBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">↑</button>
 <button class="btn btn-primary" id="grpDownBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">↓</button>
 <button class="btn btn-primary" id="grpDelBtn" style="border-radius:8px;padding:6px 10px;font-size:12px;background:#e57373">グループ削除</button>
 </div>
-<div style="display:flex;gap:6px;margin-bottom:10px">
+<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+<select class="form-select" id="newGroupGenre" style="flex:1 1 100%"></select>
 <input class="form-input" id="newGroupInput" placeholder="新しいグループ名" style="flex:1">
 <button class="btn btn-primary" id="addGroupBtn" style="border-radius:8px;padding:8px 14px">グループ追加</button>
 </div>
@@ -459,6 +474,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="section-title">設定の復元</div>
 <div style="font-size:11px;color:var(--gray);margin-bottom:8px;line-height:1.6">ジャンルやグループなどの設定が消えたとき・おかしくなったときに使います。</div>
 <div style="display:flex;gap:6px;flex-wrap:wrap">
+<button class="btn btn-primary" id="splitOgBtn" style="border-radius:8px;padding:8px 14px">「SixTONES以外」をタブに分ける</button>
 <button class="btn btn-primary" id="restoreGroupsBtn" style="border-radius:8px;padding:8px 14px">SixTONES以外のグループを復元</button>
 <button class="btn btn-primary" id="cfgHistBtn" style="border-radius:8px;padding:8px 14px">設定の履歴から戻す</button>
 </div>
@@ -516,6 +532,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="form-group" id="otherMemberGroup">
 <label class="form-label">出演者（SixTONES以外）</label>
 <div class="chips-grid" id="otherMemberChips"></div>
+<div id="otherAddRow" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+<select class="form-select" id="otherAddGroup" style="flex:1 1 100%"></select>
+<input class="form-input" id="otherAddInput" placeholder="名前を追加（グループに登録されます）" style="flex:1">
+<button type="button" class="btn btn-primary" id="otherAddBtn" style="border-radius:8px;padding:8px 14px">追加</button>
+</div>
 </div>
 <div class="form-group">
 <label class="form-label">交換</label>
@@ -558,6 +579,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 const GAS_URL='https://script.google.com/macros/s/AKfycbzcQk2qXHLkun0bAgOYsFJiATESW-eju6s8ZqplZwvxXr94hpmZKmzLqIu5UaHRDTzU/exec';
 const TOKEN_KEY='top_admin_token';
 const DEFAULT_GENRES=['すべて','ガムシャラ','ISLAND TV(ショート動画)','ANN'];
+const OGP='SixTONES以外';
+const OG_SPLIT=['SixTONES以外(デビュー組・俳優部)','SixTONES以外(ジュニア)','SixTONES以外(他界隈)'];
+const isOG=g=>String(g||'').startsWith(OGP);
+function ogGenres(c){c=c||cfg||_cfg;return ((c&&c.genres)||[]).filter(isOG);}
+function ogGroups(c){c=c||cfg||_cfg;const out=[];ogGenres(c).forEach(k=>((c.subgenres&&c.subgenres[k])||[]).forEach(x=>{if(!out.includes(x))out.push(x);}));return out;}
 const DEFAULT_SUBGENRES={'ガムシャラ':[],'ISLAND TV(ショート動画)':[],'ANN':[]};
 const DEFAULT_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 const DEFAULT_OTHER_MEMBERS={'DOMOTO(KinKi kids)':['堂本光一','堂本剛'],'V6':['坂本昌行','長野博','井ノ原快彦','森田剛','三宅健','岡田准一'],'嵐':['大野智','櫻井翔','相葉雅紀','二宮和也','松本潤'],'Snow Man':['ラウール','向井康二','目黒蓮','渡辺翔太','岩本照','深澤辰哉','阿部亮平','宮舘涼太','佐久間大介'],'なにわ男子':['道枝駿佑','高橋恭平','西畑大吾','大橋和也','藤原丈一郎','長尾謙杜','小島健']};
@@ -868,7 +894,7 @@ const prevScroll=body.scrollTop;
 const openG=new Set([...body.querySelectorAll('details[data-g]')].filter(d=>d.open).map(d=>d.dataset.g));
 const genres=cfg.genres.filter(g=>g!=='すべて');
 const sixt=cfg.members;
-const groups=cfg.subgenres['SixTONES以外']||[];
+const groups=ogGroups(cfg);
 const yearSet=new Set();
 data.forEach(it=>getYearsOf(it).forEach(y=>yearSet.add(y)));
 F.years.forEach(y=>yearSet.add(y));
@@ -1276,9 +1302,10 @@ document.getElementById('memberManageList').querySelectorAll('[data-mi]').forEac
 cfg.members.splice(parseInt(b.dataset.mi),1);saveConfig(cfg);openSettingsModal();
 }));
 // SixTONES以外メンバー管理
-const otherGroups=cfg.subgenres['SixTONES以外']||[];
+const otherGroups=ogGroups(cfg);
 const ogSel=document.getElementById('otherGroupSelect');
-ogSel.innerHTML=otherGroups.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+const _ogG=ogGenres(cfg);
+ogSel.innerHTML=otherGroups.map(g=>{const k=_ogG.find(x=>(cfg.subgenres[x]||[]).includes(g));return `<option value="${esc(g)}">${esc(g)}${_ogG.length>1&&k?'　— '+esc(k.replace(OGP,'').replace(/^\(|\)$/g,'')||k):''}</option>`;}).join('');
 function renderOtherMembers(){
 const grp=ogSel.value;
 const members=(cfg.otherMembers[grp]||[]);
@@ -1291,14 +1318,21 @@ ogSel.onchange=renderOtherMembers;
 renderOtherMembers();
 (function(){
 const reopen=()=>{openSettingsModal();renderTabs();renderSubtabs();};
-const subs=()=>{if(!cfg.subgenres[OG])cfg.subgenres[OG]=[];return cfg.subgenres[OG];};
-const usedBy=g=>(cachedVideos||[]).filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===OG&&x.subgenre===g));
+const gOf=g=>ogGenres(cfg).find(x=>(cfg.subgenres[x]||[]).includes(g))||ogGenres(cfg)[0]||OG;
+const subsOf=g=>{const k=gOf(g);if(!cfg.subgenres[k])cfg.subgenres[k]=[];return cfg.subgenres[k];};
+const subs=()=>subsOf(ogSel.value);
+const ngSel=document.getElementById('newGroupGenre');
+ngSel.innerHTML=ogGenres(cfg).map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join('');
+ngSel.style.display=ogGenres(cfg).length>1?'':'none';
+if(ogSel.value){ngSel.value=gOf(ogSel.value);}
+ogSel.addEventListener('change',()=>{if(ogSel.value)ngSel.value=gOf(ogSel.value);});
+const usedBy=g=>(cachedVideos||[]).filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===gOf(g)&&x.subgenre===g));
 ogSel.value=window._lastOgSel&&subs().includes(window._lastOgSel)?window._lastOgSel:ogSel.value;renderOtherMembers();
 ogSel.addEventListener('change',()=>{window._lastOgSel=ogSel.value;});
 document.getElementById('addGroupBtn').onclick=()=>{
 const v=document.getElementById('newGroupInput').value.trim();if(!v)return;
-if(subs().includes(v)){toastMsg('すでにあるグループです');return;}
-subs().push(v);if(!cfg.genres.includes(OG))cfg.genres.push(OG);
+if(ogGroups(cfg).includes(v)){toastMsg('すでにあるグループです');return;}
+{const k=ngSel.value||ogGenres(cfg)[0]||OG;if(!cfg.subgenres[k])cfg.subgenres[k]=[];cfg.subgenres[k].push(v);}
 if(!cfg.otherMembers)cfg.otherMembers={};if(!cfg.otherMembers[v])cfg.otherMembers[v]=[];
 if(saveConfig(cfg)===false)return;window._lastOgSel=v;reopen();toastMsg('「'+v+'」を追加しました');
 };
@@ -1307,13 +1341,28 @@ document.getElementById('grpDownBtn').onclick=()=>{const l=subs(),i=l.indexOf(og
 document.getElementById('grpDelBtn').onclick=()=>{
 const g=ogSel.value;if(!g)return;const n=usedBy(g).length;
 if(!confirm('グループ「'+g+'」を一覧から削除します。'+(n?'このグループが付いた動画が'+n+'件あります（動画のデータは消えません）。':'')+'よろしいですか？'))return;
-cfg.subgenres[OG]=subs().filter(x=>x!==g);if(cfg.otherMembers)delete cfg.otherMembers[g];
+cfg.subgenres[gOf(g)]=subs().filter(x=>x!==g);if(cfg.otherMembers)delete cfg.otherMembers[g];
 if(saveConfig(cfg)===false)return;window._lastOgSel='';reopen();toastMsg('「'+g+'」を削除しました');
 };
+document.getElementById('grpMoveBtn').onclick=async()=>{
+const g=ogSel.value;if(!g)return;const from=gOf(g);const opts=ogGenres(cfg).filter(k=>k!==from);
+if(!opts.length){toastMsg('移動先のタブがありません');return;}
+const ans=prompt('「'+g+'」の移動先の番号を入力してください\n'+opts.map((k,i)=>(i+1)+'：'+k).join('\n'),'1');
+const to=opts[parseInt(ans,10)-1];if(!to)return;
+await loadVideos();const targets=usedBy(g);
+cfg.subgenres[from]=(cfg.subgenres[from]||[]).filter(x=>x!==g);
+if(!cfg.subgenres[to])cfg.subgenres[to]=[];cfg.subgenres[to].push(g);
+if(saveConfig(cfg)===false)return;
+let fail=0,done=0;
+for(const it of targets){const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===from&&x.subgenre===g?{...x,genre:to}:x);
+if(!(await writeVideo({...it,genres:JSON.stringify(gs)},false)))fail++;done++;toastMsg('書き換え中 '+done+' / '+targets.length);}
+cachedVideos=null;await loadVideos(true);window._lastOgSel=g;reopen();renderList();
+toastMsg(fail?('一部（'+fail+'件）の書き換えに失敗しました'):'「'+g+'」を移動しました');
+};
 document.getElementById('grpRenBtn').onclick=async()=>{
-const old=ogSel.value;if(!old)return;
+const old=ogSel.value;if(!old)return;const gOld=gOf(old);
 const nn=(prompt('新しいグループ名',old)||'').trim();if(!nn||nn===old)return;
-if(subs().includes(nn)){toastMsg('すでにあるグループです');return;}
+if(ogGroups(cfg).includes(nn)){toastMsg('すでにあるグループです');return;}
 await loadVideos();
 const targets=usedBy(old);
 if(!confirm('「'+old+'」を「'+nn+'」に変更します。'+(targets.length?'該当の動画'+targets.length+'件も書き換えます。':'')+'よろしいですか？'))return;
@@ -1323,7 +1372,7 @@ if(F.subs&&F.subs.has&&F.subs.has(old)){F.subs.delete(old);F.subs.add(nn);}
 if(saveConfig(cfg)===false)return;
 let fail=0,done=0;
 for(const it of targets){
-const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===OG&&x.subgenre===old?{...x,subgenre:nn}:x);
+const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===gOld&&x.subgenre===old?{...x,subgenre:nn}:x);
 const ok=await writeVideo({...it,genres:JSON.stringify(gs)},false);
 if(!ok)fail++;done++;toastMsg('書き換え中 '+done+' / '+targets.length);
 }
@@ -1338,6 +1387,10 @@ const grp=ogSel.value;if(!cfg.otherMembers[grp])cfg.otherMembers[grp]=[];
 cfg.otherMembers[grp].push(v);saveConfig(cfg);
 document.getElementById('newOtherMemberInput').value='';renderOtherMembers();
 };
+{const hasOGP=cfg.genres.includes(OGP)||(cachedVideos||[]).some(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===OGP));
+document.getElementById('splitOgBtn').style.display=hasOGP?'':'none';
+const split=!cfg.genres.includes(OGP)&&ogGenres(cfg).length>0;
+document.getElementById('restoreGroupsBtn').style.display=split?'none':'';}
 document.getElementById('settingsModal').classList.remove('hidden');
 }
 document.getElementById('settingsCloseBtn').addEventListener('click',()=>document.getElementById('settingsModal').classList.add('hidden'));
@@ -1463,15 +1516,20 @@ const effectiveSel=initial?sel:nowSel;
 document.getElementById('memberChips').innerHTML=cfg.members.map(m=>`<button type="button" class="chip${effectiveSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
 document.getElementById('memberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 const selectedGenres2=getSelectedGenres();
-const otherSubs=selectedGenres2.filter(g=>g.genre==='SixTONES以外').map(g=>g.subgenre);
+const otherSubs=selectedGenres2.filter(g=>isOG(g.genre)).map(g=>g.subgenre);
 let extraMembers=[];
 otherSubs.forEach(sub=>{if(cfg.otherMembers[sub])extraMembers=[...new Set([...extraMembers,...(cfg.otherMembers[sub]||[])])];});
 const otherGroup=document.getElementById('otherMemberGroup');
-if(extraMembers.length){
+if(otherSubs.length){
+const hadOther=!initial&&!otherGroup.classList.contains('hidden');
 otherGroup.classList.remove('hidden');
-const hadOther=!initial&&document.getElementById('otherMemberChips').children.length>0;
+const addSel=document.getElementById('otherAddGroup');const prevG=addSel.value;
+addSel.innerHTML=otherSubs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+if(otherSubs.includes(prevG))addSel.value=prevG;
+addSel.style.display=otherSubs.length>1?'':'none';
 const nowOtherSel=[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
 const effectiveOtherSel=hadOther?nowOtherSel:sel;
+extraMembers=[...new Set([...extraMembers,...effectiveOtherSel.filter(m=>!cfg.members.includes(m))])];
 document.getElementById('otherMemberChips').innerHTML=extraMembers.map(m=>`<button type="button" class="chip${effectiveOtherSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
 document.getElementById('otherMemberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 }else{
@@ -1479,6 +1537,16 @@ otherGroup.classList.add('hidden');
 document.getElementById('otherMemberChips').innerHTML='';
 }
 }
+document.getElementById('otherAddBtn').onclick=()=>{
+const inp=document.getElementById('otherAddInput'),v=inp.value.trim();if(!v)return;
+const g=document.getElementById('otherAddGroup').value;if(!g)return;
+cfg=loadConfig();if(!cfg.otherMembers)cfg.otherMembers={};if(!cfg.otherMembers[g])cfg.otherMembers[g]=[];
+if(!cfg.otherMembers[g].includes(v)){cfg.otherMembers[g].push(v);if(saveConfig(cfg)===false)return;}
+inp.value='';
+renderMemberChips(false);
+document.querySelectorAll('#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===v)c.classList.add('selected');});
+};
+document.getElementById('otherAddInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();document.getElementById('otherAddBtn').click();}};
 const selectedGenres=item?parseGenres(item.genres||item.genre||''):[];
 renderGenreSections(selectedGenres);
 document.getElementById('memberChips').innerHTML='';
@@ -2098,11 +2166,75 @@ toastMsg(rows.length+'件の収録内容を追加しました');
 });
 
 
+/* ===== 「SixTONES以外」のタブ分割 ===== */
+let splitBusy=false;
+function splitGroupList(){
+const g=new Set((cfg.subgenres[OGP]||[]));
+(cachedVideos||[]).forEach(it=>parseGenres(it.genres||it.genre||'').forEach(x=>{if(x.genre===OGP&&x.subgenre)g.add(x.subgenre);}));
+return [...g];
+}
+function splitDefaultDest(grp){
+const k=OG_SPLIT.find(n=>(cfg.subgenres[n]||[]).includes(grp));
+return k||OG_SPLIT[0];
+}
+async function openSplitOg(){
+cfg=loadConfig();await loadVideos();
+const groups=splitGroupList();
+document.getElementById('splitOgList').classList.remove('hidden');
+document.getElementById('splitOgApplyBtn').classList.remove('hidden');
+document.getElementById('splitOgProgress').classList.add('hidden');
+document.getElementById('splitOgList').innerHTML=groups.length?groups.map(x=>{
+const d=splitDefaultDest(x);
+return `<div class="manage-item" style="gap:8px"><span style="flex:1">${esc(x)}</span><select class="form-select" data-sg="${esc(x)}" style="flex:0 0 58%">${OG_SPLIT.map(k=>`<option value="${esc(k)}"${k===d?' selected':''}>${esc(k)}</option>`).join('')}</select></div>`;}).join(''):'<div style="font-size:12px;color:var(--gray)">グループがありません。タブだけ作成します。</div>';
+document.getElementById('splitOgModal').classList.remove('hidden');
+}
+document.getElementById('splitOgBtn').addEventListener('click',()=>{if(isAdmin)openSplitOg();});
+document.getElementById('splitOgCloseBtn').addEventListener('click',()=>{if(!splitBusy)document.getElementById('splitOgModal').classList.add('hidden');});
+document.getElementById('splitOgApplyBtn').addEventListener('click',async()=>{
+if(!isAdmin||splitBusy)return;
+const map={};document.querySelectorAll('#splitOgList [data-sg]').forEach(sel=>{map[sel.dataset.sg]=sel.value;});
+if(!confirm('「SixTONES以外」を3つのタブに分けます。動画のデータも書き換えます。よろしいですか？'))return;
+splitBusy=true;
+cfg=loadConfig();
+const idx=cfg.genres.indexOf(OGP);
+const insertAt=idx>=0?idx:cfg.genres.length;
+if(idx>=0)cfg.genres.splice(idx,1);
+const toAdd=OG_SPLIT.filter(k=>!cfg.genres.includes(k));
+cfg.genres.splice(insertAt,0,...toAdd);
+OG_SPLIT.forEach(k=>{if(!cfg.subgenres[k])cfg.subgenres[k]=[];});
+Object.entries(map).forEach(([grp,k])=>{
+OG_SPLIT.forEach(n=>{cfg.subgenres[n]=(cfg.subgenres[n]||[]).filter(x=>x!==grp);});
+cfg.subgenres[k].push(grp);
+});
+delete cfg.subgenres[OGP];
+if(saveConfig(cfg)===false){splitBusy=false;return;}
+const list=document.getElementById('splitOgList'),pg=document.getElementById('splitOgProgress'),ab=document.getElementById('splitOgApplyBtn');
+list.classList.add('hidden');ab.classList.add('hidden');pg.classList.remove('hidden');
+await loadVideos();
+const targets=(cachedVideos||[]).filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===OGP));
+let done=0,fail=0;
+pg.textContent='0 / '+targets.length+' 件 書き換え中…（閉じずにお待ちください）';
+for(const it of targets){
+const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===OGP?{...x,genre:map[x.subgenre]||OG_SPLIT[0]}:x);
+let ok=false;try{ok=await writeVideo({...it,genres:JSON.stringify(gs)},false);}catch{}
+if(!ok)fail++;done++;
+pg.textContent=done+' / '+targets.length+' 件 書き換え中…（閉じずにお待ちください）';
+}
+splitBusy=false;
+cachedVideos=null;await loadVideos(true);
+if(F.genres.has(OGP))F.genres.delete(OGP);
+if(currentGenre===OGP)currentGenre='すべて';
+document.getElementById('splitOgModal').classList.add('hidden');
+openSettingsModal();renderTabs();renderSubtabs();renderList();
+toastMsg(fail?('一部（'+fail+'件）の書き換えに失敗しました。もう一度「分ける」を押してください'):'3つのタブに分けました');
+});
+
 /* ===== 設定の復元（SixTONES以外のグループ／履歴） ===== */
 const OG='SixTONES以外';
 let otherGroupsChecked=false;
 async function restoreOtherGroups(manual){
 if(!DEFAULT_SUBGENRES[OG])return false;
+if(cfg&&cfg.genres&&!cfg.genres.includes(OG)&&ogGenres(cfg).length){if(manual)toastMsg('すでにタブが分かれているため、復元は不要です');return false;}
 if(!configLoaded){if(manual)toastMsg('設定を読み込み中です。少し待ってからお試しください。');return false;}
 await loadVideos();
 cfg=loadConfig();
@@ -2113,7 +2245,7 @@ DEFAULT_SUBGENRES[OG].forEach(x=>{if(!cur.includes(x)&&!add.includes(x))add.push
 if(g.genre===OG&&g.subgenre&&!cur.includes(g.subgenre)&&!add.includes(g.subgenre))add.push(g.subgenre);
 }));
 let changed=false;
-if(!cfg.genres.includes(OG)){cfg.genres.push(OG);changed=true;}
+if(!cfg.genres.includes(OG)&&(cachedVideos||[]).some(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===OG))){cfg.genres.push(OG);changed=true;}
 if(add.length){cfg.subgenres[OG]=cur.concat(add);changed=true;}
 cfg.otherMembers=cfg.otherMembers||{};
 Object.entries(DEFAULT_OTHER_MEMBERS).forEach(([grp,names])=>{
