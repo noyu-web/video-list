@@ -1849,9 +1849,9 @@ const multi=[...where.entries()].filter(([n,g])=>g.length>1);
 const sim=[];
 allN.forEach((a,i)=>allN.slice(i+1).forEach(b=>{const x=fk(a),y=fk(b);if(x.length>=2&&y.length>=2&&x!==y&&(x.includes(y)||y.includes(x)))sim.push([a,b]);else if(x===y&&a!==b)sim.push([a,b]);}));
 const gtxt=n=>(where.get(n)||[]).join('・')||'未登録';
-const btn=n=>`<button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark)" data-mfix="${esc(n)}">変更・統合</button>`;
+const btn2=(keep,other)=>`<button class="btn-remove" style="background:var(--pink);color:#fff" data-mkeep="${esc(keep)}" data-mother="${esc(other)}">この名前に統一</button>`;
 const multiHTML=multi.length?`<div class="section-title">複数グループに登録されている人（兼任）</div><div class="manage-list" style="max-height:none">${multi.map(([n,g])=>`<div class="manage-item"><span>${esc(n)} <span style="color:var(--gray);font-size:11px">（${esc(g.join('・'))}）</span></span></div>`).join('')}</div><div style="font-size:11px;color:var(--gray);margin:4px 0 12px">同じ名前なので統一済みです。表記が違う人は下の「似た名前」に出ます。</div>`:'';
-const simHTML=sim.length?`<div class="section-title">似た名前（同じ人かもしれません）</div><div class="manage-list" style="max-height:none">${sim.map(([a,b])=>`<div class="manage-item" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;justify-content:space-between;align-items:center"><span>${esc(a)} <span style="color:var(--gray);font-size:11px">（${esc(gtxt(a))}・${cnt.get(a)||0}件）</span></span>${btn(a)}</div><div style="display:flex;justify-content:space-between;align-items:center"><span>${esc(b)} <span style="color:var(--gray);font-size:11px">（${esc(gtxt(b))}・${cnt.get(b)||0}件）</span></span>${btn(b)}</div></div>`).join('')}</div><div style="font-size:11px;color:var(--gray);margin:4px 0 12px">統一したい方の「変更・統合」を押し、残したい名前を入力してください。</div>`:'';
+const simHTML=sim.length?`<div class="section-title">似た名前（同じ人かもしれません）</div><div class="manage-list" style="max-height:none">${sim.map(([a,b])=>`<div class="manage-item" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;justify-content:space-between;align-items:center"><span>${esc(a)} <span style="color:var(--gray);font-size:11px">（${esc(gtxt(a))}・${cnt.get(a)||0}件）</span></span>${btn2(a,b)}</div><div style="display:flex;justify-content:space-between;align-items:center"><span>${esc(b)} <span style="color:var(--gray);font-size:11px">（${esc(gtxt(b))}・${cnt.get(b)||0}件）</span></span>${btn2(b,a)}</div></div>`).join('')}</div><div style="font-size:11px;color:var(--gray);margin:4px 0 12px">残したい方の「この名前に統一」を押すと、もう一方が書き換わります。</div>`:'';
 document.getElementById('memberFixList').innerHTML=multiHTML+simHTML+
 (unreg.length?`<div class="section-title">未登録の名前（設定にない名前）</div><div class="manage-list" style="max-height:none">${unreg.map(row).join('')}</div>`:'<div style="font-size:12px;color:var(--gray);margin-bottom:8px">未登録の名前はありません</div>')+
 `<div class="section-title" style="margin-top:14px">登録済みの名前</div><div class="manage-list" style="max-height:none">${regd.map(row).join('')||'<div style="font-size:12px;color:var(--gray)">なし</div>'}</div>`;
@@ -1868,6 +1868,8 @@ function closeMemberFix(){if(memberFixBusy)return;document.getElementById('membe
 document.getElementById('memberFixCloseBtn').addEventListener('click',closeMemberFix);
 document.getElementById('memberFixModal').addEventListener('click',function(e){if(e.target===this)closeMemberFix();});
 document.getElementById('memberFixList').addEventListener('click',e=>{
+const k=e.target.closest('[data-mkeep]');
+if(k&&isAdmin){mergeMember(k.dataset.mother,k.dataset.mkeep);return;}
 const b=e.target.closest('[data-mfix]');if(!b||!isAdmin)return;
 const old=b.dataset.mfix;
 const nw=prompt('「'+old+'」の新しい名前\n（すでにある名前を入れると、1つにまとまります）',old);
@@ -1879,8 +1881,7 @@ if(memberFixBusy||!newName||newName===oldName)return;
 const all=await loadVideos();
 const hasOld=v=>(v.members||[]).includes(oldName)||parseTracks(v).some(t=>t&&Array.isArray(t.members)&&t.members.includes(oldName));
 const targets=all.filter(hasOld);
-if(!targets.length){alert('該当する動画がありません');return;}
-if(!confirm('「'+oldName+'」→「'+newName+'」\n'+targets.length+'件の動画の出演者名を書き換えます。よろしいですか？'))return;
+if(!confirm('「'+oldName+'」→「'+newName+'」\n'+(targets.length?targets.length+'件の動画の出演者名と、':'')+'グループの名前一覧を書き換えます。よろしいですか？'))return;
 memberFixBusy=true;
 document.getElementById('memberFixList').classList.add('hidden');
 const pg=document.getElementById('memberFixProgress');pg.classList.remove('hidden');
@@ -1897,7 +1898,7 @@ done++;
 pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
 if(!isAdmin)break;
 }
-if(done-fail>0){
+if(done-fail>0||!targets.length){
 cfg=loadConfig();
 cfg.members=swap(cfg.members);
 Object.keys(cfg.otherMembers||{}).forEach(g=>{cfg.otherMembers[g]=swap(cfg.otherMembers[g]);});
@@ -1909,7 +1910,7 @@ cachedVideos=null;await loadVideos(true);
 renderList();
 document.getElementById('memberFixList').classList.remove('hidden');pg.classList.add('hidden');
 renderMemberFix();
-toastMsg(fail?`${done-fail}件完了／${fail}件失敗`:`${done}件を書き換えました`);
+toastMsg(fail?`${done-fail}件完了／${fail}件失敗`:(done?`${done}件を書き換えました`:'名前を統合しました'));
 }
 
 
