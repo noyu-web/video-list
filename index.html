@@ -716,8 +716,9 @@ parseGenres(item.genres||item.genre||'').forEach(g=>{if(isOG(g.genre)&&g.subgenr
 (item.members||[]).forEach(m=>Object.entries(c.otherMembers||{}).forEach(([grp,a])=>{if((a||[]).includes(m)&&ogGroups(c).includes(grp)&&!out.includes(grp))out.push(grp);}));
 return out;
 }
-function groupTagsHTML(item,small){
-return itemGroups(item).map(g=>`<span class="tag" style="font-size:${small?10:12}px;padding:1px 7px;background:#fff;color:var(--pink-dark);border:1px dashed var(--pink)">${esc(g)}</span>`).join('');
+function groupTagsHTML(item){
+if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
+return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
@@ -1074,7 +1075,7 @@ list.innerHTML=data.map((item,idx)=>{
 return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
-${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}${(item.members||[]).filter(m=>!isSixTONESMember(m)).map(m=>`<span class="tag" style="font-size:10px;padding:1px 7px;background:var(--pink-pale);color:var(--pink-dark);cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}${groupTagsHTML(item,true)}
+${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
 </div>
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
@@ -1233,7 +1234,7 @@ function openDetailModal(item){
 document.getElementById('detailTitle').textContent=item.title;
 const genres=parseGenres(item.genres||item.genre||'');
 document.getElementById('detailGenres').innerHTML='';
-document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item,false);
+document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
 const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
