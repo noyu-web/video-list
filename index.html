@@ -307,6 +307,18 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div class="toast" id="toast"></div>
 
+<!-- Config History Modal -->
+<div class="modal-overlay hidden" id="cfgHistModal" style="z-index:212">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0">設定の履歴</div>
+<button class="btn-icon" id="cfgHistCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">設定を保存するたびに、保存する前の内容が残ります。戻したい時点を選んでください（戻す直前の設定も履歴に残ります）。</div>
+<div id="cfgHistList"></div>
+</div>
+</div>
+
 <!-- Member Fix Modal -->
 <div class="modal-overlay hidden" id="memberFixModal" style="z-index:210">
 <div class="modal">
@@ -434,6 +446,14 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 </div>
 <div class="form-group">
+<div class="section-title">設定の復元</div>
+<div style="font-size:11px;color:var(--gray);margin-bottom:8px;line-height:1.6">ジャンルやグループなどの設定が消えたとき・おかしくなったときに使います。</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+<button class="btn btn-primary" id="restoreGroupsBtn" style="border-radius:8px;padding:8px 14px">SixTONES以外のグループを復元</button>
+<button class="btn btn-primary" id="cfgHistBtn" style="border-radius:8px;padding:8px 14px">設定の履歴から戻す</button>
+</div>
+</div>
+<div class="form-group">
 <div class="section-title">出演者名の整理（表記ゆれの統合）</div>
 <div style="font-size:11px;color:var(--gray);margin-bottom:8px;line-height:1.6">「光一」と「堂本光一」のような表記の違いを、まとめて直します。</div>
 <button class="btn btn-primary" id="memberFixOpenBtn" style="border-radius:8px;padding:8px 14px">名前の一覧を開く</button>
@@ -532,9 +552,11 @@ const DEFAULT_SUBGENRES={'配信関連':['ISLAND TV','Johnnys online・FAMILY CL
 const DEFAULT_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
 const DEFAULT_OTHER_MEMBERS={'DOMOTO(KinKi kids)':['堂本光一','堂本剛'],'V6':['坂本昌行','長野博','井ノ原快彦','森田剛','三宅健','岡田准一'],'嵐':['大野智','櫻井翔','相葉雅紀','二宮和也','松本潤'],'Snow Man':['ラウール','向井康二','目黒蓮','渡辺翔太','岩本照','深澤辰哉','阿部亮平','宮舘涼太','佐久間大介'],'なにわ男子':['道枝駿佑','高橋恭平','西畑大吾','大橋和也','藤原丈一郎','長尾謙杜','小島健']};
 let _cfg=null;
+let configLoaded=false;
 async function loadFullConfigFromServer(){
 try{
 const data=await gasGet({action:'getFullConfig'});
+if(data&&typeof data==='object'&&!data.error)configLoaded=true;
 if(data&&data.genres){
 _cfg={
 genres:data.genres||DEFAULT_GENRES,
@@ -565,6 +587,11 @@ return cfg;
 }catch{return{genres:DEFAULT_GENRES,subgenres:DEFAULT_SUBGENRES,members:DEFAULT_MEMBERS,otherMembers:DEFAULT_OTHER_MEMBERS};}
 }
 function saveConfig(cfg){
+if(!configLoaded){
+toastMsg('設定をまだ読み込めていないため、保存しませんでした。少し待ってからもう一度お試しください。');
+loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();});
+return false;
+}
 _cfg=cfg;
 try{
 localStorage.setItem('cfg_genres',JSON.stringify(cfg.genres));
@@ -1019,6 +1046,7 @@ document.getElementById('adminToolbar').classList.toggle('hidden',!isAdmin);
 if(!isAdmin){checkedSet.clear();checksLoaded=false;selectMode=false;selected.clear();if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;}updateReorderBar();}
 updateBulkBar();
 if(isAdmin&&!checksLoaded)loadChecks();
+if(isAdmin)ensureOtherGroups();
 renderTabs();renderSubtabs();renderList();
 }
 
@@ -2000,6 +2028,77 @@ document.getElementById('pasteModal').classList.add('hidden');
 toastMsg(rows.length+'件の収録内容を追加しました');
 });
 
+
+/* ===== 設定の復元（SixTONES以外のグループ／履歴） ===== */
+const OG='SixTONES以外';
+let otherGroupsChecked=false;
+async function restoreOtherGroups(manual){
+if(!DEFAULT_SUBGENRES[OG])return false;
+if(!configLoaded){if(manual)toastMsg('設定を読み込み中です。少し待ってからお試しください。');return false;}
+await loadVideos();
+cfg=loadConfig();
+const cur=(cfg.subgenres[OG]||[]).slice();
+const add=[];
+DEFAULT_SUBGENRES[OG].forEach(x=>{if(!cur.includes(x)&&!add.includes(x))add.push(x);});
+(cachedVideos||[]).forEach(it=>parseGenres(it.genres||it.genre||'').forEach(g=>{
+if(g.genre===OG&&g.subgenre&&!cur.includes(g.subgenre)&&!add.includes(g.subgenre))add.push(g.subgenre);
+}));
+let changed=false;
+if(!cfg.genres.includes(OG)){cfg.genres.push(OG);changed=true;}
+if(add.length){cfg.subgenres[OG]=cur.concat(add);changed=true;}
+cfg.otherMembers=cfg.otherMembers||{};
+Object.entries(DEFAULT_OTHER_MEMBERS).forEach(([grp,names])=>{
+const a=cfg.otherMembers[grp]||[];
+if(!a.length&&names.length&&(cfg.subgenres[OG]||[]).includes(grp)){cfg.otherMembers[grp]=names.slice();changed=true;}
+});
+if(!changed){if(manual)toastMsg('すでに復元済みです（変更はありません）');return false;}
+if(saveConfig(cfg)===false)return false;
+renderTabs();renderSubtabs();
+toastMsg('「'+OG+'」のグループ一覧を復元しました');
+return true;
+}
+async function ensureOtherGroups(){
+if(otherGroupsChecked||!isAdmin||!configLoaded||!DEFAULT_SUBGENRES[OG])return;
+otherGroupsChecked=true;
+await loadVideos();
+cfg=loadConfig();
+const hasData=(cachedVideos||[]).some(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===OG));
+const empty=(cfg.subgenres[OG]||[]).length===0;
+if((cfg.genres.includes(OG)&&empty)||(!cfg.genres.includes(OG)&&hasData))await restoreOtherGroups(false);
+}
+document.getElementById('restoreGroupsBtn').addEventListener('click',()=>{
+if(!isAdmin)return;
+restoreOtherGroups(true).then(()=>{if(!document.getElementById('settingsModal').classList.contains('hidden'))openSettingsModal();});
+});
+if(!DEFAULT_SUBGENRES[OG])document.getElementById('restoreGroupsBtn').classList.add('hidden');
+function fmtTs(ts){try{return new Date(ts).toLocaleString('ja-JP');}catch{return ts;}}
+async function openCfgHist(){
+const box=document.getElementById('cfgHistList');
+box.innerHTML='<div style="font-size:13px;color:var(--gray)">読み込み中…</div>';
+document.getElementById('cfgHistModal').classList.remove('hidden');
+let d=null;
+try{d=await jsonp({action:'getConfigHistory',list:CHECK_LIST,token},20000);}catch{}
+if(!d||!d.ok){box.innerHTML='<div style="font-size:13px;color:#991b1b">履歴を読み込めませんでした。GASを最新版に更新して再デプロイしたか確認してください。</div>';return;}
+if(!d.items.length){box.innerHTML='<div style="font-size:13px;color:var(--gray)">履歴はまだありません。これから設定を保存するたびに残ります。</div>';return;}
+box.innerHTML=d.items.map(it=>`<div class="manage-item" style="align-items:flex-start;gap:8px"><span style="font-size:12px;line-height:1.6"><b>${esc(fmtTs(it.ts))}</b><br><span style="color:var(--gray)">ジャンル ${it.genres}／${esc(OG)}のグループ ${it.groups}／個人名 ${it.names}</span></span><button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark);flex-shrink:0" data-hts="${esc(it.ts)}">この時点に戻す</button></div>`).join('');
+}
+document.getElementById('cfgHistBtn').addEventListener('click',()=>{if(isAdmin)openCfgHist();});
+document.getElementById('cfgHistCloseBtn').addEventListener('click',()=>document.getElementById('cfgHistModal').classList.add('hidden'));
+document.getElementById('cfgHistModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+document.getElementById('cfgHistList').addEventListener('click',async e=>{
+const b=e.target.closest('[data-hts]');if(!b||!isAdmin)return;
+if(!confirm(fmtTs(b.dataset.hts)+' の設定に戻します。\n現在の設定も履歴に残るので、あとでもう一度戻せます。よろしいですか？'))return;
+let okk=false;
+try{const d=await gasPost({action:'restoreConfig'},{list:CHECK_LIST,ts:b.dataset.hts});okk=!!(d&&d.ok);}catch{}
+if(!okk){if(isAdmin)failMsg('設定の復元');return;}
+_cfg=null;configLoaded=false;
+await loadFullConfigFromServer();
+renderTabs();renderSubtabs();renderList();
+document.getElementById('cfgHistModal').classList.add('hidden');
+if(!document.getElementById('settingsModal').classList.contains('hidden'))openSettingsModal();
+toastMsg('設定を戻しました');
+});
+
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
 updateFavOnlyBtn();
@@ -2013,7 +2112,7 @@ try{hadCfg=!!localStorage.getItem('cfg_genres');}catch{}
 const tw=document.querySelector('.tabs-wrap');
 const showTabs=()=>{tw.style.visibility='';};
 if(!hadCfg){tw.style.visibility='hidden';setTimeout(showTabs,3000);}
-loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();showTabs();});
+loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();showTabs();ensureOtherGroups();});
 }
 if(isAdmin){
 gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAdminUI();}}).catch(()=>{});
