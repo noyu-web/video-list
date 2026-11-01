@@ -298,10 +298,33 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 </div>
 <div class="form-group">
+<label class="form-label">所持リスト②へ</label>
+<button class="btn-save" id="bulkTransferBtn" style="width:100%">所持リスト②へ移動・コピー</button>
+</div>
+<div class="form-group">
 <button id="bulkDelete" style="width:100%;background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer">選んだ項目を削除</button>
 </div>
 </div>
 <div id="bulkProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
+</div>
+</div>
+
+<div class="modal-overlay hidden" id="transferModal" style="z-index:215">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0" id="transferTitle">所持リスト②へ</div>
+<button class="btn-icon" id="transferCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div id="transferForm">
+<div style="font-size:12px;color:var(--gray);margin-bottom:10px;line-height:1.6">移動先のジャンルを選んでください。「そのまま」の場合、今のジャンル名のまま送ります（移動先にないジャンルは未分類になります）。</div>
+<select class="form-select" id="transferGenre" style="margin-bottom:6px"></select>
+<select class="form-select" id="transferSub" style="margin-bottom:12px"></select>
+<div style="display:flex;gap:6px">
+<button class="btn-save" id="transferMoveBtn" style="flex:1">移動（こちらから消す）</button>
+<button class="btn-cancel" id="transferCopyBtn" style="flex:1">コピー（残す）</button>
+</div>
+</div>
+<div id="transferProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
 </div>
 </div>
 
@@ -474,6 +497,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="section-title">設定の復元</div>
 <div style="font-size:11px;color:var(--gray);margin-bottom:8px;line-height:1.6">ジャンルやグループなどの設定が消えたとき・おかしくなったときに使います。</div>
 <div style="display:flex;gap:6px;flex-wrap:wrap">
+<button class="btn btn-primary" id="importGroupsBtn" style="border-radius:8px;padding:8px 14px">所持リスト②からグループ・名前を取り込む</button>
 <button class="btn btn-primary" id="splitOgBtn" style="border-radius:8px;padding:8px 14px">「SixTONES以外」をタブに分ける</button>
 <button class="btn btn-primary" id="restoreGroupsBtn" style="border-radius:8px;padding:8px 14px">SixTONES以外のグループを復元</button>
 <button class="btn btn-primary" id="cfgHistBtn" style="border-radius:8px;padding:8px 14px">設定の履歴から戻す</button>
@@ -648,6 +672,7 @@ const favSet=new Set();
 try{JSON.parse(localStorage.getItem(FAV_KEY)||'[]').forEach(i=>favSet.add(String(i)));}catch{}
 function saveFav(){try{localStorage.setItem(FAV_KEY,JSON.stringify([...favSet]));}catch{}}
 const OTHER_ACTION='getVideos2',OTHER_LABEL='所持リスト②';
+const OTHER_SAVE='saveVideo2',OTHER_CFG='getFullConfig2',OWN_DELETE='deleteVideo',OTHER_NAME='②';
 let selectMode=false,reorderMode=false,lastShown=[],bulkBusy=false;
 const selected=new Set();
 const NEW_DAYS=7;
@@ -685,6 +710,15 @@ if(typeof o.q==='string')F.q=o.q;
 }
 let cfg=loadConfig();
 const SIXTONES_MEMBERS=['京本大我','ジェシー','田中樹','松村北斗','髙地優吾','森本慎太郎','SixTONES'];
+function itemGroups(item){
+const c=loadConfig();const out=[];
+parseGenres(item.genres||item.genre||'').forEach(g=>{if(isOG(g.genre)&&g.subgenre&&!out.includes(g.subgenre))out.push(g.subgenre);});
+(item.members||[]).forEach(m=>Object.entries(c.otherMembers||{}).forEach(([grp,a])=>{if((a||[]).includes(m)&&ogGroups(c).includes(grp)&&!out.includes(grp))out.push(grp);}));
+return out;
+}
+function groupTagsHTML(item,small){
+return itemGroups(item).map(g=>`<span class="tag" style="font-size:${small?10:12}px;padding:1px 7px;background:#fff;color:var(--pink-dark);border:1px dashed var(--pink)">${esc(g)}</span>`).join('');
+}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
 if(m==='ジェシー')return'tag-jesse';
@@ -1040,7 +1074,7 @@ list.innerHTML=data.map((item,idx)=>{
 return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
-${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
+${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}${(item.members||[]).filter(m=>!isSixTONESMember(m)).map(m=>`<span class="tag" style="font-size:10px;padding:1px 7px;background:var(--pink-pale);color:var(--pink-dark);cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}${groupTagsHTML(item,true)}
 </div>
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
@@ -1199,7 +1233,7 @@ function openDetailModal(item){
 document.getElementById('detailTitle').textContent=item.title;
 const genres=parseGenres(item.genres||item.genre||'');
 document.getElementById('detailGenres').innerHTML='';
-document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('');
+document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item,false);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
 const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
@@ -2167,6 +2201,87 @@ document.getElementById('pasteModal').classList.add('hidden');
 toastMsg(rows.length+'件の収録内容を追加しました');
 });
 
+
+/* ===== 他のリストへ移動・コピー／グループ取り込み ===== */
+let transferBusy=false,otherCfg=null;
+async function fetchOtherCfg(){
+try{const d=await jsonp({action:OTHER_CFG},20000);if(d&&typeof d==='object'&&!d.error&&Array.isArray(d.genres))return d;}catch{}
+return null;
+}
+document.getElementById('bulkTransferBtn').addEventListener('click',async()=>{
+if(!isAdmin||!selected.size)return;
+document.getElementById('transferTitle').textContent=selected.size+'件を所持リスト'+OTHER_NAME+'へ';
+document.getElementById('transferForm').classList.remove('hidden');
+document.getElementById('transferProgress').classList.add('hidden');
+const gs=document.getElementById('transferGenre'),ss=document.getElementById('transferSub');
+gs.innerHTML='<option value="">読み込み中…</option>';ss.innerHTML='';
+document.getElementById('transferModal').classList.remove('hidden');
+otherCfg=await fetchOtherCfg();
+if(!otherCfg){gs.innerHTML='<option value="">そのまま</option>';return;}
+gs.innerHTML='<option value="">そのまま</option>'+otherCfg.genres.filter(g=>g!=='すべて').map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+});
+document.getElementById('transferGenre').addEventListener('change',()=>{
+const g=document.getElementById('transferGenre').value,ss=document.getElementById('transferSub');
+const subs=(otherCfg&&otherCfg.subgenres&&otherCfg.subgenres[g])||[];
+ss.innerHTML=g?'<option value="">（小ジャンルなし）</option>'+subs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join(''):'';
+});
+document.getElementById('transferCloseBtn').addEventListener('click',()=>{if(!transferBusy)document.getElementById('transferModal').classList.add('hidden');});
+async function transferRun(move){
+if(!isAdmin||transferBusy)return;
+const all=await loadVideos();const targets=all.filter(it=>selected.has(it.id));
+if(!targets.length)return;
+const g=document.getElementById('transferGenre').value,sub=document.getElementById('transferSub').value;
+if(!confirm(targets.length+'件を所持リスト'+OTHER_NAME+'へ'+(move?'移動':'コピー')+'します。よろしいですか？'))return;
+transferBusy=true;
+document.getElementById('transferForm').classList.add('hidden');
+const pg=document.getElementById('transferProgress');pg.classList.remove('hidden');
+let done=0,fail=0;const base=Date.now();
+pg.textContent='0 / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+for(let k=0;k<targets.length;k++){
+const it=targets[k];
+const video={...it,id:String(base+k),genres:g?JSON.stringify([{genre:g,subgenre:sub}]):(typeof it.genres==='string'?it.genres:JSON.stringify(it.genres||[]))};
+let ok=false;
+try{const d=await gasPost({action:OTHER_SAVE},{video,isNew:true});ok=!!(d&&d.ok);}catch{}
+if(ok&&move){try{const d=await gasWrite({action:OWN_DELETE,data:'',id:it.id});if(!(d&&d.ok))fail++;}catch{fail++;}}
+else if(!ok)fail++;
+done++;pg.textContent=done+' / '+targets.length+' 件 処理中…（閉じずにお待ちください）';
+if(!isAdmin)break;
+}
+transferBusy=false;
+document.getElementById('transferModal').classList.add('hidden');
+document.getElementById('bulkModal').classList.add('hidden');
+cachedVideos=null;await loadVideos(true);
+selected.clear();selectMode=false;updateBulkBar();renderList();
+toastMsg(fail?`${done-fail}件完了／${fail}件失敗（${OTHER_NAME}側を確認してください）`:`${done}件を${move?'移動':'コピー'}しました`);
+}
+document.getElementById('transferMoveBtn').addEventListener('click',()=>transferRun(true));
+document.getElementById('transferCopyBtn').addEventListener('click',()=>transferRun(false));
+document.getElementById('importGroupsBtn').addEventListener('click',async()=>{
+if(!isAdmin)return;
+if(!configLoaded){toastMsg('設定を読み込み中です。少し待ってからお試しください。');return;}
+toastMsg('所持リスト'+OTHER_NAME+'の設定を読み込み中…');
+const oc=await fetchOtherCfg();
+if(!oc){toastMsg('所持リスト'+OTHER_NAME+'の設定を読み込めませんでした');return;}
+cfg=loadConfig();
+const gens=(oc.genres||[]).filter(isOG);
+if(!gens.length){toastMsg('所持リスト'+OTHER_NAME+'に「SixTONES以外」のグループはありません');return;}
+let addG=0,addN=0;
+gens.forEach(k=>{
+if(!cfg.genres.includes(k)){cfg.genres.push(k);}
+if(!cfg.subgenres[k])cfg.subgenres[k]=[];
+((oc.subgenres&&oc.subgenres[k])||[]).forEach(x=>{if(!ogGroups(cfg).includes(x)){cfg.subgenres[k].push(x);addG++;}});
+});
+cfg.otherMembers=cfg.otherMembers||{};
+Object.entries(oc.otherMembers||{}).forEach(([grp,names])=>{
+if(!ogGroups(cfg).includes(grp))return;
+const cur=cfg.otherMembers[grp]||(cfg.otherMembers[grp]=[]);
+(names||[]).forEach(n=>{if(!cur.includes(n)){cur.push(n);addN++;}});
+});
+if(!addG&&!addN){toastMsg('追加するグループ・名前はありません（すでに揃っています）');return;}
+if(saveConfig(cfg)===false)return;
+openSettingsModal();renderTabs();renderSubtabs();
+toastMsg('グループ'+addG+'件・名前'+addN+'件を取り込みました');
+});
 
 /* ===== 「SixTONES以外」のタブ分割 ===== */
 let splitBusy=false;
