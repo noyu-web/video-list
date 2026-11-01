@@ -615,6 +615,8 @@ let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set(),fav:new Set()};
 const CHECK_LIST='1';
 const checkedSet=new Set();let checksLoaded=false;
+function saveChecksCache(){try{localStorage.setItem('checks_ls_'+CHECK_LIST,JSON.stringify([...checkedSet]));}catch{}}
+function hydrateChecksCache(){if(checksLoaded||checkedSet.size)return;try{const a=JSON.parse(localStorage.getItem('checks_ls_'+CHECK_LIST)||'[]');if(Array.isArray(a))a.forEach(i=>checkedSet.add(String(i)));}catch{}}
 const FAV_KEY='fav_ids_'+CHECK_LIST;
 const favSet=new Set();
 try{JSON.parse(localStorage.getItem(FAV_KEY)||'[]').forEach(i=>favSet.add(String(i)));}catch{}
@@ -1053,8 +1055,9 @@ badge.className='mode-badge '+(isAdmin?'admin':'view');
 document.getElementById('loginBtn').classList.toggle('hidden',isAdmin);
 document.getElementById('settingsBtn').style.display=isAdmin?'':'none';
 document.getElementById('adminToolbar').classList.toggle('hidden',!isAdmin);
-if(!isAdmin){checkedSet.clear();checksLoaded=false;selectMode=false;selected.clear();if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;}updateReorderBar();}
+if(!isAdmin){checkedSet.clear();checksLoaded=false;try{localStorage.removeItem('checks_ls_'+CHECK_LIST);}catch{}selectMode=false;selected.clear();if(reorderMode){reorderMode=false;document.getElementById('sortSelect').disabled=false;}updateReorderBar();}
 updateBulkBar();
+if(isAdmin)hydrateChecksCache();
 if(isAdmin&&!checksLoaded)loadChecks();
 if(isAdmin)ensureOtherGroups();
 renderTabs();renderSubtabs();renderList();
@@ -1768,7 +1771,20 @@ const cnt=collectMemberCounts();const reg=registeredNames();
 const names=[...cnt.keys()].sort((a,b)=>a.localeCompare(b,'ja'));
 const unreg=names.filter(n=>!reg.has(n)),regd=names.filter(n=>reg.has(n));
 const row=n=>`<div class="manage-item"><span>${esc(n)} <span style="color:var(--gray);font-size:11px">（${cnt.get(n)}件）</span></span><button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark)" data-mfix="${esc(n)}">変更・統合</button></div>`;
-document.getElementById('memberFixList').innerHTML=
+const where=new Map();
+const addW=(n,g)=>{if(!where.has(n))where.set(n,[]);if(!where.get(n).includes(g))where.get(n).push(g);};
+cfg.members.forEach(n=>addW(n,'SixTONES'));
+Object.entries(cfg.otherMembers||{}).forEach(([g,a])=>(a||[]).forEach(n=>addW(n,g)));
+const allN=[...new Set([...where.keys(),...cnt.keys()])];
+const fk=x=>fold(x).replace(/\s/g,'');
+const multi=[...where.entries()].filter(([n,g])=>g.length>1);
+const sim=[];
+allN.forEach((a,i)=>allN.slice(i+1).forEach(b=>{const x=fk(a),y=fk(b);if(x.length>=2&&y.length>=2&&x!==y&&(x.includes(y)||y.includes(x)))sim.push([a,b]);else if(x===y&&a!==b)sim.push([a,b]);}));
+const gtxt=n=>(where.get(n)||[]).join('・')||'未登録';
+const btn=n=>`<button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark)" data-mfix="${esc(n)}">変更・統合</button>`;
+const multiHTML=multi.length?`<div class="section-title">複数グループに登録されている人（兼任）</div><div class="manage-list" style="max-height:none">${multi.map(([n,g])=>`<div class="manage-item"><span>${esc(n)} <span style="color:var(--gray);font-size:11px">（${esc(g.join('・'))}）</span></span></div>`).join('')}</div><div style="font-size:11px;color:var(--gray);margin:4px 0 12px">同じ名前なので統一済みです。表記が違う人は下の「似た名前」に出ます。</div>`:'';
+const simHTML=sim.length?`<div class="section-title">似た名前（同じ人かもしれません）</div><div class="manage-list" style="max-height:none">${sim.map(([a,b])=>`<div class="manage-item" style="flex-direction:column;align-items:stretch;gap:6px"><div style="display:flex;justify-content:space-between;align-items:center"><span>${esc(a)} <span style="color:var(--gray);font-size:11px">（${esc(gtxt(a))}・${cnt.get(a)||0}件）</span></span>${btn(a)}</div><div style="display:flex;justify-content:space-between;align-items:center"><span>${esc(b)} <span style="color:var(--gray);font-size:11px">（${esc(gtxt(b))}・${cnt.get(b)||0}件）</span></span>${btn(b)}</div></div>`).join('')}</div><div style="font-size:11px;color:var(--gray);margin:4px 0 12px">統一したい方の「変更・統合」を押し、残したい名前を入力してください。</div>`:'';
+document.getElementById('memberFixList').innerHTML=multiHTML+simHTML+
 (unreg.length?`<div class="section-title">未登録の名前（設定にない名前）</div><div class="manage-list" style="max-height:none">${unreg.map(row).join('')}</div>`:'<div style="font-size:12px;color:var(--gray);margin-bottom:8px">未登録の名前はありません</div>')+
 `<div class="section-title" style="margin-top:14px">登録済みの名前</div><div class="manage-list" style="max-height:none">${regd.map(row).join('')||'<div style="font-size:12px;color:var(--gray)">なし</div>'}</div>`;
 }
@@ -1836,13 +1852,13 @@ try{
 const d=await jsonp({action:'getChecks',list:CHECK_LIST,token});
 if(d&&d.ok&&Array.isArray(d.ids)){
 checkedSet.clear();d.ids.forEach(i=>checkedSet.add(String(i)));
-checksLoaded=true;renderTabs();renderList();syncFilterSheet();
+checksLoaded=true;saveChecksCache();renderTabs();renderList();syncFilterSheet();
 }
 }catch{}
 }
 async function toggleCheck(id,value,inp){
 value?checkedSet.add(id):checkedSet.delete(id);
-renderTabs();updateProgressLine();
+saveChecksCache();renderTabs();updateProgressLine();
 const card=inp.closest('.card');
 if(card)card.classList.toggle('checked',value);
 let okk=false;
@@ -1851,7 +1867,7 @@ if(!okk){
 value?checkedSet.delete(id):checkedSet.add(id);
 inp.checked=!value;
 if(card)card.classList.toggle('checked',!value);
-renderTabs();updateProgressLine();
+saveChecksCache();renderTabs();updateProgressLine();
 if(isAdmin)failMsg('チェックの保存');
 }
 }
@@ -1862,7 +1878,7 @@ bulkBusy=true;
 let okk=false;
 try{const d=await gasPost({action:'setChecks'},{list:CHECK_LIST,ids,value});okk=!!(d&&d.ok);}catch{}
 bulkBusy=false;
-if(okk){ids.forEach(id=>value?checkedSet.add(id):checkedSet.delete(id));toastMsg(ids.length+'件を'+(value?'確認済み':'未確認')+'にしました');}
+if(okk){ids.forEach(id=>value?checkedSet.add(id):checkedSet.delete(id));saveChecksCache();toastMsg(ids.length+'件を'+(value?'確認済み':'未確認')+'にしました');}
 else if(isAdmin)failMsg('チェックの保存');
 document.getElementById('bulkModal').classList.add('hidden');
 selected.clear();selectMode=false;updateBulkBar();renderTabs();renderList();
