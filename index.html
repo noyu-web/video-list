@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -603,7 +603,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
-<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">📁 ファイルから自動追加</button><input type="file" id="fileAddInput" multiple accept="video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
+<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">📁 ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">📷 スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
 <div class="form-group">
 <label class="form-label">メモ</label>
@@ -1718,6 +1718,21 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+(function(){const oi=document.getElementById('ocrInput');let busy=false;
+const loadT=()=>window.Tesseract?Promise.resolve():new Promise((ok,ng)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>ng(new Error('load'));document.head.appendChild(sc);});
+document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
+oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
+try{toastMsg('読み取りの準備中…（初回は言語データの読み込みで時間がかかります）');await loadT();
+let text='';
+for(let k=0;k<fs.length;k++){const r=await Tesseract.recognize(fs[k],'jpn',{logger:m=>{if(m.status==='recognizing text')toastMsg('読み取り中 '+(k+1)+'/'+fs.length+'枚 '+Math.round((m.progress||0)*100)+'%');}});text+=(r.data.text||'')+'\n';}
+text=text.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1').split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
+const dm=text.match(/(20\d{2}|19\d{2})\s*[\/.年\-]\s*(\d{1,2})\s*[\/.月\-]\s*(\d{1,2})/);
+if(dm&&!getSchedules().length)addDateGroup(dm[1]+'-'+dm[2].padStart(2,'0')+'-'+dm[3].padStart(2,'0'));
+if(!text){toastMsg('文字を読み取れませんでした');return;}
+const pt=document.getElementById('pasteText');pt.value=text;document.getElementById('pasteSection').value='';document.getElementById('pasteDist').value='none';updatePastePreview();
+document.getElementById('pasteModal').classList.remove('hidden');toastMsg('読み取り結果を確認して「追加」を押してください');
+}catch{toastMsg('読み取りに失敗しました（通信状況を確認してください）');}
+finally{busy=false;}});})();
 (function(){const inp=document.getElementById('fileAddInput');
 document.getElementById('fileAddBtn').addEventListener('click',()=>inp.click());
 const fmt=b=>b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';
@@ -1888,8 +1903,10 @@ return{...it,genres:JSON.stringify(next)};
 });
 let mergeBusy=false;
 document.getElementById('bulkMergeBtn').addEventListener('click',async()=>{
+const all=await loadVideos();mergeCards(all.filter(it=>selected.has(it.id)));
+});
+async function mergeCards(t){
 if(!isAdmin||mergeBusy)return;
-const all=await loadVideos();const t=all.filter(it=>selected.has(it.id));
 if(t.length<2){toastMsg('2件以上選んでください');return;}
 const base=t[0];
 if(!confirm(t.length+'件を「'+base.title+'」に結合します。他の'+(t.length-1)+'件は削除されます。元に戻せません。よろしいですか？'))return;
@@ -1925,8 +1942,9 @@ for(const it of t.slice(1)){try{const d=await gasWrite({action:OWN_DELETE,data:'
 document.getElementById('bulkModal').classList.add('hidden');
 cachedVideos=null;await loadVideos(true);selected.clear();selectMode=false;updateBulkBar();renderList();
 toastMsg(fail?'結合しました（'+fail+'件の削除に失敗）':t.length+'件を1枚に結合しました');
+if(!document.getElementById('dupModal').classList.contains('hidden')){try{renderDup();}catch{}}
 }finally{mergeBusy=false;}
-});
+}
 document.getElementById('bulkDelete').addEventListener('click',()=>{
 if(!confirm(selected.size+'件を削除します。元に戻せません。よろしいですか？'))return;
 bulkRun('delete');
@@ -2254,7 +2272,7 @@ const gs=parseGenres(it.genres||it.genre||'').map(g=>g.genre+(g.subgenre?' / '+g
 const tr=(()=>{try{return JSON.parse(it.tracks||'[]').length;}catch{return 0;}})();
 const when=createdMs(it)?new Date(createdMs(it)).toLocaleDateString('ja-JP'):'';
 return`<div class="dup-item"><b>${esc(it.title)}</b><br>${esc(gs)}<br>出演者：${esc((it.members||[]).join('、')||'なし')}／${exchangeLabel(it.exchange)}／収録内容 ${tr}件${when?'／追加 '+esc(when):''}${checkedSet.has(it.id)?'／確認済み':''}
-<div class="dup-actions"><button type="button" data-keep="${esc(it.id)}" data-gk="${esc(k)}">この1件を残して、ほかを削除</button></div></div>`;
+<div class="dup-actions"><button type="button" data-merge="${esc(it.id)}" data-gk="${esc(k)}" style="background:var(--pink-dark);color:#fff">この1件に結合（内容をまとめる）</button><button type="button" data-keep="${esc(it.id)}" data-gk="${esc(k)}">この1件を残して、ほかを削除</button></div></div>`;
 }
 function renderDup(){
 const gs=dupGroups();
@@ -2276,6 +2294,10 @@ document.getElementById('dupList').addEventListener('click',async e=>{
 if(!isAdmin||dupBusy)return;
 const ign=e.target.closest('[data-ign]');
 if(ign){dupIgnore.add(ign.dataset.ign);saveDupIgnore();renderDup();return;}
+const mg=e.target.closest('[data-merge]');
+if(mg){const grp0=dupGroups().find(g=>g.key===mg.dataset.gk);if(!grp0)return;
+const ord=[grp0.items.find(it=>it.id===mg.dataset.merge),...grp0.items.filter(it=>it.id!==mg.dataset.merge)].filter(Boolean);
+await mergeCards(ord);return;}
 const keep=e.target.closest('[data-keep]');
 if(!keep)return;
 const grp=dupGroups().find(g=>g.key===keep.dataset.gk);if(!grp)return;
