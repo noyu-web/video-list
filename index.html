@@ -603,7 +603,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
-<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">📁 ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">📷 スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
+<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">📁 ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">📷 スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
 <div class="form-group">
 <label class="form-label">メモ</label>
@@ -1737,7 +1737,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…（初回は言語データの読み込みで時間がかかります）');
+try{toastMsg('読み取りの準備中…［版 11/3-0510］初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -1817,13 +1817,14 @@ finally{busy=false;}});})();
 document.getElementById('fileAddBtn').addEventListener('click',()=>inp.click());
 const fmt=b=>b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';
 const dim=f=>new Promise(r=>{try{if(!/^video/.test(f.type)&&!/\.(mp4|mkv|mov|m4v|ts|avi|wmv)$/i.test(f.name))return r('');const v=document.createElement('video'),u=URL.createObjectURL(f);let done=false;const fin=x=>{if(done)return;done=true;URL.revokeObjectURL(u);r(x);};v.preload='metadata';v.onloadedmetadata=()=>fin(v.videoWidth?v.videoWidth+'×'+v.videoHeight:'');v.onerror=()=>fin('');setTimeout(()=>fin(''),4000);v.src=u;}catch{r('');}});
-inp.addEventListener('change',async()=>{const fs=[...inp.files].sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));inp.value='';if(!fs.length)return;
+inp.addEventListener('change',async()=>{const fs=[...inp.files].sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));const ims=fs.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));
+if(ims.length){try{const dt=new DataTransfer();ims.forEach(f=>dt.items.add(f));const oi2=document.getElementById('ocrInput');oi2.files=dt.files;oi2.dispatchEvent(new Event('change'));}catch{toastMsg('画像は「📷 スクショから読み取り」から選んでください');}}
+inp.value='';const fs2=fs.filter(f=>!ims.includes(f));if(!fs2.length)return;
 let firstDate='';
-for(const f of fs){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+for(const f of fs2){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 if(ds&&(!firstDate||ds<firstDate))firstDate=ds;
 addTrackRow(f.name.replace(/\.[^.]+$/,''),'none',ds,[],'',{res:await dim(f),size:fmt(f.size),loc:''});}
-if(firstDate&&!getSchedules().length)addDateGroup(firstDate);
-toastMsg(fs.length+'件を追加しました');});})();
+toastMsg(fs2.length+'件を追加しました');});})();
 let _trackFiles=[];
 function getTracks(){
 _trackFiles=[];
