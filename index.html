@@ -227,7 +227,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="display:flex;align-items:center;gap:8px;padding:10px 16px 6px">
 <span style="font-size:12px;color:var(--gray)">並び替え</span>
 <select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
-<option value="default">標準（手動の並び）</option>
+<option value="default">標準</option>
 <option value="reg_new">登録（新しい順）</option>
 <option value="reg_old">登録（古い順）</option>
 <option value="date_new">公演日（新しい順）</option>
@@ -681,7 +681,9 @@ const snap=JSON.parse(JSON.stringify({genres:cfg.genres,subgenres:cfg.subgenres,
 cfgSaveQ=cfgSaveQ.then(async()=>{
 try{
 const d=await gasPost({action:'saveFullConfig'},{...snap,baseRev:cfgRev});
-if(d&&d.ok){if(d.rev)cfgRev=d.rev;return;}
+if(d&&d.ok){if(d.rev)cfgRev=d.rev;
+try{const chk=await gasGet({action:'getFullConfig'});if(chk&&chk.genres&&JSON.stringify(chk.genres)!==JSON.stringify(snap.genres)){alert('設定がサーバーに反映されませんでした（削除したタブが戻る原因になります）。他の端末やブラウザで古い画面が開いていないか確認し、全ての画面を再読み込みしてからもう一度操作してください。');await loadFullConfigFromServer();renderTabs();renderSubtabs();}}catch{}
+return;}
 if(d&&d.error==='stale'){
 await loadFullConfigFromServer();
 alert('設定が他の端末や画面で更新されていたため、今回の変更は保存しませんでした。最新の設定を読み込みました。もう一度操作してください。');
@@ -867,10 +869,18 @@ if(!subs.length&&!isAdmin){wrap.classList.remove('visible');return;}
 wrap.classList.add('visible');
 let html=`<button class="subtab ${currentSubgenre==='すべて'?'active':''}" data-s="すべて">すべて</button>`;
 html+=subs.map(s=>`<button class="subtab ${currentSubgenre===s?'active':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('');
-if(isAdmin)html+=`<button class="subtab" id="manageSubBtn" style="background:var(--pink-pale);color:var(--pink-dark);border-color:var(--pink-light)">＋ 編集</button>`;
+if(isAdmin)html+=`<button class="subtab" id="manageSubBtn" style="background:var(--pink-pale);color:var(--pink-dark);border-color:var(--pink-light)">＋ 編集</button><button class="subtab" id="delTabBtn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca">🗑 このタブを削除</button>`;
 document.getElementById('subtabs').innerHTML=html;
 document.getElementById('subtabs').querySelectorAll('.subtab[data-s]').forEach(b=>b.addEventListener('click',()=>{currentSubgenre=b.dataset.s;renderSubtabs();renderList();syncFilterSheet();}));
-if(isAdmin){const btn=document.getElementById('manageSubBtn');if(btn)btn.addEventListener('click',()=>openSubgenreModal());}
+if(isAdmin){const btn=document.getElementById('manageSubBtn');if(btn)btn.addEventListener('click',()=>openSubgenreModal());
+const dt=document.getElementById('delTabBtn');if(dt)dt.addEventListener('click',()=>{
+const g=currentGenre;if(!g||g==='すべて')return;
+if(!confirm('タブ「'+g+'」を削除します。\n（このタブの動画データは消えません。ジャンル表示が外れるだけです）\nよろしいですか？'))return;
+const c2=JSON.parse(JSON.stringify(loadConfig()));
+c2.genres=c2.genres.filter(x=>x!==g);delete c2.subgenres[g];
+if(saveConfig(c2)===false)return;
+currentGenre='すべて';currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();toastMsg('タブ「'+g+'」を削除しました');
+});}
 }
 
 /* ===== 検索フィルター ===== */
