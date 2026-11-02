@@ -1317,7 +1317,10 @@ sectionsHtml += secHeader + secItems.join('');
 secItems = [];
 };
 tracks.forEach((t,ti)=>{
-const title=(typeof t==='string'?t:t.title)||'（タイトルなし）';
+const fo0=(parseMeta(item).tr||[])[ti]||{};
+if(typeof t!=='string'&&!(t&&(t.title||t.date||(t.members||[]).length||t.section||(t.dist&&t.dist!=='none')||Object.keys(fo0).length)))return;
+if(typeof t==='string'&&!t.trim())return;
+const title=(typeof t==='string'?t:t.title)||'';
 const dist=typeof t==='string'?'none':t.dist||'none';
 const tdate=typeof t==='string'?'':t.date||'';
 const tmembers=typeof t==='string'?[]:(t.members||[]);
