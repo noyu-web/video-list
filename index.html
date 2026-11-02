@@ -1620,7 +1620,7 @@ async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').textContent=item?'動画を編集':'動画を追加';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/3-0520</small>';
 document.getElementById('editTitle').value=item?item.title:'';
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
@@ -1749,6 +1749,9 @@ const DRE_C=new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})(\\d{2})(?
 const DRE8=/(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/;
 const DRE6=/(?<![\d:])(\d{2})(\d{2})(\d{2})(?![\d:])/;
 const TRE=/(?<!\d)([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?!\d)/g;
+const timesOf=(l,hasD)=>{let a=[...l.matchAll(TRE)];if(a.length||hasD)return a;
+a=[...l.matchAll(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]\s*([0-5]\d)(?!\d)/g)];if(a.length)return a;
+if(/^[\d\s\/／~〜\-]+$/.test(l))a=[...l.matchAll(/(?<!\d)([01]\d|2[0-3])([0-5]\d)(?!\d)/g)];return a;};
 const mkD=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
 const dateOf=l=>{for(const [re] of [[DRE],[DRE_L],[DRE_C],[DRE8]]){const m=re.exec(l);if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:m[0]};}}return null;};
 const dateOfLoose=l=>dateOf(l)||(()=>{const m=DRE6.exec(l.replace(/\s/g,''));if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:null};}return null;})();
@@ -1764,7 +1767,7 @@ try{await wk.terminate();}catch{}
 const dateObjs=[];
 const addDate=(d,tm)=>{let o=dateObjs.find(x=>x.date===d);if(!o){o={date:d,times:[]};dateObjs.push(o);}(tm||[]).forEach(t=>{if(!o.times.includes(t))o.times.push(t);});return o;};
 let curB=null;
-textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim())));const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}[...l.replace(f&&f.raw?f.raw:'','').matchAll(TRE)].forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
+textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim())));const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}timesOf(l.replace(f&&f.raw?f.raw:'',''),!!f).forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
 /* 2) 日本語を含む読み取り → タイトル行・出演者 */
 let text='';
 try{stage='日本語の読み取り';
@@ -1775,8 +1778,8 @@ const cp=x=>String(x).replace(/[\s　]/g,'');
 const keep=[],trackRows=[];let curD=null;
 text.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0)));let rest=l;
 const f=dateOf(l);if(f){rest=rest.replace(f.raw,' ');curD=addDate(f.date);}
-const tms=[...rest.matchAll(TRE)];
-if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(TRE,' ');}
+const tms=timesOf(rest,!!f);
+if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]?\s*([0-5]\d)(?!\d)/g,' ');}
 const empty=!rest.replace(/[\s\/／・,、~〜\-()（）日月火水木金土祝曜]+/g,'');
 if((f||tms.length)&&empty)return;
 if(f){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:f.date});return;}
