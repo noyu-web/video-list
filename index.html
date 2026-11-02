@@ -1784,12 +1784,21 @@ if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>
 text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
 const dates=dateObjs.map(x=>x.date);
-trackRows.forEach(r=>addTrackRow(r.title,'none',r.date));
-const tkHave=new Set(trackRows.map(r=>r.date));
-dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date+(d.times.length?' '+d.times.join(' / '):'');addTrackRow(tt,'none',d.date);trackRows.push({title:tt,date:d.date});}});
 cfg=loadConfig();
 const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
-const ct=cp(text+trackRows.map(r=>r.title).join(''));const found=reg.filter(n=>ct.includes(cp(n)));
+const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺');
+const matchNames=str=>{const out=new Set();const ns=nz(str);
+reg.forEach(n=>{if(ns.includes(nz(n)))out.add(n);});
+String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nz).filter(t=>t.length>=2).forEach(t=>{
+const c=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
+if(c.length===1)out.add(c[0]);
+else if(c.length>1){const six=c.filter(n=>cfg.members.includes(n));if(six.length===1)out.add(six[0]);}});
+return[...out];};
+const rowNames=new Set();
+trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));addTrackRow(r.title,'none',r.date,r.members);});
+const tkHave=new Set(trackRows.map(r=>r.date));
+dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date+(d.times.length?' '+d.times.join(' / '):'');addTrackRow(tt,'none',d.date,[]);trackRows.push({title:tt,date:d.date});}});
+const found=[...new Set([...matchNames(text),...rowNames])];
 const missed=[];
 found.forEach(n=>{let hit=false;document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===n){c.classList.add('selected');hit=true;}});if(!hit)missed.push(n);});
 const fc=found.map(cp);
