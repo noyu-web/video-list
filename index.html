@@ -1738,7 +1738,11 @@ document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.clic
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 try{toastMsg('読み取りの準備中…（初回は言語データの読み込みで時間がかかります）');await loadT();
 let text='';
-for(let k=0;k<fs.length;k++){const r=await Tesseract.recognize(await prepImg(fs[k]),'jpn+eng',{logger:m=>{if(m.status==='recognizing text')toastMsg('読み取り中 '+(k+1)+'/'+fs.length+'枚 '+Math.round((m.progress||0)*100)+'%');}});text+=(r.data.text||'')+'\n';}
+let textB='',wk=null;
+try{wk=await Tesseract.createWorker('eng');await wk.setParameters({tessedit_char_whitelist:'0123456789/-.:',tessedit_pageseg_mode:'6'});}catch{wk=null;}
+for(let k=0;k<fs.length;k++){const pi=await prepImg(fs[k]);const r=await Tesseract.recognize(pi,'jpn+eng',{logger:m=>{if(m.status==='recognizing text')toastMsg('読み取り中 '+(k+1)+'/'+fs.length+'枚 '+Math.round((m.progress||0)*100)+'%');}});text+=(r.data.text||'')+'\n';
+if(wk){try{const rb=await wk.recognize(pi);textB+=(rb.data.text||'')+'\n';}catch{}}}
+if(wk){try{await wk.terminate();}catch{}}
 text=text.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1').split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
 const cp=x=>String(x).replace(/[\s　]/g,'');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -1747,7 +1751,7 @@ const DRE=/(?<!\d)(\d{4}|\d{2})(?:\s*[-\/.．／−–—ー一_年]\s*|\s+)(\d{
 const DRE8=/(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/;
 const TRE=/(?<!\d)([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?!\d)/g;
 const mkD=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
-const lines0=text.split('\n');const dateObjs=[];let curD=null;const keep=[];
+const lines0=text.split('\n');const dateObjs=[];let curD=null;const keep=[];const trackRows=[];
 lines0.forEach(l0=>{const l=zen(fixD(zen(l0)));let rest=l;let found=null;
 const m=DRE.exec(l)||null;const m8=m?null:DRE8.exec(l);
 if(m){found=mkD(m[1],m[2],m[3]);if(found)rest=rest.replace(m[0],' ');}
@@ -1756,11 +1760,15 @@ if(found){curD={date:found,times:[]};if(!dateObjs.some(x=>x.date===found))dateOb
 const tms=[...rest.matchAll(TRE)];
 if(tms.length&&curD){tms.forEach(t=>{const tt=String(t[1]).padStart(2,'0')+':'+t[2];if(!curD.times.includes(tt))curD.times.push(tt);});rest=rest.replace(TRE,' ');}
 if((found||tms.length)&&!rest.replace(/[\s\/／・,、~〜\-()（）日月火水木金土祝曜]+/g,''))return;
+if(found){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:found});return;}
 keep.push(l0);});
+textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim())));const m=DRE.exec(l)||null;const m8=m?null:DRE8.exec(l);const fd=m?mkD(m[1],m[2],m[3]):(m8?mkD(m8[1],m8[2],m8[3]):null);if(fd&&!dateObjs.some(x=>x.date===fd))dateObjs.push({date:fd,times:[]});});
 text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(l.replace(/[\s　]/g,''))).join('\n');
 const dates=dateObjs.map(x=>x.date);
 const have=new Set(getSchedules().map(x=>x.date));
+dateObjs.sort((a,b)=>a.date<b.date?-1:1);
 dateObjs.forEach(d=>{if(!have.has(d.date))addDateGroup(d.date,d.times);});
+trackRows.forEach(r=>addTrackRow(r.title,'none',r.date));
 cfg=loadConfig();
 const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
 const ct=cp(text);const found=reg.filter(n=>ct.includes(cp(n)));
@@ -1770,8 +1778,9 @@ const fc=found.map(cp);
 text=text.split('\n').filter(l=>{const c=cp(l);if(!c)return false;if(/^(20\d{2}|19\d{2})[\/.年\-]\d{1,2}[\/.月\-]\d{1,2}日?$/.test(c))return false;if(fc.includes(c))return false;return true;}).join('\n');
 const te=document.getElementById('editTitle');
 if(!te.value.trim()&&text){const ls=text.split('\n');te.value=ls.shift().trim();text=ls.join('\n');}
-if(!text&&!dates.length&&!found.length){toastMsg('文字を読み取れませんでした');return;}
+if(!text&&!dates.length&&!found.length&&!trackRows.length){toastMsg('文字を読み取れませんでした');return;}
 const pt=document.getElementById('pasteText');pt.value=text;document.getElementById('pasteSection').value='';document.getElementById('pasteDist').value='none';updatePastePreview();
+if(!text.trim()){toastMsg('日付'+dates.length+'件・収録内容'+trackRows.length+'件・出演者'+(found.length-missed.length)+'名を反映しました');return;}
 document.getElementById('pasteModal').classList.remove('hidden');toastMsg('日付'+dates.length+'件・出演者'+(found.length-missed.length)+'名を自動で入れました'+(missed.length?'（'+missed.join('、')+' は該当グループを選ぶと選べます）':'')+'。残りを確認して「追加」を押してください');
 }catch{toastMsg('読み取りに失敗しました（通信状況を確認してください）');}
 finally{busy=false;}});})();
@@ -2414,7 +2423,7 @@ setTimeout(()=>document.getElementById('pasteText').focus(),50);
 document.getElementById('pasteCancelBtn').addEventListener('click',()=>document.getElementById('pasteModal').classList.add('hidden'));
 document.getElementById('pasteAddBtn').addEventListener('click',()=>{
 const rows=parseTrackLines(document.getElementById('pasteText').value,document.getElementById('pasteSection').value,document.getElementById('pasteStrip').checked);
-if(!rows.length){alert('追加する行がありません');return;}
+if(!rows.length){document.getElementById('pasteModal').classList.add('hidden');return;}
 const dist=document.getElementById('pasteDist').value;
 rows.forEach(r=>addTrackRow(r.title,dist,'',[],r.section));
 document.getElementById('pasteModal').classList.add('hidden');
