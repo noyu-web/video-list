@@ -1322,7 +1322,7 @@ if(typeof t!=='string'&&!(t&&(t.title||t.date||(t.members||[]).length||t.section
 if(typeof t==='string'&&!t.trim())return;
 const title=(typeof t==='string'?t:t.title)||'';
 const dist=typeof t==='string'?'none':t.dist||'none';
-const tdate=typeof t==='string'?'':t.date||'';
+const tdate=(typeof t==='string'?'':t.date||'')+(typeof t==='string'||!t.time?'':' '+t.time);
 const tmembers=typeof t==='string'?[]:(t.members||[]);
 const sec=typeof t==='string'?'':t.section||'';
 if(sec !== currentSec) { flushSec(); currentSec=sec; }
@@ -1677,11 +1677,11 @@ const schedules=item?formatSchedules(item.dates):[];
 if(schedules.length)schedules.forEach(s=>addDateGroup(s.date,s.times||[]));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{}));}
+{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
-function addTrackRow(val='',dist='none',date='',members=[],section='',file={}){
+function addTrackRow(val='',dist='none',date='',members=[],section='',file={},time=''){
 cfg=loadConfig();
 const wrap=document.getElementById('tracksWrap');
 const row=document.createElement('div');
@@ -1702,6 +1702,7 @@ row.innerHTML=`
 </div>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
 <input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px">
+<input class="form-input track-time" type="text" placeholder="時間 例 14:00" value="${esc(time)}" style="width:110px;font-size:13px">
 <select class="track-dist form-select" style="width:100px;padding:7px 6px;font-size:12px">
 <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
 <option value="ok" ${dist==='ok'?'selected':''}>配布可</option>
@@ -1783,21 +1784,28 @@ keep.push(l0);});
 if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>{r.date=orderedB[i];});
 text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
+if(orderedB.length){const bs=[...new Set(orderedB)];const dist=(a,b)=>{let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d;};
+const snap=d=>{if(bs.includes(d))return d;let best=null,bd=9;bs.forEach(b=>{const x=dist(d,b);if(x<bd){bd=x;best=b;}});return bd<=2?best:d;};
+trackRows.forEach(r=>{r.date=snap(r.date);});
+const merged=[];dateObjs.forEach(o=>{const d=snap(o.date);let m=merged.find(x=>x.date===d);if(!m){m={date:d,times:[]};merged.push(m);}o.times.forEach(t=>{if(!m.times.includes(t))m.times.push(t);});});
+dateObjs.length=0;merged.forEach(m=>dateObjs.push(m));dateObjs.sort((a,b)=>a.date<b.date?-1:1);}
 const dates=dateObjs.map(x=>x.date);
 cfg=loadConfig();
 const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
-const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺');
+const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
 const matchNames=str=>{const out=new Set();const ns=nz(str);
 reg.forEach(n=>{if(ns.includes(nz(n)))out.add(n);});
 String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nz).filter(t=>t.length>=2).forEach(t=>{
-const c=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
-if(c.length===1)out.add(c[0]);
-else if(c.length>1){const six=c.filter(n=>cfg.members.includes(n));if(six.length===1)out.add(six[0]);}});
+const pick=c=>{if(c.length===1)out.add(c[0]);else if(c.length>1){const six=c.filter(n=>cfg.members.includes(n));if(six.length===1)out.add(six[0]);}};
+let c=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
+if(!c.length)c=reg.filter(n=>t.length>=2&&nz(n).endsWith(t));
+if(!c.length&&t.length>=3)c=reg.filter(n=>{const a=nz(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nz(n).length>=t.length;});
+pick(c);});
 return[...out];};
 const rowNames=new Set();
-trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));addTrackRow(r.title,'none',r.date,r.members);});
+trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));addTrackRow(r.title,'none',r.date,r.members,'',{},((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / ')));});
 const tkHave=new Set(trackRows.map(r=>r.date));
-dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date+(d.times.length?' '+d.times.join(' / '):'');addTrackRow(tt,'none',d.date,[]);trackRows.push({title:tt,date:d.date});}});
+dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date;addTrackRow(tt,'none',d.date,[],'',{},d.times.join(' / '));trackRows.push({title:tt,date:d.date});}});
 const found=[...new Set([...matchNames(text),...rowNames])];
 const missed=[];
 found.forEach(n=>{let hit=false;document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===n){c.classList.add('selected');hit=true;}});if(!hit)missed.push(n);});
@@ -1836,10 +1844,11 @@ const date=row.querySelector('.track-date');
 const sec=row.querySelector('.track-section');
 const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
 const fo={};[['res','.tf-res'],['size','.tf-size'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
-const hasOther=(date&&date.value)||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
+const tmEl=row.querySelector('.track-time');const tmv=tmEl?tmEl.value.trim():'';
+const hasOther=tmv||(date&&date.value)||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
 if(!input.value.trim()&&!hasOther)return null;
 _trackFiles.push(fo);
-return{title:input.value.trim(),dist:dist?dist.value:'none',date:date?date.value:'',members,section:sec?sec.value:''};
+return{title:input.value.trim(),time:tmv,dist:dist?dist.value:'none',date:date?date.value:'',members,section:sec?sec.value:''};
 }).filter(Boolean);
 }
 document.getElementById('addBtn').addEventListener('click',()=>openEditModal());
