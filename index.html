@@ -482,6 +482,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <select class="form-select" id="otherGroupSelect" style="margin-bottom:8px"></select>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
 <button class="btn btn-primary" id="grpRenBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">名前変更</button>
+<button class="btn btn-primary" id="grpTabBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">＋ SixTONES以外のタブを追加</button>
 <button class="btn btn-primary" id="grpMoveBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">別タブへ移動</button>
 <button class="btn btn-primary" id="grpUpBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">↑</button>
 <button class="btn btn-primary" id="grpDownBtn" style="border-radius:8px;padding:6px 10px;font-size:12px">↓</button>
@@ -739,8 +740,8 @@ if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');return(o&&typeof o==='object')?o:{};}catch{return{};}}
-function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.mins?o.mins+'分':'',o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
-function hasMeta(item){const m=parseMeta(item);return['res','size','mins','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
+function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
+function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
 if(m==='ジェシー')return'tag-jesse';
@@ -1260,7 +1261,7 @@ const genres=parseGenres(item.genres||item.genre||'');
 document.getElementById('detailGenres').innerHTML='';
 document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
-{const mt=parseMeta(item);const rows=isAdmin?[['解像度',mt.res],['容量',mt.size],['長さ',mt.mins?mt.mins+'分':''],['保存場所',mt.loc]].filter(r=>r[1]):[];
+{const mt=parseMeta(item);const rows=isAdmin?[['解像度',mt.res],['容量',mt.size],['保存場所',mt.loc]].filter(r=>r[1]):[];
 document.getElementById('detailFileInfo').innerHTML=rows.length?'<div style="background:var(--pink-pale);border:1px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.9"><div style="font-weight:700;color:var(--pink-dark);margin-bottom:2px">ファイル情報</div>'+rows.map(r=>`<div><span style="color:var(--gray)">${r[0]}</span>　${esc(r[1])}</div>`).join('')+'</div>':'';}
 const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
@@ -1300,7 +1301,7 @@ const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="f
 secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
 <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.mins?fo.mins+'分':'',fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">💾 ${esc(tx)}</div>`:'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">💾 ${esc(tx)}</div>`:'';})()}
 </div>`);
 });
 flushSec();
@@ -1405,6 +1406,14 @@ const g=ogSel.value;if(!g)return;const n=usedBy(g).length;
 if(!confirm('グループ「'+g+'」を一覧から削除します。'+(n?'このグループが付いた動画が'+n+'件あります（動画のデータは消えません）。':'')+'よろしいですか？'))return;
 cfg.subgenres[gOf(g)]=subs().filter(x=>x!==g);if(cfg.otherMembers)delete cfg.otherMembers[g];
 if(saveConfig(cfg)===false)return;window._lastOgSel='';reopen();toastMsg('「'+g+'」を削除しました');
+};
+document.getElementById('grpTabBtn').onclick=()=>{
+let nm=(prompt('追加するタブ名','SixTONES以外(他界隈)')||'').trim();if(!nm)return;
+if(!nm.startsWith(OGP))nm=OGP+'('+nm+')';
+if(cfg.genres.includes(nm)){toastMsg('すでにあるタブです');return;}
+cfg.genres.push(nm);if(!cfg.subgenres[nm])cfg.subgenres[nm]=[];
+if(saveConfig(cfg)===false)return;
+reopen();toastMsg('「'+nm+'」を追加しました');
 };
 document.getElementById('grpMoveBtn').onclick=async()=>{
 const g=ogSel.value;if(!g)return;const from=gOf(g);const opts=ogGenres(cfg).filter(k=>k!==from);
@@ -1654,7 +1663,6 @@ row.innerHTML=`
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
 <input class="form-input tf-res" placeholder="解像度（例 1920×1080）" value="${esc(file.res||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-size" placeholder="容量（例 5GB）" value="${esc(file.size||'')}" style="font-size:12px;padding:6px 8px">
-<input class="form-input tf-mins" placeholder="長さ（分）" inputmode="numeric" value="${esc(file.mins||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(file.loc||'')}" style="font-size:12px;padding:6px 8px">
 </div>
 <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
@@ -1681,7 +1689,7 @@ const dist=row.querySelector('.track-dist');
 const date=row.querySelector('.track-date');
 const sec=row.querySelector('.track-section');
 const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
-{const fo={};[['res','.tf-res'],['size','.tf-size'],['mins','.tf-mins'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});_trackFiles.push(fo);}
+{const fo={};[['res','.tf-res'],['size','.tf-size'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});_trackFiles.push(fo);}
 return{title:input.value.trim(),dist:dist?dist.value:'none',date:date?date.value:'',members,section:sec?sec.value:''};
 }).filter(Boolean);
 }
@@ -1709,7 +1717,7 @@ const genres=getSelectedGenres();
 const schedules=getSchedules();
 const tracks=getTracks();
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);['res','size','mins','loc'].forEach(k=>{if(om[k])metaObj[k]=om[k];});if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);['res','size','loc'].forEach(k=>{if(om[k])metaObj[k]=om[k];});if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
