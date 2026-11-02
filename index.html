@@ -594,15 +594,6 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
 </div>
 <div class="form-group">
-<label class="form-label">ファイル情報（任意）</label>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-<input class="form-input" id="editRes" placeholder="解像度（例 1920×1080）">
-<input class="form-input" id="editSize" placeholder="容量（例 5GB）">
-<input class="form-input" id="editMins" placeholder="長さ（分）" inputmode="numeric">
-<input class="form-input" id="editLoc" placeholder="保存場所（例 HDD-A）">
-</div>
-</div>
-<div class="form-group">
 <label class="form-label">メモ</label>
 <textarea class="form-textarea" id="editNote" placeholder="任意"></textarea>
 </div>
@@ -748,7 +739,8 @@ if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');return(o&&typeof o==='object')?o:{};}catch{return{};}}
-function metaText(item){const m=parseMeta(item);return isAdmin?[m.res,m.size,m.mins?m.mins+'分':'',m.loc].filter(Boolean).join(' '):'';}
+function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.mins?o.mins+'分':'',o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
+function hasMeta(item){const m=parseMeta(item);return['res','size','mins','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
 if(m==='ジェシー')return'tag-jesse';
@@ -908,7 +900,7 @@ let hit=false;
 if(F.gaps.has('nogenre')&&gs0.length===0)hit=true;
 if(F.gaps.has('nomember')&&(item.members||[]).length===0)hit=true;
 if(F.gaps.has('nosub')&&gs0.some(g=>((c0.subgenres[g.genre]||[]).length>0)&&!g.subgenre))hit=true;
-if(F.gaps.has('nometa')&&!Object.keys(parseMeta(item)).length)hit=true;
+if(F.gaps.has('nometa')&&!hasMeta(item))hit=true;
 if(!hit)return false;
 }
 if(F.fav.size&&!favSet.has(item.id))return false;
@@ -1295,7 +1287,7 @@ const secHeader = currentSec ? `<div style="font-size:11px;font-weight:700;color
 sectionsHtml += secHeader + secItems.join('');
 secItems = [];
 };
-tracks.forEach(t=>{
+tracks.forEach((t,ti)=>{
 const title=typeof t==='string'?t:t.title;
 const dist=typeof t==='string'?'none':t.dist||'none';
 const tdate=typeof t==='string'?'':t.date||'';
@@ -1308,6 +1300,7 @@ const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="f
 secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
 <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.mins?fo.mins+'分':'',fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">💾 ${esc(tx)}</div>`:'';})()}
 </div>`);
 });
 flushSec();
@@ -1577,7 +1570,6 @@ document.getElementById('editModalTitle').textContent=item?'動画を編集':'�
 document.getElementById('editTitle').value=item?item.title:'';
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
-{const mt=parseMeta(item);document.getElementById('editRes').value=mt.res||'';document.getElementById('editSize').value=mt.size||'';document.getElementById('editMins').value=mt.mins||'';document.getElementById('editLoc').value=mt.loc||'';}
 const sel=item?item.members:[];
 function renderMemberChips(initial){
 cfg=loadConfig();
@@ -1628,11 +1620,11 @@ const schedules=item?formatSchedules(item.dates):[];
 if(schedules.length)schedules.forEach(s=>addDateGroup(s.date,s.times||[]));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-tracks.forEach(t=>typeof t==='string'?addTrackRow(t):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||''));
+{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{}));}
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
-function addTrackRow(val='',dist='none',date='',members=[],section=''){
+function addTrackRow(val='',dist='none',date='',members=[],section='',file={}){
 cfg=loadConfig();
 const wrap=document.getElementById('tracksWrap');
 const row=document.createElement('div');
@@ -1659,6 +1651,12 @@ row.innerHTML=`
 <option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
 </select>
 </div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+<input class="form-input tf-res" placeholder="解像度（例 1920×1080）" value="${esc(file.res||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input tf-size" placeholder="容量（例 5GB）" value="${esc(file.size||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input tf-mins" placeholder="長さ（分）" inputmode="numeric" value="${esc(file.mins||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input tf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(file.loc||'')}" style="font-size:12px;padding:6px 8px">
+</div>
 <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
 row.querySelector('.tr-rm').addEventListener('click',()=>row.remove());
 row.querySelector('.tr-up').addEventListener('click',()=>{
@@ -1673,7 +1671,9 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+let _trackFiles=[];
 function getTracks(){
+_trackFiles=[];
 return[...document.getElementById('tracksWrap').querySelectorAll('div[style*="pink-pale"]')].map(row=>{
 const input=row.querySelector('.track-input');
 if(!input||!input.value.trim())return null;
@@ -1681,6 +1681,7 @@ const dist=row.querySelector('.track-dist');
 const date=row.querySelector('.track-date');
 const sec=row.querySelector('.track-section');
 const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
+{const fo={};[['res','.tf-res'],['size','.tf-size'],['mins','.tf-mins'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});_trackFiles.push(fo);}
 return{title:input.value.trim(),dist:dist?dist.value:'none',date:date?date.value:'',members,section:sec?sec.value:''};
 }).filter(Boolean);
 }
@@ -1700,8 +1701,6 @@ if(dup&&!confirm('同じタイトルの動画がすでにあります：\n「'+d
 }
 const exchange=document.getElementById('editExchange').value;
 const note=document.getElementById('editNote').value.trim();
-const metaObj={};
-[['res','editRes'],['size','editSize'],['mins','editMins'],['loc','editLoc']].forEach(([k,id])=>{const v=document.getElementById(id).value.trim();if(v)metaObj[k]=v;});
 const members=[
 ...[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member),
 ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
@@ -1709,6 +1708,8 @@ const members=[
 const genres=getSelectedGenres();
 const schedules=getSchedules();
 const tracks=getTracks();
+const metaObj={};
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);['res','size','mins','loc'].forEach(k=>{if(om[k])metaObj[k]=om[k];});if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
