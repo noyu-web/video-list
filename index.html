@@ -1636,8 +1636,11 @@ if(otherSubs.includes(prevG))addSel.value=prevG;
 addSel.style.display=otherSubs.length>1?'':'none';
 const nowOtherSel=[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
 const effectiveOtherSel=hadOther?nowOtherSel:sel;
-extraMembers=[...new Set([...extraMembers,...effectiveOtherSel.filter(m=>!cfg.members.includes(m))])];
-document.getElementById('otherMemberChips').innerHTML=extraMembers.map(m=>`<button type="button" class="chip${effectiveOtherSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`).join('');
+const allOG=ogGroups(cfg);
+const grpChips=[...new Set([...otherSubs,...effectiveOtherSel.filter(m=>allOG.includes(m))])];
+extraMembers=[...new Set([...extraMembers,...effectiveOtherSel.filter(m=>!cfg.members.includes(m))])].filter(m=>!allOG.includes(m));
+const chipH=m=>`<button type="button" class="chip${effectiveOtherSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`;
+document.getElementById('otherMemberChips').innerHTML=(grpChips.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark)">グループ名</div>'+grpChips.map(chipH).join('')+(extraMembers.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark);margin-top:4px">個人名</div>':''):'')+extraMembers.map(chipH).join('');
 document.getElementById('otherMemberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 }else{
 otherGroup.classList.add('hidden');
