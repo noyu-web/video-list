@@ -430,6 +430,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailGenres" style="margin-bottom:10px"></div>
 <div id="detailMembers" class="card-meta" style="margin-bottom:12px"></div>
 <div id="detailExchange" style="margin-bottom:12px"></div>
+<div id="detailFileInfo" style="margin-bottom:12px"></div>
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
@@ -593,6 +594,15 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
 </div>
 <div class="form-group">
+<label class="form-label">ファイル情報（任意）</label>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+<input class="form-input" id="editRes" placeholder="解像度（例 1920×1080）">
+<input class="form-input" id="editSize" placeholder="容量（例 5GB）">
+<input class="form-input" id="editMins" placeholder="長さ（分）" inputmode="numeric">
+<input class="form-input" id="editLoc" placeholder="保存場所（例 HDD-A）">
+</div>
+</div>
+<div class="form-group">
 <label class="form-label">メモ</label>
 <textarea class="form-textarea" id="editNote" placeholder="任意"></textarea>
 </div>
@@ -737,6 +747,8 @@ function groupTagsHTML(item){
 if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
+function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');return(o&&typeof o==='object')?o:{};}catch{return{};}}
+function metaText(item){const m=parseMeta(item);return isAdmin?[m.res,m.size,m.mins?m.mins+'分':'',m.loc].filter(Boolean).join(' '):'';}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
 if(m==='ジェシー')return'tag-jesse';
@@ -801,7 +813,7 @@ try{
 const cached=localStorage.getItem('videos_ls_cache');
 if(cached){
 cachedVideos=JSON.parse(cached);
-gasGet({action:'getVideos'}).then(data=>{
+gasGet({action:'getVideos',token}).then(data=>{
 if(Array.isArray(data)){
 cachedVideos=data;
 try{localStorage.setItem('videos_ls_cache',JSON.stringify(data));}catch{}
@@ -812,7 +824,7 @@ return cachedVideos;
 }
 }catch{}
 }
-cachedVideos=await gasGet({action:'getVideos'});
+cachedVideos=await gasGet({action:'getVideos',token});
 if(!Array.isArray(cachedVideos))cachedVideos=[];
 try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}
 return cachedVideos;
@@ -884,7 +896,7 @@ F.years.forEach(y=>{if(ys.has(y))ok=true;});
 if(!ok)return false;
 }
 if(F.q){
-const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item)].join(' ');
+const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
 const hayF=fold(hay);
 const terms=fold(F.q).split(/\s+/).filter(Boolean);
 if(!terms.every(t=>hayF.includes(t)))return false;
@@ -896,6 +908,7 @@ let hit=false;
 if(F.gaps.has('nogenre')&&gs0.length===0)hit=true;
 if(F.gaps.has('nomember')&&(item.members||[]).length===0)hit=true;
 if(F.gaps.has('nosub')&&gs0.some(g=>((c0.subgenres[g.genre]||[]).length>0)&&!g.subgenre))hit=true;
+if(F.gaps.has('nometa')&&!Object.keys(parseMeta(item)).length)hit=true;
 if(!hit)return false;
 }
 if(F.fav.size&&!favSet.has(item.id))return false;
@@ -919,7 +932,7 @@ F.ex.forEach(v=>items.push({k:'ex',v,label:exchangeLabel(v)}));
 F.fresh.forEach(v=>items.push({k:'fresh',v,label:'新着（7日以内）'}));
 F.fav.forEach(v=>items.push({k:'fav',v,label:'★ お気に入り'}));
 if(isAdmin)F.chk.forEach(v=>items.push({k:'chk',v,label:v==='yes'?'確認済み':'未確認'}));
-F.gaps.forEach(v=>items.push({k:'gaps',v,label:v==='nogenre'?'ジャンル未設定':v==='nomember'?'出演者なし':'小ジャンル未設定'}));
+F.gaps.forEach(v=>items.push({k:'gaps',v,label:v==='nogenre'?'ジャンル未設定':v==='nomember'?'出演者なし':v==='nometa'?'ファイル情報なし':'小ジャンル未設定'}));
 document.getElementById('activeBar').innerHTML=items.map(it=>`<button type="button" class="af-chip" data-fk="${it.k}" data-fv="${esc(it.v)}">${esc(it.label)} ✕</button>`).join('');
 const n=filterCount();
 document.getElementById('filterBadge').textContent=n;
@@ -969,7 +982,7 @@ secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years
 secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
 secHTML('新着','7日以内に追加された動画','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>')+
 secHTML('お気に入り','この端末に保存されます','<div class="chips-grid">'+chipHTML('fav','yes','★ お気に入りのみ')+'</div>')+
-(isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+chipHTML('gaps','nomember','出演者なし')+'</div>'):'')+
+(isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+chipHTML('gaps','nometa','ファイル情報なし')+chipHTML('gaps','nomember','出演者なし')+'</div>'):'')+
 (isAdmin?secHTML('確認状況','管理者向け・チェックの有無で絞り込み','<div class="chips-grid">'+chipHTML('chk','yes','確認済み')+chipHTML('chk','no','未確認')+'</div>'):'');
 body.innerHTML=html;
 body.scrollTop=prevScroll;
@@ -1151,7 +1164,8 @@ else localStorage.removeItem(TOKEN_KEY);
 }
 function clearToken(){
 isAdmin=false;token='';
-try{localStorage.removeItem(TOKEN_KEY);}catch{}
+try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem('videos_ls_cache');}catch{}
+if(cachedVideos)cachedVideos.forEach(v=>{v.meta='';});
 }
 const ERR={
 too_soon:'少し時間をおいてから、もう一度押してください。',
@@ -1210,6 +1224,7 @@ if(d&&d.ok){
 token=d.token;isAdmin=true;
 try{localStorage.setItem(TOKEN_KEY,JSON.stringify({token:d.token,expires:d.expires}));}catch{}
 closeAuth();updateAdminUI();
+cachedVideos=null;loadVideos(true).then(()=>renderList());
 }else{
 setAuthMsg(ERR[d&&d.error]||'ログインに失敗しました。');
 if(d&&(d.error==='expired'||d.error==='locked')){
@@ -1253,6 +1268,8 @@ const genres=parseGenres(item.genres||item.genre||'');
 document.getElementById('detailGenres').innerHTML='';
 document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
+{const mt=parseMeta(item);const rows=isAdmin?[['解像度',mt.res],['容量',mt.size],['長さ',mt.mins?mt.mins+'分':''],['保存場所',mt.loc]].filter(r=>r[1]):[];
+document.getElementById('detailFileInfo').innerHTML=rows.length?'<div style="background:var(--pink-pale);border:1px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.9"><div style="font-weight:700;color:var(--pink-dark);margin-bottom:2px">ファイル情報</div>'+rows.map(r=>`<div><span style="color:var(--gray)">${r[0]}</span>　${esc(r[1])}</div>`).join('')+'</div>':'';}
 const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
 if(schedules.length){
@@ -1560,6 +1577,7 @@ document.getElementById('editModalTitle').textContent=item?'動画を編集':'�
 document.getElementById('editTitle').value=item?item.title:'';
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
+{const mt=parseMeta(item);document.getElementById('editRes').value=mt.res||'';document.getElementById('editSize').value=mt.size||'';document.getElementById('editMins').value=mt.mins||'';document.getElementById('editLoc').value=mt.loc||'';}
 const sel=item?item.members:[];
 function renderMemberChips(initial){
 cfg=loadConfig();
@@ -1682,6 +1700,8 @@ if(dup&&!confirm('同じタイトルの動画がすでにあります：\n「'+d
 }
 const exchange=document.getElementById('editExchange').value;
 const note=document.getElementById('editNote').value.trim();
+const metaObj={};
+[['res','editRes'],['size','editSize'],['mins','editMins'],['loc','editLoc']].forEach(([k,id])=>{const v=document.getElementById(id).value.trim();if(v)metaObj[k]=v;});
 const members=[
 ...[...document.getElementById('memberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member),
 ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
@@ -1689,7 +1709,7 @@ const members=[
 const genres=getSelectedGenres();
 const schedules=getSchedules();
 const tracks=getTracks();
-const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks)};
+const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
 const savedOk=await writeVideo(video,!editingId);
