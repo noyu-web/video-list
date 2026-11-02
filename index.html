@@ -224,13 +224,14 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div style="display:flex;align-items:center;gap:8px;padding:10px 16px 6px">
 <span style="font-size:12px;color:var(--gray)">並び替え</span>
-<select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
+<select id="sortSelect" style="display:none;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
 <option value="default">登録順</option>
 <option value="date_new">公演日（新しい順）</option>
 <option value="date_old">公演日（古い順）</option>
 <option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
 </select>
+<div id="sortChips" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;flex:1;min-width:0"></div>
 <button type="button" class="fav-only" id="favOnlyBtn">☆ お気に入りだけ</button>
 </div>
 
@@ -304,6 +305,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="form-group">
 <label class="form-label">所持リスト②へ</label>
 <button class="btn-save" id="bulkTransferBtn" style="width:100%">所持リスト②へ移動・コピー</button>
+</div>
+<div class="form-group">
+<label class="form-label">カードの結合</label>
+<button class="btn-save" id="bulkMergeBtn" style="width:100%">選んだカードを1枚に結合</button>
+<div style="font-size:11px;color:var(--gray);margin-top:4px">一番上のカードに、日付・収録内容・出演者・ジャンルをまとめて追加し、残りは削除します</div>
 </div>
 <div class="form-group">
 <button id="bulkDelete" style="width:100%;background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer">選んだ項目を削除</button>
@@ -478,6 +484,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 <div class="form-group">
 <div class="section-title">SixTONES以外 出演者管理</div>
+<div id="ogTabOrder" style="margin-bottom:10px"></div>
 <div style="font-size:11px;color:var(--gray);margin-bottom:8px">グループを選んで個人名を管理</div>
 <select class="form-select" id="otherGroupSelect" style="margin-bottom:8px"></select>
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
@@ -593,6 +600,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
+<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">📁 ファイルから自動追加</button><input type="file" id="fileAddInput" multiple accept="video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
 <div class="form-group">
 <label class="form-label">メモ</label>
@@ -739,7 +747,7 @@ function groupTagsHTML(item){
 if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
-function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');return(o&&typeof o==='object')?o:{};}catch{return{};}}
+function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
 function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
 function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
@@ -1261,8 +1269,7 @@ const genres=parseGenres(item.genres||item.genre||'');
 document.getElementById('detailGenres').innerHTML='';
 document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
-{const mt=parseMeta(item);const rows=isAdmin?[['解像度',mt.res],['容量',mt.size],['保存場所',mt.loc]].filter(r=>r[1]):[];
-document.getElementById('detailFileInfo').innerHTML=rows.length?'<div style="background:var(--pink-pale);border:1px solid var(--pink-light);border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.9"><div style="font-weight:700;color:var(--pink-dark);margin-bottom:2px">ファイル情報</div>'+rows.map(r=>`<div><span style="color:var(--gray)">${r[0]}</span>　${esc(r[1])}</div>`).join('')+'</div>':'';}
+document.getElementById('detailFileInfo').innerHTML='';
 const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
 if(schedules.length){
@@ -1407,6 +1414,20 @@ if(!confirm('グループ「'+g+'」を一覧から削除します。'+(n?'こ�
 cfg.subgenres[gOf(g)]=subs().filter(x=>x!==g);if(cfg.otherMembers)delete cfg.otherMembers[g];
 if(saveConfig(cfg)===false)return;window._lastOgSel='';reopen();toastMsg('「'+g+'」を削除しました');
 };
+const renderOgOrder=()=>{
+const box=document.getElementById('ogTabOrder');const og=ogGenres(cfg);
+if(og.length<2){box.innerHTML='';return;}
+box.innerHTML='<div style="font-size:11px;color:var(--gray);margin-bottom:4px">タブの順番（↑↓で入れ替え）</div>'+og.map((k,i)=>`<div class="manage-item" style="gap:6px"><span style="flex:1;font-size:13px">${esc(k)}</span><button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark)" data-ogo="up" data-k="${esc(k)}" ${i===0?'disabled':''}>↑</button><button class="btn-remove" style="background:var(--pink-pale);color:var(--pink-dark)" data-ogo="down" data-k="${esc(k)}" ${i===og.length-1?'disabled':''}>↓</button></div>`).join('');
+box.querySelectorAll('[data-ogo]').forEach(b=>b.addEventListener('click',()=>{
+const k=b.dataset.k,og2=ogGenres(cfg),i=og2.indexOf(k),j=b.dataset.ogo==='up'?i-1:i+1;
+if(i<0||j<0||j>=og2.length)return;
+const a=cfg.genres.indexOf(og2[i]),c=cfg.genres.indexOf(og2[j]);
+[cfg.genres[a],cfg.genres[c]]=[cfg.genres[c],cfg.genres[a]];
+if(saveConfig(cfg)===false)return;
+renderOgOrder();renderTabs();renderSubtabs();
+}));
+};
+renderOgOrder();
 document.getElementById('grpTabBtn').onclick=()=>{
 let nm=(prompt('追加するタブ名','SixTONES以外(他界隈)')||'').trim();if(!nm)return;
 if(!nm.startsWith(OGP))nm=OGP+'('+nm+')';
@@ -1679,6 +1700,17 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+(function(){const inp=document.getElementById('fileAddInput');
+document.getElementById('fileAddBtn').addEventListener('click',()=>inp.click());
+const fmt=b=>b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';
+const dim=f=>new Promise(r=>{try{if(!/^video/.test(f.type)&&!/\.(mp4|mkv|mov|m4v|ts|avi|wmv)$/i.test(f.name))return r('');const v=document.createElement('video'),u=URL.createObjectURL(f);let done=false;const fin=x=>{if(done)return;done=true;URL.revokeObjectURL(u);r(x);};v.preload='metadata';v.onloadedmetadata=()=>fin(v.videoWidth?v.videoWidth+'×'+v.videoHeight:'');v.onerror=()=>fin('');setTimeout(()=>fin(''),4000);v.src=u;}catch{r('');}});
+inp.addEventListener('change',async()=>{const fs=[...inp.files].sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));inp.value='';if(!fs.length)return;
+let firstDate='';
+for(const f of fs){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+if(ds&&(!firstDate||ds<firstDate))firstDate=ds;
+addTrackRow(f.name.replace(/\.[^.]+$/,''),'none',ds,[],'',{res:await dim(f),size:fmt(f.size),loc:''});}
+if(firstDate&&!getSchedules().length)addDateGroup(firstDate);
+toastMsg(fs.length+'件を追加しました');});})();
 let _trackFiles=[];
 function getTracks(){
 _trackFiles=[];
@@ -1717,7 +1749,7 @@ const genres=getSelectedGenres();
 const schedules=getSchedules();
 const tracks=getTracks();
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);['res','size','loc'].forEach(k=>{if(om[k])metaObj[k]=om[k];});if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
@@ -1835,6 +1867,47 @@ if(mode==='add')next=cur.some(x=>x.genre===g&&(x.subgenre||'')===sub)?cur:[...cu
 else next=[{genre:g,subgenre:sub}];
 return{...it,genres:JSON.stringify(next)};
 });
+});
+let mergeBusy=false;
+document.getElementById('bulkMergeBtn').addEventListener('click',async()=>{
+if(!isAdmin||mergeBusy)return;
+const all=await loadVideos();const t=all.filter(it=>selected.has(it.id));
+if(t.length<2){toastMsg('2件以上選んでください');return;}
+const base=t[0];
+if(!confirm(t.length+'件を「'+base.title+'」に結合します。他の'+(t.length-1)+'件は削除されます。元に戻せません。よろしいですか？'))return;
+mergeBusy=true;
+try{
+const pj=(v,d)=>{try{const x=typeof v==='string'?JSON.parse(v||'null'):v;return x==null?d:x;}catch{return d;}};
+const members=[...(base.members||[])];
+const genres=pj(base.genres,[]).slice();
+const sched=pj(base.dates,[]).map(x=>typeof x==='string'?{date:x,times:[]}:{date:x.date,times:(x.times||[]).slice()});
+const tName=x=>typeof x==='string'?x:(x&&x.title)||'';
+const mkTrack=(it)=>({title:it.title,dist:'none',date:(((pj(it.dates,[])[0])||{}).date)||((pj(it.dates,[])[0])||'')||'',members:(it.members||[]).slice(),section:''});
+let tracks=pj(base.tracks,[]).slice();
+const bm=parseMeta(base);let tr=(bm.tr||[]).slice();
+if(!tracks.length&&t.length>1){tracks=[mkTrack(base)];tr=[(bm.tr||[])[0]||{}];}
+while(tr.length<tracks.length)tr.push({});
+const notes=[base.note||''].filter(Boolean);
+for(const it of t.slice(1)){
+(it.members||[]).forEach(m=>{if(!members.includes(m))members.push(m);});
+pj(it.genres,[]).forEach(g=>{if(!genres.some(x=>x.genre===g.genre&&(x.subgenre||'')===(g.subgenre||'')))genres.push(g);});
+pj(it.dates,[]).forEach(d0=>{const d=typeof d0==='string'?{date:d0,times:[]}:d0;if(!d.date)return;const e=sched.find(x=>x.date===d.date);if(e){(d.times||[]).forEach(tm=>{if(!e.times.includes(tm))e.times.push(tm);});}else sched.push({date:d.date,times:(d.times||[]).slice()});});
+const im=parseMeta(it);let its=pj(it.tracks,[]);let itr=(im.tr||[]).slice();
+if(!its.length){its=[mkTrack(it)];itr=[(im.tr||[])[0]||{}];}
+its.forEach((x,k)=>{if(tracks.some(y=>tName(y)===tName(x)))return;tracks.push(x);tr.push(itr[k]||{});});
+if(it.note&&!notes.includes(it.note))notes.push(it.note);
+}
+sched.sort((a,b)=>a.date<b.date?-1:1);
+const metaObj={};if(tr.some(o=>o&&Object.keys(o).length))metaObj.tr=tr;
+const video={...base,members,genres:JSON.stringify(genres),dates:JSON.stringify(sched),tracks:JSON.stringify(tracks),note:notes.join('\n'),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
+let ok=await writeVideo(video,false);
+if(!ok){toastMsg('結合の保存に失敗しました');return;}
+let fail=0;
+for(const it of t.slice(1)){try{const d=await gasWrite({action:OWN_DELETE,data:'',id:it.id});if(!(d&&d.ok))fail++;}catch{fail++;}}
+document.getElementById('bulkModal').classList.add('hidden');
+cachedVideos=null;await loadVideos(true);selected.clear();selectMode=false;updateBulkBar();renderList();
+toastMsg(fail?'結合しました（'+fail+'件の削除に失敗）':t.length+'件を1枚に結合しました');
+}finally{mergeBusy=false;}
 });
 document.getElementById('bulkDelete').addEventListener('click',()=>{
 if(!confirm(selected.size+'件を削除します。元に戻せません。よろしいですか？'))return;
@@ -2466,6 +2539,13 @@ toastMsg('設定を戻しました');
 
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
+(function(){const SC=[['default','登録順'],['date_new','新しい順'],['date_old','古い順'],['title','50音順'],['exchange','交換可']];
+const box=document.getElementById('sortChips'),sel=document.getElementById('sortSelect');
+box.innerHTML=SC.map(([v,l])=>`<button type="button" data-sv="${v}" style="flex:none;font-size:12px;padding:5px 11px;border-radius:999px;border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark)">${l}</button>`).join('');
+window.syncSortChips=function(){box.querySelectorAll('button[data-sv]').forEach(b=>{const on=b.dataset.sv===sel.value;b.style.background=on?'var(--pink-dark)':'var(--white)';b.style.color=on?'#fff':'var(--pink-dark)';b.style.opacity=sel.disabled?'.4':'1';b.disabled=sel.disabled;});const m=document.getElementById('sortManualChip');if(m){m.style.background=reorderMode?'var(--pink-dark)':'var(--white)';m.style.color=reorderMode?'#fff':'var(--pink-dark)';}};
+const mb=document.createElement('button');mb.type='button';mb.id='sortManualChip';mb.textContent='↕ 手動';mb.style.cssText='flex:none;font-size:12px;padding:5px 11px;border-radius:999px;border:1.5px dashed var(--pink-dark);background:var(--white);color:var(--pink-dark)';mb.addEventListener('click',()=>{if(!isAdmin){toastMsg('手動の並び替えは管理者のみです');return;}reorderMode?exitReorder():enterReorder();});box.appendChild(mb);
+box.addEventListener('click',e=>{const b=e.target.closest('button[data-sv]');if(!b||sel.disabled)return;sel.value=b.dataset.sv;sortOrder=b.dataset.sv;renderList();});
+const _rl=renderList;renderList=function(){const r=_rl.apply(this,arguments);syncSortChips();return r;};syncSortChips();})();
 updateFavOnlyBtn();
 loadToken();
 applyHash();
