@@ -176,6 +176,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 .mv-bar{display:flex;gap:6px;padding:0 13px 10px;justify-content:flex-end;align-items:center}
 .mv-bar .mv-no{margin-right:auto;font-size:12px;font-weight:800;color:var(--pink-dark)}
 .mv-bar button{min-width:40px;height:34px;border-radius:8px;border:1.5px solid var(--pink-light);background:var(--pink-pale);color:var(--pink-dark);font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.mv-bar .mv-grip{flex:1;text-align:center;height:30px;line-height:30px;border-radius:8px;background:var(--pink-dark);color:#fff;font-size:13px;font-weight:800;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.card.dragging{opacity:.85;box-shadow:0 8px 24px rgba(200,60,120,.35);transform:scale(1.02);position:relative;z-index:5}
 .mv-bar button:disabled{opacity:.35;cursor:default}
 .card.moved{animation:moved 1s ease}
 @keyframes moved{0%{background:var(--pink-light)}100%{background:var(--white)}}
@@ -224,14 +226,15 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div style="display:flex;align-items:center;gap:8px;padding:10px 16px 6px">
 <span style="font-size:12px;color:var(--gray)">並び替え</span>
-<select id="sortSelect" style="display:none;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
-<option value="default">登録順</option>
+<select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
+<option value="default">標準（手動の並び）</option>
+<option value="reg_new">登録（新しい順）</option>
+<option value="reg_old">登録（古い順）</option>
 <option value="date_new">公演日（新しい順）</option>
 <option value="date_old">公演日（古い順）</option>
 <option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
 </select>
-<div id="sortChips" style="display:flex;gap:6px;overflow-x:auto;white-space:nowrap;flex:1;min-width:0"></div>
 <button type="button" class="fav-only" id="favOnlyBtn">☆ お気に入りだけ</button>
 </div>
 
@@ -730,7 +733,7 @@ const m=/^#s=(.+)$/.exec(location.hash);if(!m)return;
 const o=JSON.parse(decodeURIComponent(m[1]));
 if(typeof o.t==='string'&&loadConfig().genres.includes(o.t))currentGenre=o.t;
 if(typeof o.u==='string'&&currentGenre!=='すべて')currentSubgenre=o.u;
-if(['default','date_new','date_old','title','exchange'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
+if(['default','date_new','date_old','reg_new','reg_old','title','exchange'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
 if(typeof o.q==='string')F.q=o.q;
 [['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
 }catch{}
@@ -1092,6 +1095,8 @@ if(sortOrder==='date_new'){
 data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return db.localeCompare(da);});
 }else if(sortOrder==='date_old'){
 data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return da.localeCompare(db);});
+}else if(sortOrder==='reg_new'||sortOrder==='reg_old'){
+const sg=sortOrder==='reg_new'?-1:1;data=[...data].sort((a,b)=>sg*((Number(a.id)||0)-(Number(b.id)||0)));
 }else if(sortOrder==='title'){
 data=[...data].sort((a,b)=>String(a.title).localeCompare(String(b.title),'ja'));
 }else if(sortOrder==='exchange'){
@@ -1111,7 +1116,7 @@ ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${m
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
 </div><div class="card-side"><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>${selectMode||reorderMode?'':`<button type="button" class="fav-btn${favSet.has(item.id)?' on':''}" data-fav="${item.id}" aria-label="お気に入り">${favSet.has(item.id)?'★':'☆'}</button>`}</div></div>
-${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
+${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><div class="mv-grip" data-id="${item.id}">☰ ドラッグ</div><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
 list.querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleFav(b.dataset.fav,b);}));
@@ -1955,6 +1960,21 @@ if(isAdmin)failMsg('並び順の保存');
 cachedVideos=null;await loadVideos(true);renderList();
 }
 }
+(function(){const list=document.getElementById('cardList');let drag=null,timer=null,py=0;
+list.addEventListener('pointerdown',e=>{const g=e.target.closest('.mv-grip');if(!g||!reorderMode)return;e.preventDefault();e.stopPropagation();
+const card=g.closest('.card');drag={card,id:g.dataset.id};card.classList.add('dragging');try{g.setPointerCapture(e.pointerId);}catch{}py=e.clientY;
+timer=setInterval(()=>{if(!drag)return;if(py<110)window.scrollBy(0,-14);else if(py>window.innerHeight-150)window.scrollBy(0,14);place();},30);});
+function place(){if(!drag)return;const cards=[...list.querySelectorAll('.card[data-detail]')].filter(c=>c!==drag.card);
+for(const c of cards){const r=c.getBoundingClientRect();if(py>=r.top&&py<=r.bottom){const before=drag.card.compareDocumentPosition(c)&Node.DOCUMENT_POSITION_FOLLOWING;
+const mid=r.top+r.height/2;if(before&&py>mid)c.after(drag.card);else if(!before&&py<mid)c.before(drag.card);break;}}}
+list.addEventListener('pointermove',e=>{if(!drag)return;e.preventDefault();py=e.clientY;place();});
+const end=()=>{if(!drag)return;clearInterval(timer);const d=drag;drag=null;d.card.classList.remove('dragging');
+const ids=[...list.querySelectorAll('.card[data-detail]')].map(c=>c.dataset.detail);
+if(ids.join()===lastShown.join())return;
+if(!applyOrderLocally(ids))return;lastShown=ids.slice();
+renderList().then(()=>{const el=document.querySelector('[data-detail="'+d.id+'"]');if(el)el.classList.add('moved');});
+orderQueue=orderQueue.then(()=>sendOrder(ids));};
+list.addEventListener('pointerup',end);list.addEventListener('pointercancel',end);})();
 async function moveItem(id,dir){
 const ids=lastShown.slice();
 const i=ids.indexOf(id);if(i<0)return;
@@ -2539,13 +2559,7 @@ toastMsg('設定を戻しました');
 
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
-(function(){const SC=[['default','登録順'],['date_new','新しい順'],['date_old','古い順'],['title','50音順'],['exchange','交換可']];
-const box=document.getElementById('sortChips'),sel=document.getElementById('sortSelect');
-box.innerHTML=SC.map(([v,l])=>`<button type="button" data-sv="${v}" style="flex:none;font-size:12px;padding:5px 11px;border-radius:999px;border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark)">${l}</button>`).join('');
-window.syncSortChips=function(){box.querySelectorAll('button[data-sv]').forEach(b=>{const on=b.dataset.sv===sel.value;b.style.background=on?'var(--pink-dark)':'var(--white)';b.style.color=on?'#fff':'var(--pink-dark)';b.style.opacity=sel.disabled?'.4':'1';b.disabled=sel.disabled;});const m=document.getElementById('sortManualChip');if(m){m.style.background=reorderMode?'var(--pink-dark)':'var(--white)';m.style.color=reorderMode?'#fff':'var(--pink-dark)';}};
-const mb=document.createElement('button');mb.type='button';mb.id='sortManualChip';mb.textContent='↕ 手動';mb.style.cssText='flex:none;font-size:12px;padding:5px 11px;border-radius:999px;border:1.5px dashed var(--pink-dark);background:var(--white);color:var(--pink-dark)';mb.addEventListener('click',()=>{if(!isAdmin){toastMsg('手動の並び替えは管理者のみです');return;}reorderMode?exitReorder():enterReorder();});box.appendChild(mb);
-box.addEventListener('click',e=>{const b=e.target.closest('button[data-sv]');if(!b||sel.disabled)return;sel.value=b.dataset.sv;sortOrder=b.dataset.sv;renderList();});
-const _rl=renderList;renderList=function(){const r=_rl.apply(this,arguments);syncSortChips();return r;};syncSortChips();})();
+
 updateFavOnlyBtn();
 loadToken();
 applyHash();
