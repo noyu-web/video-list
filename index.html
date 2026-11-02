@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -693,6 +693,7 @@ if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');
 }catch{failMsg('設定の保存');}
 });
 }
+let qMode='or';
 let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set(),fav:new Set()};
 const CHECK_LIST='1';
@@ -719,6 +720,7 @@ if(currentGenre!=='すべて')o.t=currentGenre;
 if(currentSubgenre!=='すべて')o.u=currentSubgenre;
 if(sortOrder!=='default')o.o=sortOrder;
 if(F.q)o.q=F.q;
+if(qMode==='and')o.a=1;
 [['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
 return o;
 }
@@ -733,6 +735,7 @@ function applyHash(){
 try{
 const m=/^#s=(.+)$/.exec(location.hash);if(!m)return;
 const o=JSON.parse(decodeURIComponent(m[1]));
+if(o.a)qMode='and';
 if(typeof o.t==='string'&&loadConfig().genres.includes(o.t))currentGenre=o.t;
 if(typeof o.u==='string'&&currentGenre!=='すべて')currentSubgenre=o.u;
 if(['default','date_new','date_old','reg_new','reg_old','title','exchange'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
@@ -901,19 +904,19 @@ if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenr
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
 if(F.genres.size){
 const gs=parseGenres(item.genres||item.genre||'');
-if(!gs.some(g=>F.genres.has(g.genre)))return false;
+if(qMode==='and'?![...F.genres].every(x=>gs.some(g=>g.genre===x)):!gs.some(g=>F.genres.has(g.genre)))return false;
 }
-if(F.members.size&&!(item.members||[]).some(m=>F.members.has(m)))return false;
+if(F.members.size){const ms=item.members||[];if(qMode==='and'?![...F.members].every(x=>ms.includes(x)):!ms.some(m=>F.members.has(m)))return false;}
 if(F.years.size){
 const ys=getYearsOf(item);let ok=false;
-F.years.forEach(y=>{if(ys.has(y))ok=true;});
+if(qMode==='and')ok=[...F.years].every(y=>ys.has(y));else F.years.forEach(y=>{if(ys.has(y))ok=true;});
 if(!ok)return false;
 }
 if(F.q){
 const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
 const hayF=fold(hay);
-const terms=fold(F.q).split(/\s+/).filter(Boolean);
-if(!terms.every(t=>hayF.includes(t)))return false;
+const segs=fold(F.q).split(/[|｜]/).map(x=>x.split(/\s+/).filter(Boolean)).filter(a=>a.length);
+if(segs.length&&!segs.some(terms=>terms.every(t=>hayF.includes(t))))return false;
 }
 if(F.gaps.size){
 const gs0=parseGenres(item.genres||item.genre||'');
@@ -989,7 +992,8 @@ const add=isAdmin?`<div class="om-add"><input class="form-input om-in" data-og="
 return`<details class="fs-others" data-g="${esc(g)}"${open?' open':''}><summary>${esc(g)}（${names.length}名）</summary><div class="chips-grid">${chips||'<span style="font-size:12px;color:var(--gray)">未登録</span>'}</div>${add}</details>`;
 }).join('');
 const html=
-secHTML('文字検索','タイトル・出演者・メモ・収録内容','<input class="form-input" id="fsText" type="search" placeholder="スペースで複数ワード（すべて含む）" value="'+esc(F.q)+'">')+
+secHTML('複数選択のしかた','ジャンル・出演者・年代','<div class="chips-grid"><button type="button" class="chip'+(qMode==='or'?' selected':'')+'" data-qm="or">いずれか（OR）</button><button type="button" class="chip'+(qMode==='and'?' selected':'')+'" data-qm="and">すべて（AND）</button></div>')+
+secHTML('文字検索','タイトル・出演者・メモ・収録内容','<input class="form-input" id="fsText" type="search" placeholder="スペース＝すべて含む（AND）／ | ＝どれか（OR）" value="'+esc(F.q)+'">')+
 secHTML('ジャンル名','複数選択可','<div class="chips-grid">'+genres.map(g=>chipHTML('genres',g)).join('')+'</div>')+
 secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/削除ができます':''),'<div class="chips-grid">'+sixt.map(m=>chipHTML('members',m)).join('')+'</div>'+(groupHTML?'<div style="font-size:11px;font-weight:700;color:var(--gray);margin:12px 0 2px">SixTONES以外</div>'+groupHTML:''))+
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
@@ -1022,6 +1026,8 @@ document.getElementById('filterApplyBtn').textContent=n+'件を表示';
 }
 let _qTimer=null;
 document.getElementById('filterBody').addEventListener('click',e=>{
+const qm=e.target.closest('button[data-qm]');
+if(qm){qMode=qm.dataset.qm;document.querySelectorAll('#filterBody [data-qm]').forEach(x=>x.classList.toggle('selected',x.dataset.qm===qMode));renderList();syncFilterSheet();return;}
 const b=e.target.closest('button[data-fk]');if(!b)return;
 const k=b.dataset.fk,v=b.dataset.fv;
 F[k].has(v)?F[k].delete(v):F[k].add(v);
@@ -1726,11 +1732,23 @@ try{toastMsg('読み取りの準備中…（初回は言語データの読み込
 let text='';
 for(let k=0;k<fs.length;k++){const r=await Tesseract.recognize(fs[k],'jpn',{logger:m=>{if(m.status==='recognizing text')toastMsg('読み取り中 '+(k+1)+'/'+fs.length+'枚 '+Math.round((m.progress||0)*100)+'%');}});text+=(r.data.text||'')+'\n';}
 text=text.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1').split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
-const dm=text.match(/(20\d{2}|19\d{2})\s*[\/.年\-]\s*(\d{1,2})\s*[\/.月\-]\s*(\d{1,2})/);
-if(dm&&!getSchedules().length)addDateGroup(dm[1]+'-'+dm[2].padStart(2,'0')+'-'+dm[3].padStart(2,'0'));
-if(!text){toastMsg('文字を読み取れませんでした');return;}
+const cp=x=>String(x).replace(/[\s　]/g,'');
+const dre=/(20\d{2}|19\d{2})\s*[\/.年\-]\s*(\d{1,2})\s*[\/.月\-]\s*(\d{1,2})/g;
+const dates=[...new Set([...text.matchAll(dre)].map(m=>m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0')))];
+const have=new Set(getSchedules().map(x=>x.date));
+dates.forEach(d=>{if(!have.has(d))addDateGroup(d);});
+cfg=loadConfig();
+const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
+const ct=cp(text);const found=reg.filter(n=>ct.includes(cp(n)));
+const missed=[];
+found.forEach(n=>{let hit=false;document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===n){c.classList.add('selected');hit=true;}});if(!hit)missed.push(n);});
+const fc=found.map(cp);
+text=text.split('\n').filter(l=>{const c=cp(l);if(!c)return false;if(/^(20\d{2}|19\d{2})[\/.年\-]\d{1,2}[\/.月\-]\d{1,2}日?$/.test(c))return false;if(fc.includes(c))return false;return true;}).join('\n');
+const te=document.getElementById('editTitle');
+if(!te.value.trim()&&text){const ls=text.split('\n');te.value=ls.shift().trim();text=ls.join('\n');}
+if(!text&&!dates.length&&!found.length){toastMsg('文字を読み取れませんでした');return;}
 const pt=document.getElementById('pasteText');pt.value=text;document.getElementById('pasteSection').value='';document.getElementById('pasteDist').value='none';updatePastePreview();
-document.getElementById('pasteModal').classList.remove('hidden');toastMsg('読み取り結果を確認して「追加」を押してください');
+document.getElementById('pasteModal').classList.remove('hidden');toastMsg('日付'+dates.length+'件・出演者'+(found.length-missed.length)+'名を自動で入れました'+(missed.length?'（'+missed.join('、')+' は該当グループを選ぶと選べます）':'')+'。残りを確認して「追加」を押してください');
 }catch{toastMsg('読み取りに失敗しました（通信状況を確認してください）');}
 finally{busy=false;}});})();
 (function(){const inp=document.getElementById('fileAddInput');
