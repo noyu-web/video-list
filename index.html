@@ -1784,11 +1784,9 @@ if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>
 text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
 const dates=dateObjs.map(x=>x.date);
-const have=new Set(getSchedules().map(x=>x.date));
-dateObjs.forEach(d=>{if(!have.has(d.date))addDateGroup(d.date,d.times);});
 trackRows.forEach(r=>addTrackRow(r.title,'none',r.date));
 const tkHave=new Set(trackRows.map(r=>r.date));
-dateObjs.forEach(d=>{if(!tkHave.has(d.date)){addTrackRow('','none',d.date);trackRows.push({title:'',date:d.date});}});
+dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date+(d.times.length?' '+d.times.join(' / '):'');addTrackRow(tt,'none',d.date);trackRows.push({title:tt,date:d.date});}});
 cfg=loadConfig();
 const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
 const ct=cp(text+trackRows.map(r=>r.title).join(''));const found=reg.filter(n=>ct.includes(cp(n)));
@@ -1798,7 +1796,7 @@ const fc=found.map(cp);
 text=text.split('\n').filter(l=>{const c=cp(l);return c&&!fc.includes(c);}).join('\n');
 const te=document.getElementById('editTitle');
 if(!te.value.trim()&&text){const ls=text.split('\n');te.value=ls.shift().trim();text=ls.join('\n');}
-const sum='日付'+dates.length+'件・収録内容'+trackRows.length+'件・出演者'+(found.length-missed.length)+'名';
+const sum='収録内容'+trackRows.length+'件・出演者'+(found.length-missed.length)+'名';
 if(steps.length)alert('一部の読み取りに失敗しました。\n'+steps.join('\n')+'\n\n通信状況を確認して、もう一度お試しください。\n（'+sum+'は反映済みです）');
 if(!dates.length&&!trackRows.length&&!found.length&&!text.trim()){if(!steps.length)alert('文字を読み取れませんでした。画像を変えてお試しください。');return;}
 const pt=document.getElementById('pasteText');pt.value=text;document.getElementById('pasteSection').value='';document.getElementById('pasteDist').value='none';updatePastePreview();
