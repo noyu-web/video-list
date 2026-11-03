@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ec8aaa"><title>重複・抜け漏れチェック</title><style>
+:root{--pink:#ec8aaa;--pink-light:#f8dbe7;--pink-pale:#fff7fa;--pink-dark:#c95a88;--gray:#6b7280;--border:#ead9e1;--text:#1f2937;--white:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--pink-pale);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+header{background:var(--white);border-bottom:2px solid var(--pink-light);padding:12px 16px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:17px;color:var(--pink-dark);font-weight:800}
+main{max-width:760px;margin:0 auto;padding:14px 14px 60px}
+.btn{border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn.danger{color:#991b1b;border-color:#fecaca;background:#fff5f5}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.card h3{font-size:14px;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);line-height:1.6}
+input,select,textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--white);width:100%;color:var(--text)}
+textarea{min-height:80px;resize:vertical}
+label.l{display:block;font-size:12px;font-weight:700;color:var(--gray);margin:10px 0 4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark);border-radius:16px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.bar{height:8px;background:var(--pink-light);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--pink)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--pink-light);color:var(--pink-dark);margin-right:4px;font-weight:700}
+.muted{color:var(--gray);font-size:13px;text-align:center;padding:24px 0;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#374151;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90vw}
+.toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--white);border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:760px;max-height:88vh;overflow:auto}
+.modal h2{font-size:16px;color:var(--pink-dark);margin-bottom:8px}
+details.card summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--pink-dark)}
+</style></head><body>
+
+<header><h1>重複・抜け漏れチェック</h1><button class="btn sm" id="reload">再読み込み</button></header>
+<main><div id="out"><div class="muted">読み込み中…</div></div></main>
+
+<script>
+
+const GAS_URL='https://script.google.com/macros/s/AKfycbxjLSyDyNKZXg7O45aK9nzq--Msdy-i-u7aXqqsfJlpxvV6Lj3NXCI4FwDLT_4aj8A8/exec';
+const TK='top_admin_token';
+function tok(){try{const o=JSON.parse(localStorage.getItem(TK)||'null');if(o&&o.token&&(!o.expires||o.expires>Date.now()))return o.token;}catch{}return '';}
+const isAdmin=()=>!!tok();
+let _cb=0;
+function jsonp(p,t){return new Promise((res,rej)=>{const n='_c'+(_cb++),s=document.createElement('script');window[n]=d=>{delete window[n];s.remove();res(d);};s.onerror=()=>{delete window[n];s.remove();rej(new Error('error'));};s.src=GAS_URL+'?'+new URLSearchParams({...p,callback:n,t:Date.now()});document.head.appendChild(s);setTimeout(()=>{if(window[n]){delete window[n];s.remove();rej(new Error('timeout'));}},t||20000);});}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+function toast(t){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e);}e.textContent=t;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),2400);}
+const pj=(v,d)=>{try{const x=typeof v==='string'?JSON.parse(v||'null'):v;return x==null?d:x;}catch{return d;}};
+async function loadVideos(n){const d=await jsonp({action:n===2?'getVideos2':'getVideos',token:tok()});return Array.isArray(d)?d.map(v=>({...v,_list:n})):[];}
+async function loadWishlist(){const d=await jsonp({action:'getWishlist'});return Array.isArray(d)?d:[];}
+async function loadChecks(n){if(!isAdmin())return null;try{const d=await jsonp({action:'getChecks',list:String(n),token:tok()});if(d&&d.ok&&Array.isArray(d.ids))return new Set(d.ids.map(String));}catch{}return null;}
+function tracksOf(v){const a=pj(v.tracks,[]);return Array.isArray(a)?a.map(t=>typeof t==='string'?{title:t}:(t||{})):[];}
+function metaOf(v){const o=pj(v.meta,{});if(!o||typeof o!=='object')return{tr:[]};const tr=Array.isArray(o.tr)?o.tr.slice():[];if(o.res||o.size||o.loc||o.dur){const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||'',dur:o.dur||''};}}return{tr};}
+function schedulesOf(v){const a=pj(v.dates,[]);return(Array.isArray(a)?a:[]).map(x=>typeof x==='string'?{date:x,times:[]}:x).filter(x=>x&&x.date);}
+function genresOf(v){const a=pj(v.genres,[]);return Array.isArray(a)?a:[];}
+function sizeGB(s){const m=/([0-9]+(?:\.[0-9]+)?)\s*([kmgt]?)b?/i.exec(String(s||'').normalize('NFKC'));if(!m)return 0;const n=parseFloat(m[1]),u=m[2].toLowerCase();return u==='t'?n*1024:u==='m'?n/1024:u==='k'?n/1048576:n;}
+function fmtGB(g){return g>=1024?(g/1024).toFixed(2)+' TB':g>=1?g.toFixed(2)+' GB':(g*1024).toFixed(0)+' MB';}
+function durSec(s){s=String(s||'').normalize('NFKC').trim();let m=/^(\d+):(\d{2}):(\d{2})$/.exec(s);if(m)return +m[1]*3600+ +m[2]*60+ +m[3];m=/^(\d+):(\d{2})$/.exec(s);if(m)return +m[1]*60+ +m[2];m=/(?:(\d+)\s*時間)?\s*(?:(\d+)\s*分)?/.exec(s);if(m&&(m[1]||m[2]))return(+m[1]||0)*3600+(+m[2]||0)*60;return 0;}
+function fmtDur(t){const p=n=>String(n).padStart(2,'0');return p(Math.floor(t/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60);}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function openModal(id){document.getElementById(id).classList.add('show');}
+
+
+let L1=[],L2=[],W=[];
+const nm=['','①','②'];
+function dupGroups(arr){const m=new Map();arr.forEach(v=>{const k=norm(v.title);if(!k)return;if(!m.has(k))m.set(k,[]);m.get(k).push(v);});return[...m.values()].filter(a=>a.length>=2);}
+function section(title,count,inner,open){return '<details class="card"'+(open&&count?' open':'')+'><summary>'+esc(title)+'　<span class="tag">'+count+' 件</span></summary><div style="margin-top:10px">'+(inner||'<div class="sub">問題はありません</div>')+'</div></details>';}
+const li=(t,s)=>'<div style="padding:6px 0;border-bottom:1px solid var(--pink-light)"><div style="font-size:13px;font-weight:700">'+esc(t)+'</div>'+(s?'<div class="sub">'+esc(s)+'</div>':'')+'</div>';
+async function load(){
+const out=document.getElementById('out');out.innerHTML='<div class="muted">読み込み中…</div>';
+try{[L1,L2,W]=await Promise.all([loadVideos(1),loadVideos(2),loadWishlist()]);}catch{out.innerHTML='<div class="muted">読み込めませんでした。通信状況を確認して、再読み込みしてください。</div>';return;}
+build();}
+function build(){
+const all=[...L1,...L2];let h='<div class="card"><div class="row"><span class="tag">所持① '+L1.length+' 件</span><span class="tag">所持② '+L2.length+' 件</span><span class="tag">求めリスト '+W.length+' 件</span></div></div>';
+const d1=dupGroups(L1),d2=dupGroups(L2);
+h+=section('所持リスト①の中の重複',d1.length,d1.map(g=>g.map(v=>li(v.title,'追加 '+(/^\d{13}$/.test(v.id)?new Date(+v.id).toLocaleDateString('ja-JP'):'')+'　収録内容 '+tracksOf(v).length+' 件')).join('')+'<div style="height:8px"></div>').join(''),true);
+h+=section('所持リスト②の中の重複',d2.length,d2.map(g=>g.map(v=>li(v.title,'収録内容 '+tracksOf(v).length+' 件')).join('')+'<div style="height:8px"></div>').join(''),true);
+const m2=new Map(L2.map(v=>[norm(v.title),v]));const both=L1.filter(v=>norm(v.title)&&m2.has(norm(v.title)));
+h+=section('①と②の両方にあるタイトル',both.length,both.map(v=>li(v.title)).join(''),false);
+const owned=new Set(all.map(v=>norm(v.title)));
+const wOwned=W.filter(w=>norm(w.title)&&owned.has(norm(w.title)));
+const wNot=W.filter(w=>!(norm(w.title)&&owned.has(norm(w.title))));
+h+=section('求めリストに載っているが、すでに所持',wOwned.length,wOwned.map(w=>li(w.title,'求めリストから外してよい可能性があります')).join(''),true);
+h+=section('求めリストの未所持',wNot.length,wNot.map(w=>li(w.title,[w.genre,w.date].filter(Boolean).join('　'))).join(''),false);
+const gap=(f)=>all.filter(f);
+const g1=gap(v=>!genresOf(v).length),g2=gap(v=>!(v.members||[]).length&&!tracksOf(v).some(t=>(t.members||[]).length)),g3=gap(v=>!tracksOf(v).filter(t=>t.title||t.date).length),g4=gap(v=>!schedulesOf(v).length&&!tracksOf(v).some(t=>t.date));
+const lst=a=>a.map(v=>li(v.title,'所持リスト'+nm[v._list])).join('');
+h+=section('ジャンル未設定',g1.length,lst(g1),false)+section('出演者なし',g2.length,lst(g2),false)+section('収録内容なし',g3.length,lst(g3),false)+section('日付なし',g4.length,lst(g4),false);
+if(isAdmin()){const g5=all.filter(v=>{const m=metaOf(v).tr;return!m.some(o=>o&&(o.res||o.size||o.loc||o.dur));});h+=section('ファイル情報なし（管理者のみ）',g5.length,lst(g5),false);}
+document.getElementById('out').innerHTML=h;}
+document.getElementById('reload').onclick=load;
+load();
+
+</script></body></html>
