@@ -1706,7 +1706,7 @@ row.innerHTML=`
 <button class="btn-remove tr-rm" type="button">✕</button>
 </div>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-<input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px">
+<input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px"><button type="button" class="btn-add-small" onclick="this.previousElementSibling.value=''" style="flex:none;padding:6px 10px">日付削除</button>
 <input class="form-input track-time" type="text" placeholder="時間 例 14:00" value="${esc(time)}" style="width:110px;font-size:13px">
 <select class="track-dist form-select" style="width:100px;padding:7px 6px;font-size:12px">
 <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
@@ -1841,7 +1841,7 @@ inp.value='';const fs2=fs.filter(f=>!ims.includes(f));if(!fs2.length)return;
 let firstDate='';
 for(const f of fs2){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 if(ds&&(!firstDate||ds<firstDate))firstDate=ds;
-addTrackRow(f.name.replace(/\.[^.]+$/,''),'none',ds,[],'',{res:await dim(f),size:fmt(f.size),dur:await durOf(f),loc:''});}
+addTrackRow(f.name.replace(/\.[^.]+$/,''),'none','',[],'',{res:await dim(f),size:fmt(f.size),dur:await durOf(f),loc:''});}
 toastMsg(fs2.length+'件を追加しました');});})();
 let _trackFiles=[];
 function getTracks(){
