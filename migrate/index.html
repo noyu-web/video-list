@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ec8aaa"><title>移行チェック</title><style>
+:root{--pink:#ec8aaa;--pink-light:#f8dbe7;--pink-pale:#fff7fa;--pink-dark:#c95a88;--gray:#6b7280;--border:#ead9e1;--text:#1f2937;--white:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--pink-pale);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+header{background:var(--white);border-bottom:2px solid var(--pink-light);padding:12px 16px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:17px;color:var(--pink-dark);font-weight:800}
+main{max-width:760px;margin:0 auto;padding:14px 14px 60px}
+.btn{border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn.danger{color:#991b1b;border-color:#fecaca;background:#fff5f5}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.card h3{font-size:14px;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);line-height:1.6}
+input,select,textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--white);width:100%;color:var(--text)}
+textarea{min-height:80px;resize:vertical}
+label.l{display:block;font-size:12px;font-weight:700;color:var(--gray);margin:10px 0 4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark);border-radius:16px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.bar{height:8px;background:var(--pink-light);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--pink)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--pink-light);color:var(--pink-dark);margin-right:4px;font-weight:700}
+.muted{color:var(--gray);font-size:13px;text-align:center;padding:24px 0;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#374151;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90vw}
+.toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--white);border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:760px;max-height:88vh;overflow:auto}
+.modal h2{font-size:16px;color:var(--pink-dark);margin-bottom:8px}
+details.card summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--pink-dark)}
+</style></head><body>
+
+<header><h1>移行チェック</h1></header>
+<main>
+<div class="card"><h3>この端末のデータ</h3><div class="sub">スプレッドシートに保存されている動画データ・設定は、機種変更で消えません。ここでは、この端末だけに入っているデータを扱います。</div>
+<div id="local" style="margin-top:8px"></div>
+<div class="row" style="margin-top:10px"><button class="btn primary" id="bkFile">ファイルに保存</button><button class="btn" id="bkCopy">コピー</button></div></div>
+<div class="card"><h3>新しい端末で復元</h3><div class="sub">バックアップのJSONを貼り付けるか、ファイルを選んで、復元します。</div>
+<textarea id="rText" placeholder="ここにJSONを貼り付け" style="margin-top:8px"></textarea>
+<div class="row" style="margin-top:8px"><input type="file" id="rFile" accept=".json,application/json,text/plain" style="flex:1"><button class="btn primary" id="rBtn">復元する</button></div></div>
+<div class="card"><h3>チェックリスト</h3><div class="sub">済んだものにチェックを入れてください。</div>
+<div id="steps" style="margin-top:6px"></div><div class="bar"><i id="pbar" style="width:0"></i></div><div class="sub" id="ptxt" style="margin-top:4px"></div></div>
+</main>
+
+<script>
+
+const GAS_URL='https://script.google.com/macros/s/AKfycbxjLSyDyNKZXg7O45aK9nzq--Msdy-i-u7aXqqsfJlpxvV6Lj3NXCI4FwDLT_4aj8A8/exec';
+const TK='top_admin_token';
+function tok(){try{const o=JSON.parse(localStorage.getItem(TK)||'null');if(o&&o.token&&(!o.expires||o.expires>Date.now()))return o.token;}catch{}return '';}
+const isAdmin=()=>!!tok();
+let _cb=0;
+function jsonp(p,t){return new Promise((res,rej)=>{const n='_c'+(_cb++),s=document.createElement('script');window[n]=d=>{delete window[n];s.remove();res(d);};s.onerror=()=>{delete window[n];s.remove();rej(new Error('error'));};s.src=GAS_URL+'?'+new URLSearchParams({...p,callback:n,t:Date.now()});document.head.appendChild(s);setTimeout(()=>{if(window[n]){delete window[n];s.remove();rej(new Error('timeout'));}},t||20000);});}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+function toast(t){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e);}e.textContent=t;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),2400);}
+const pj=(v,d)=>{try{const x=typeof v==='string'?JSON.parse(v||'null'):v;return x==null?d:x;}catch{return d;}};
+async function loadVideos(n){const d=await jsonp({action:n===2?'getVideos2':'getVideos',token:tok()});return Array.isArray(d)?d.map(v=>({...v,_list:n})):[];}
+async function loadWishlist(){const d=await jsonp({action:'getWishlist'});return Array.isArray(d)?d:[];}
+async function loadChecks(n){if(!isAdmin())return null;try{const d=await jsonp({action:'getChecks',list:String(n),token:tok()});if(d&&d.ok&&Array.isArray(d.ids))return new Set(d.ids.map(String));}catch{}return null;}
+function tracksOf(v){const a=pj(v.tracks,[]);return Array.isArray(a)?a.map(t=>typeof t==='string'?{title:t}:(t||{})):[];}
+function metaOf(v){const o=pj(v.meta,{});if(!o||typeof o!=='object')return{tr:[]};const tr=Array.isArray(o.tr)?o.tr.slice():[];if(o.res||o.size||o.loc||o.dur){const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||'',dur:o.dur||''};}}return{tr};}
+function schedulesOf(v){const a=pj(v.dates,[]);return(Array.isArray(a)?a:[]).map(x=>typeof x==='string'?{date:x,times:[]}:x).filter(x=>x&&x.date);}
+function genresOf(v){const a=pj(v.genres,[]);return Array.isArray(a)?a:[];}
+function sizeGB(s){const m=/([0-9]+(?:\.[0-9]+)?)\s*([kmgt]?)b?/i.exec(String(s||'').normalize('NFKC'));if(!m)return 0;const n=parseFloat(m[1]),u=m[2].toLowerCase();return u==='t'?n*1024:u==='m'?n/1024:u==='k'?n/1048576:n;}
+function fmtGB(g){return g>=1024?(g/1024).toFixed(2)+' TB':g>=1?g.toFixed(2)+' GB':(g*1024).toFixed(0)+' MB';}
+function durSec(s){s=String(s||'').normalize('NFKC').trim();let m=/^(\d+):(\d{2}):(\d{2})$/.exec(s);if(m)return +m[1]*3600+ +m[2]*60+ +m[3];m=/^(\d+):(\d{2})$/.exec(s);if(m)return +m[1]*60+ +m[2];m=/(?:(\d+)\s*時間)?\s*(?:(\d+)\s*分)?/.exec(s);if(m&&(m[1]||m[2]))return(+m[1]||0)*3600+(+m[2]||0)*60;return 0;}
+function fmtDur(t){const p=n=>String(n).padStart(2,'0');return p(Math.floor(t/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60);}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function openModal(id){document.getElementById(id).classList.add('show');}
+
+
+const WL=['viewlog_v1','fav_ids_1','fav_ids_2','dup_ignore_1','dup_ignore_2','hub_paths_v1','mig_checks_v1'];
+const names={viewlog_v1:'視聴ログ',fav_ids_1:'お気に入り（所持リスト①）',fav_ids_2:'お気に入り（所持リスト②）',dup_ignore_1:'重複を無視した設定（①）',dup_ignore_2:'重複を無視した設定（②）',hub_paths_v1:'入口のリンク設定',mig_checks_v1:'このチェックリスト'};
+function snap(){const o={};WL.forEach(k=>{try{const v=localStorage.getItem(k);if(v!=null)o[k]=v;}catch{}});return o;}
+function count(v){try{const x=JSON.parse(v);return Array.isArray(x)?x.length:(x&&typeof x==='object'?Object.keys(x).length:1);}catch{return 1;}}
+function showLocal(){const s=snap();const ks=Object.keys(s);document.getElementById('local').innerHTML=ks.length?ks.map(k=>'<div class="row" style="justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--pink-light)"><span style="font-size:13px">'+esc(names[k]||k)+'</span><span class="sub">'+count(s[k])+' 件</span></div>').join(''):'<div class="sub">この端末だけに入っているデータはありません。</div>';}
+const payload=()=>JSON.stringify({app:'migrate',v:1,at:new Date().toISOString(),data:snap()});
+document.getElementById('bkFile').onclick=()=>{const b=new Blob([payload()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='video-apps-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);toast('保存しました。ファイルアプリを確認してください');};
+document.getElementById('bkCopy').onclick=async()=>{try{await navigator.clipboard.writeText(payload());toast('コピーしました');}catch{document.getElementById('rText').value=payload();document.getElementById('rText').select();toast('下の欄に出しました。コピーしてください');}};
+document.getElementById('rFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;document.getElementById('rText').value=await f.text();};
+document.getElementById('rBtn').onclick=()=>{try{const o=JSON.parse(document.getElementById('rText').value);const d=o&&o.data;if(!d||typeof d!=='object')throw 0;if(!confirm('この端末のデータを、バックアップの内容で上書きします。よろしいですか？'))return;let n=0;Object.keys(d).forEach(k=>{if(WL.includes(k)&&typeof d[k]==='string'){localStorage.setItem(k,d[k]);n++;}});showLocal();loadSteps();toast(n+' 項目を復元しました');}catch{toast('読み込めませんでした。形式を確認してください');}};
+const STEPS=[
+['旧端末','スプレッドシート（動画データ）のコピーを作った（ファイル → コピーを作成）'],
+['旧端末','Apps Scriptの最新コードを、別の場所（メモやファイル）にも保存した'],
+['旧端末','管理者メールで、ログインできることを確認した'],
+['旧端末','上の「ファイルに保存」でバックアップを取った'],
+['旧端末','バックアップのファイルを、新しい端末で開ける場所（iCloudなど）に置いた'],
+['新端末','サイトのURLを開き、ブックマークまたはホーム画面に追加した'],
+['新端末','管理者ログインして、一覧が表示されることを確認した'],
+['新端末','上の「新しい端末で復元」で、バックアップを戻した'],
+['新端末','視聴ログ・お気に入りが戻っていることを確認した'],
+['新端末','旧端末のデータを、新端末の動作確認が済むまで消さずに残した']
+];
+let chk=[];try{chk=JSON.parse(localStorage.getItem('mig_checks_v1')||'[]');}catch{}
+function loadSteps(){try{chk=JSON.parse(localStorage.getItem('mig_checks_v1')||'[]');}catch{chk=[];}drawSteps();}
+function drawSteps(){let cur='';document.getElementById('steps').innerHTML=STEPS.map((s,i)=>{let h='';if(s[0]!==cur){cur=s[0];h+='<div class="sub" style="font-weight:700;margin:10px 0 2px">'+esc(s[0])+'</div>';}
+return h+'<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:13px;line-height:1.6;cursor:pointer"><input type="checkbox" data-i="'+i+'" '+(chk.includes(i)?'checked':'')+' style="width:20px;height:20px;flex:none;margin-top:2px;accent-color:#ec8aaa"><span>'+esc(s[1])+'</span></label>';}).join('');
+const n=chk.filter(i=>i<STEPS.length).length;document.getElementById('pbar').style.width=Math.round(n/STEPS.length*100)+'%';document.getElementById('ptxt').textContent=n+' / '+STEPS.length+' 完了';}
+document.getElementById('steps').addEventListener('change',e=>{const i=+e.target.dataset.i;chk=chk.filter(x=>x!==i);if(e.target.checked)chk.push(i);try{localStorage.setItem('mig_checks_v1',JSON.stringify(chk));}catch{}drawSteps();showLocal();});
+showLocal();drawSteps();
+
+</script></body></html>
