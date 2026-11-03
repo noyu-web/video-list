@@ -121,16 +121,17 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .fs-foot .btn-save{flex:1}
 .fs-sec{margin-bottom:18px}
 .fs-label{font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.fs-sec>summary{cursor:pointer;list-style:none}.fs-sec>summary::-webkit-details-marker{display:none}.fs-sec>summary::before{content:'▶';font-size:10px;margin-right:2px}.fs-sec[open]>summary::before{content:'▼'}.fs-others{border-radius:10px;padding:2px 10px 6px}
-.fs-others>summary{list-style:none}.fs-others>summary::-webkit-details-marker{display:none}
+.fs-sec>summary{cursor:pointer;list-style:none}.fs-sec>summary::-webkit-details-marker{display:none}.fs-sec>summary::before{content:'▶';font-size:10px;margin-right:2px}.fs-sec[open]>summary::before{content:'▼'}.fs-others{border-radius:10px;padding:0 10px;margin-top:6px;border:1px solid var(--pink-light)}
+.fs-others>summary{list-style:none;margin:0!important;padding:8px 0!important}.fs-others[open]>summary{margin-bottom:4px!important}.fs-others[open]{padding-bottom:8px}
+.fs-others>summary::-webkit-details-marker{display:none}
 .fs-others>summary::before{content:'▶';font-size:9px;margin-right:6px}.fs-others[open]>summary::before{content:'▼'}
-.fs-l1{background:var(--pink-light);border-left:5px solid var(--pink-dark);margin-top:10px}
+.fs-l1{background:var(--pink-pale);border-left:5px solid var(--pink)}
 .fs-l1>summary{font-size:14px!important;font-weight:800!important;color:var(--pink-dark)!important}
-.fs-cat{background:#f6f1fa;border-left:4px solid #9b7bc4;margin:8px 0 8px 8px}
-.fs-cat>summary{font-size:13px!important;font-weight:700!important;color:#6f4fa0!important}
-.fs-grp{background:#fff;border:1px solid var(--border);border-left:3px solid #e6a7bd;margin:6px 0 6px 8px}
-.fs-grp>summary{font-size:12px!important;font-weight:600!important;color:var(--gray)!important}
-.fs-inl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:8px}.fs-inl .fs-label{margin:0;min-width:64px}.fs-inl .chips-grid{display:contents}.fs-inl #fsText{flex:1;min-width:0}
+.fs-cat{background:#fff;border-left:3px solid var(--pink);margin:6px 0 0 0}
+.fs-cat>summary{font-size:13px!important;font-weight:700!important;color:var(--pink-dark)!important}
+.fs-grp{background:var(--pink-pale);border-left:2px solid var(--pink-light);margin:6px 0 0 0}
+.fs-grp>summary{font-size:12px!important;font-weight:600!important;color:var(--text)!important}
+.fs-inl{display:grid;grid-template-columns:64px 1fr;align-items:start;gap:0 6px;margin-bottom:10px}.fs-inl .fs-label{margin:0;padding-top:7px;white-space:nowrap}.fs-inl .chips-grid{display:flex;flex-wrap:wrap;gap:6px}.fs-inl .chip{font-size:12px;padding:6px 8px}.fs-inl #fsText{width:100%;box-sizing:border-box;padding:8px 10px;font-size:13px}.fs-sec{margin-bottom:6px}.fs-sec>summary{padding:6px 0}
 .fs-label small{color:var(--gray);font-weight:500;font-size:11px}
 .fs-others{margin-top:8px}
 .fs-others summary{font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;padding:4px 0;margin-bottom:6px}
@@ -978,7 +979,7 @@ else F[k].delete(v);
 renderList();syncFilterSheet();
 });
 let _fsOpenS=null;
-function secInl(label,inner){return`<div class="fs-inl"><span class="fs-label">${label}</span>${inner}</div>`;}
+function secInl(label,inner){return`<div class="fs-inl"><span class="fs-label">${label}</span><div class="fs-ic">${inner}</div></div>`;}
 function secHTML(label,note,inner){
 const o=_fsOpenS?_fsOpenS.has(label):(label==='文字検索'||(label!=='複数選択のしかた'&&/ selected"/.test(inner)));
 return`<details class="fs-sec" data-s="${esc(label)}"${o?' open':''}><summary class="fs-label">${label}${note?`<small>${note}</small>`:''}</summary>${inner}</details>`;
@@ -1014,8 +1015,8 @@ const ogs=ogGenres(cfg);
 const catLabel=k=>k.replace(OGP,'').replace(/^\(|\)$/g,'').replace(/^[（(]|[）)]$/g,'')||'その他';
 const groupHTML=ogs.length>1?ogs.map(k=>{const gs=(cfg.subgenres[k]||[]);const inner=gs.map(groupOne).join('');if(!inner)return'';const o=openG.has('cat:'+k)||gs.some(g=>((cfg.otherMembers&&cfg.otherMembers[g])||[]).some(n=>F.members.has(n)));return`<details class="fs-others fs-cat" data-g="${esc('cat:'+k)}"${o?' open':''}><summary>${esc(catLabel(k))}（${gs.length}グループ）</summary>${inner}</details>`;}).join(''):groups.map(groupOne).join('');
 const html=
-secInl('複数選択','<div class="chips-grid"><button type="button" class="chip'+(qMode==='or'?' selected':'')+'" data-qm="or">いずれか（OR）</button><button type="button" class="chip'+(qMode==='and'?' selected':'')+'" data-qm="and">すべて（AND）</button></div>')+
-secInl('文字検索','<input class="form-input" id="fsText" type="search" placeholder="スペース＝すべて含む（AND）／ | ＝どれか（OR）" value="'+esc(F.q)+'">')+
+secInl('複数選択','<div class="chips-grid"><button type="button" class="chip'+(qMode==='or'?' selected':'')+'" data-qm="or">いずれか(OR)</button><button type="button" class="chip'+(qMode==='and'?' selected':'')+'" data-qm="and">すべて(AND)</button></div>')+
+secInl('文字検索','<input class="form-input" id="fsText" type="search" placeholder="空白=AND ／ |=OR" value="'+esc(F.q)+'">')+
 secHTML('ジャンル名','複数選択可','<div class="chips-grid">'+genres.map(g=>chipHTML('genres',g)).join('')+'</div>')+
 secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/削除ができます':''),'<details class="fs-others fs-l1" data-g="__six"'+((openG.has('__six')||(!body.querySelector('details[data-g]')&&sixt.some(m=>F.members.has(m))))?' open':'')+'><summary>SixTONES（'+sixt.length+'名）</summary><div class="chips-grid">'+sixt.map(m=>chipHTML('members',m)).join('')+'</div></details>'+(groupHTML?'<details class="fs-others fs-l1" data-g="__og"'+((openG.has('__og')||[...F.members].some(n=>!sixt.includes(n)))?' open':'')+'><summary>SixTONES以外</summary>'+groupHTML+'</details>':''))+
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
