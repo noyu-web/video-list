@@ -761,7 +761,7 @@ if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
-function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
+function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
 function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
@@ -1337,7 +1337,7 @@ const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="f
 secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
 <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(tx)}</div>`:'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.dur,fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(tx)}</div>`:'';})()}
 </div>`);
 });
 flushSec();
@@ -1717,6 +1717,7 @@ row.innerHTML=`
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
 <input class="form-input tf-res" placeholder="解像度（例 1920×1080）" value="${esc(file.res||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-size" placeholder="容量（例 5GB）" value="${esc(file.size||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input tf-dur" placeholder="長さ（例 01:23:45）" value="${esc(file.dur||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(file.loc||'')}" style="font-size:12px;padding:6px 8px">
 </div>
 <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
@@ -1832,6 +1833,7 @@ finally{busy=false;}});})();
 (function(){const inp=document.getElementById('fileAddInput');
 document.getElementById('fileAddBtn').addEventListener('click',()=>inp.click());
 const fmt=b=>b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';
+const durOf=f=>new Promise(r=>{try{if(!/^(video|audio)/.test(f.type)&&!/\.(mp4|mkv|mov|m4v|ts|avi|wmv|mp3|m4a|flac|wav)$/i.test(f.name))return r('');const v=document.createElement(/^audio/.test(f.type)?'audio':'video'),u=URL.createObjectURL(f);let done=false;const fin=x=>{if(done)return;done=true;URL.revokeObjectURL(u);r(x);};v.preload='metadata';v.onloadedmetadata=()=>{const d=v.duration;{const t=Math.round(d),p=n=>String(n).padStart(2,'0');fin(isFinite(d)&&d>0?p(Math.floor(t/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60):'');}};v.onerror=()=>fin('');setTimeout(()=>fin(''),4000);v.src=u;}catch{r('');}});
 const dim=f=>new Promise(r=>{try{if(!/^video/.test(f.type)&&!/\.(mp4|mkv|mov|m4v|ts|avi|wmv)$/i.test(f.name))return r('');const v=document.createElement('video'),u=URL.createObjectURL(f);let done=false;const fin=x=>{if(done)return;done=true;URL.revokeObjectURL(u);r(x);};v.preload='metadata';v.onloadedmetadata=()=>fin(v.videoWidth?v.videoWidth+'×'+v.videoHeight:'');v.onerror=()=>fin('');setTimeout(()=>fin(''),4000);v.src=u;}catch{r('');}});
 inp.addEventListener('change',async()=>{const fs=[...inp.files].sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));const ims=fs.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));
 if(ims.length){try{const dt=new DataTransfer();ims.forEach(f=>dt.items.add(f));const oi2=document.getElementById('ocrInput');oi2.files=dt.files;oi2.dispatchEvent(new Event('change'));}catch{toastMsg('画像は「スクショから読み取り」から選んでください');}}
@@ -1839,7 +1841,7 @@ inp.value='';const fs2=fs.filter(f=>!ims.includes(f));if(!fs2.length)return;
 let firstDate='';
 for(const f of fs2){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 if(ds&&(!firstDate||ds<firstDate))firstDate=ds;
-addTrackRow(f.name.replace(/\.[^.]+$/,''),'none',ds,[],'',{res:await dim(f),size:fmt(f.size),loc:''});}
+addTrackRow(f.name.replace(/\.[^.]+$/,''),'none',ds,[],'',{res:await dim(f),size:fmt(f.size),dur:await durOf(f),loc:''});}
 toastMsg(fs2.length+'件を追加しました');});})();
 let _trackFiles=[];
 function getTracks(){
@@ -1851,7 +1853,7 @@ const dist=row.querySelector('.track-dist');
 const date=row.querySelector('.track-date');
 const sec=row.querySelector('.track-section');
 const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
-const fo={};[['res','.tf-res'],['size','.tf-size'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
+const fo={};[['res','.tf-res'],['size','.tf-size'],['dur','.tf-dur'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
 const tmEl=row.querySelector('.track-time');const tmv=tmEl?tmEl.value.trim():'';
 const hasOther=tmv||(date&&date.value)||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
 if(!input.value.trim()&&!hasOther)return null;
