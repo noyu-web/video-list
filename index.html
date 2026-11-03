@@ -69,7 +69,7 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .toggle input{opacity:0;width:0;height:0}
 .toggle-slider{position:absolute;inset:0;background:#d1d5db;border-radius:20px;transition:.2s}
 .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}
-.toggle input:checked+.toggle-slider{background:#22c55e}
+.toggle input:checked+.toggle-slider{background:#ee7ea4}
 .toggle input:checked+.toggle-slider::before{transform:translateX(16px)}
 .toggle-label{font-size:12px;color:var(--gray)}
 .card-actions{display:flex;gap:6px;padding:0 13px 10px;justify-content:flex-end}
@@ -145,6 +145,10 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 /* お気に入り・進捗・診断・重複・貼り付け */
 .card-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.fav-btn svg{width:26px;height:26px;fill:#fff;stroke:#f2a0bd;stroke-width:1.5;stroke-linejoin:round;display:block}
+.fav-btn.on svg{fill:#fdb9cf;stroke:#ee7ea4}
+.fav-only svg.hs{width:15px;height:15px;vertical-align:-2px;margin-right:4px;fill:#fff;stroke:#f2a0bd;stroke-width:1.8;stroke-linejoin:round}
+.fav-only.on svg.hs{fill:#fdb9cf;stroke:#ee7ea4}
 .fav-btn{border:none;background:none;font-size:24px;line-height:1;color:#fff;-webkit-text-stroke:1.3px #f08cb3;cursor:pointer;padding:2px 4px;font-family:inherit}
 .fav-btn.on{color:#ff6f9f;-webkit-text-stroke:1.3px #fff;text-shadow:0 0 2px #e0457f}
 .fav-only{margin-left:auto;font-size:12px;font-weight:700;padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);background:var(--white);color:var(--gray);cursor:pointer;font-family:inherit}
@@ -207,8 +211,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="header-left"><button class="login-btn" id="loginBtn">ログイン</button></div>
 <div class="header-right">
 <button class="mode-badge view" id="modeBadge">閲覧モード</button>
-<button class="btn-icon" id="settingsBtn" style="display:none">⚙️</button>
-<button class="search-btn" id="searchBtn">🔍 検索<span class="fb" id="filterBadge">0</span></button>
+<button class="btn-icon" id="settingsBtn" style="display:none"><span style="font-size:13px;font-weight:600">設定</span></button>
+<button class="search-btn" id="searchBtn">検索<span class="fb" id="filterBadge">0</span></button>
 </div>
 </header>
 
@@ -217,9 +221,9 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div id="adminToolbar" class="toolbar hidden">
 <button class="btn btn-primary" id="addBtn">＋ 追加</button>
-<button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">☑ 選択</button>
-<button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">↕ 並び替え</button>
-<button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">🩺 診断</button>
+<button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">選択</button>
+<button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">並び替え</button>
+<button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">診断</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -235,7 +239,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
 </select>
-<button type="button" class="fav-only" id="favOnlyBtn">♥︎ お気に入りだけ</button>
+<button type="button" class="fav-only" id="favOnlyBtn"><svg class="hs" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>お気に入りだけ</button>
 </div>
 
 <div class="list-wrap">
@@ -248,13 +252,13 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="modal-overlay hidden" id="filterModal">
 <div class="modal fs-modal">
 <div class="fs-head">
-<div class="modal-title" style="margin-bottom:0">🔍 検索・絞り込み</div>
+<div class="modal-title" style="margin-bottom:0">検索・絞り込み</div>
 <button class="btn-icon" id="filterCloseBtn" style="font-size:20px">✕</button>
 </div>
 <div class="fs-body" id="filterBody"></div>
 <div class="fs-foot">
 <button class="btn-cancel" id="filterResetBtn">リセット</button>
-<button class="btn-cancel" id="filterShareBtn" title="この条件のリンクをコピー">🔗</button>
+<button class="btn-cancel" id="filterShareBtn" title="この条件のリンクをコピー">リンク</button>
 <button class="btn-save" id="filterApplyBtn">表示する</button>
 </div>
 </div>
@@ -385,7 +389,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="modal-overlay hidden" id="healthModal" style="z-index:205">
 <div class="modal">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-<div class="modal-title" style="margin-bottom:0;color:var(--pink-dark)">🩺 データの診断</div>
+<div class="modal-title" style="margin-bottom:0;color:var(--pink-dark)">データの診断</div>
 <button class="btn-icon" id="healthCloseBtn" style="font-size:20px">✕</button>
 </div>
 <div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">気になる項目をタップすると、該当する動画の一覧（または整理の画面）が開きます。</div>
@@ -468,7 +472,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <!-- Settings Modal -->
 <div class="modal-overlay hidden" id="settingsModal">
 <div class="modal">
-<div class="modal-title">⚙️ 設定</div>
+<div class="modal-title">設定</div>
 <div class="form-group">
 <div class="section-title">ジャンル管理</div>
 <div class="manage-list" id="genreManageList"></div>
@@ -566,7 +570,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 <div style="border-top:2px solid var(--pink-light);margin:16px 0"></div>
 <div class="form-group">
-<label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700">👥 出演者（SixTONES）</label>
+<label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700">出演者（SixTONES）</label>
 <div class="chips-grid" id="memberChips"></div>
 </div>
 <div class="form-group" id="otherMemberGroup">
@@ -592,7 +596,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="genreSections"></div>
 </div>
 <div class="form-group">
-<label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">📅 配信,放送日</label>
+<label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">配信,放送日</label>
 <div class="dates-section" style="margin-top:6px">
 <div id="dateGroupsWrap"></div>
 <button class="btn-add-small" id="addDateGroupBtn">＋ 日付を追加</button>
@@ -602,8 +606,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">収録内容,詳細</label>
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
-<button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">📋 まとめて貼り付け</button>
-<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">📁 ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">📷 スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
+<button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">まとめて貼り付け</button>
+<button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
 <div class="form-group">
 <label class="form-label">メモ</label>
@@ -700,6 +704,7 @@ const CHECK_LIST='1';
 const checkedSet=new Set();let checksLoaded=false;
 function saveChecksCache(){try{localStorage.setItem('checks_ls_'+CHECK_LIST,JSON.stringify([...checkedSet]));}catch{}}
 function hydrateChecksCache(){if(checksLoaded||checkedSet.size)return;try{const a=JSON.parse(localStorage.getItem('checks_ls_'+CHECK_LIST)||'[]');if(Array.isArray(a))a.forEach(i=>checkedSet.add(String(i)));}catch{}}
+const HEART_SVG='<svg class="hs" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 const FAV_KEY='fav_ids_'+CHECK_LIST;
 const favSet=new Set();
 try{JSON.parse(localStorage.getItem(FAV_KEY)||'[]').forEach(i=>favSet.add(String(i)));}catch{}
@@ -872,7 +877,7 @@ if(!subs.length&&!isAdmin){wrap.classList.remove('visible');return;}
 wrap.classList.add('visible');
 let html=`<button class="subtab ${currentSubgenre==='すべて'?'active':''}" data-s="すべて">すべて</button>`;
 html+=subs.map(s=>`<button class="subtab ${currentSubgenre===s?'active':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('');
-if(isAdmin)html+=`<button class="subtab" id="manageSubBtn" style="background:var(--pink-pale);color:var(--pink-dark);border-color:var(--pink-light)">＋ 編集</button><button class="subtab" id="delTabBtn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca">🗑 このタブを削除</button>`;
+if(isAdmin)html+=`<button class="subtab" id="manageSubBtn" style="background:var(--pink-pale);color:var(--pink-dark);border-color:var(--pink-light)">＋ 編集</button><button class="subtab" id="delTabBtn" style="background:#fee2e2;color:#991b1b;border-color:#fecaca">このタブを削除</button>`;
 document.getElementById('subtabs').innerHTML=html;
 document.getElementById('subtabs').querySelectorAll('.subtab[data-s]').forEach(b=>b.addEventListener('click',()=>{currentSubgenre=b.dataset.s;renderSubtabs();renderList();syncFilterSheet();}));
 if(isAdmin){const btn=document.getElementById('manageSubBtn');if(btn)btn.addEventListener('click',()=>openSubgenreModal());
@@ -947,7 +952,7 @@ F.members.forEach(v=>items.push({k:'members',v,label:v}));
 F.years.forEach(v=>items.push({k:'years',v,label:v+'年'}));
 F.ex.forEach(v=>items.push({k:'ex',v,label:exchangeLabel(v)}));
 F.fresh.forEach(v=>items.push({k:'fresh',v,label:'新着（7日以内）'}));
-F.fav.forEach(v=>items.push({k:'fav',v,label:'♥︎ お気に入り'}));
+F.fav.forEach(v=>items.push({k:'fav',v,label:'お気に入り'}));
 if(isAdmin)F.chk.forEach(v=>items.push({k:'chk',v,label:v==='yes'?'確認済み':'未確認'}));
 F.gaps.forEach(v=>items.push({k:'gaps',v,label:v==='nogenre'?'ジャンル未設定':v==='nomember'?'出演者なし':v==='nometa'?'ファイル情報なし':'小ジャンル未設定'}));
 document.getElementById('activeBar').innerHTML=items.map(it=>`<button type="button" class="af-chip" data-fk="${it.k}" data-fv="${esc(it.v)}">${esc(it.label)} ✕</button>`).join('');
@@ -999,7 +1004,7 @@ secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/�
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
 secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
 secHTML('新着','7日以内に追加された動画','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>')+
-secHTML('お気に入り','この端末に保存されます','<div class="chips-grid">'+chipHTML('fav','yes','♥︎ お気に入りのみ')+'</div>')+
+secHTML('お気に入り','この端末に保存されます','<div class="chips-grid">'+chipHTML('fav','yes','お気に入りのみ')+'</div>')+
 (isAdmin?secHTML('未設定の確認','管理者向け・設定漏れを探します','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+chipHTML('gaps','nometa','ファイル情報なし')+chipHTML('gaps','nomember','出演者なし')+'</div>'):'')+
 (isAdmin?secHTML('確認状況','管理者向け・チェックの有無で絞り込み','<div class="chips-grid">'+chipHTML('chk','yes','確認済み')+chipHTML('chk','no','未確認')+'</div>'):'');
 body.innerHTML=html;
@@ -1122,7 +1127,7 @@ data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 lastShown=data.map(d=>d.id);
 updateProgressLine(data);
 document.getElementById('listCount').textContent=data.length+' 件';
-if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
+if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 list.innerHTML=data.map((item,idx)=>{
 return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
@@ -1131,8 +1136,8 @@ ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${m
 </div>
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
-</div><div class="card-side"><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>${selectMode||reorderMode?'':`<button type="button" class="fav-btn${favSet.has(item.id)?' on':''}" data-fav="${item.id}" aria-label="お気に入り">♥︎</button>`}</div></div>
-${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><div class="mv-grip" data-id="${item.id}">☰ ドラッグ</div><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
+</div><div class="card-side"><span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>${selectMode||reorderMode?'':`<button type="button" class="fav-btn${favSet.has(item.id)?' on':''}" data-fav="${item.id}" aria-label="お気に入り">${HEART_SVG}</button>`}</div></div>
+${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><div class="mv-grip" data-id="${item.id}">ドラッグ</div><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
 list.querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleFav(b.dataset.fav,b);}));
@@ -1332,7 +1337,7 @@ const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="f
 secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
 <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">💾 ${esc(tx)}</div>`:'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(tx)}</div>`:'';})()}
 </div>`);
 });
 flushSec();
@@ -1829,7 +1834,7 @@ document.getElementById('fileAddBtn').addEventListener('click',()=>inp.click());
 const fmt=b=>b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';
 const dim=f=>new Promise(r=>{try{if(!/^video/.test(f.type)&&!/\.(mp4|mkv|mov|m4v|ts|avi|wmv)$/i.test(f.name))return r('');const v=document.createElement('video'),u=URL.createObjectURL(f);let done=false;const fin=x=>{if(done)return;done=true;URL.revokeObjectURL(u);r(x);};v.preload='metadata';v.onloadedmetadata=()=>fin(v.videoWidth?v.videoWidth+'×'+v.videoHeight:'');v.onerror=()=>fin('');setTimeout(()=>fin(''),4000);v.src=u;}catch{r('');}});
 inp.addEventListener('change',async()=>{const fs=[...inp.files].sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));const ims=fs.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));
-if(ims.length){try{const dt=new DataTransfer();ims.forEach(f=>dt.items.add(f));const oi2=document.getElementById('ocrInput');oi2.files=dt.files;oi2.dispatchEvent(new Event('change'));}catch{toastMsg('画像は「📷 スクショから読み取り」から選んでください');}}
+if(ims.length){try{const dt=new DataTransfer();ims.forEach(f=>dt.items.add(f));const oi2=document.getElementById('ocrInput');oi2.files=dt.files;oi2.dispatchEvent(new Event('change'));}catch{toastMsg('画像は「スクショから読み取り」から選んでください');}}
 inp.value='';const fs2=fs.filter(f=>!ims.includes(f));if(!fs2.length)return;
 let firstDate='';
 for(const f of fs2){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -1905,7 +1910,7 @@ function updateBulkBar(){
 document.getElementById('bulkBar').classList.toggle('hidden',!selectMode);
 document.body.classList.toggle('selecting',selectMode);
 document.getElementById('bulkCount').textContent=selected.size+'件選択';
-document.getElementById('selectBtn').textContent=selectMode?'☑ 選択中':'☑ 選択';
+document.getElementById('selectBtn').textContent=selectMode?'選択中':'選択';
 }
 function toggleSel(card){
 const id=card.dataset.detail;
@@ -2052,7 +2057,7 @@ let orderQueue=Promise.resolve();
 function updateReorderBar(){
 document.getElementById('reorderBar').classList.toggle('hidden',!reorderMode);
 document.body.classList.toggle('selecting',reorderMode||selectMode);
-document.getElementById('reorderBtn').textContent=reorderMode?'↕ 並び替え中':'↕ 並び替え';
+document.getElementById('reorderBtn').textContent=reorderMode?'並び替え中':'並び替え';
 }
 function enterReorder(){
 if(!isAdmin)return;
@@ -2263,7 +2268,7 @@ function updateFavOnlyBtn(){
 const b=document.getElementById('favOnlyBtn');if(!b)return;
 const on=F.fav.has('yes');
 b.classList.toggle('on',on);
-b.textContent='♥︎ お気に入りだけ'+(favSet.size?'（'+favSet.size+'）':'');
+b.innerHTML=HEART_SVG+'お気に入りだけ'+(favSet.size?'（'+favSet.size+'）':'');
 }
 function toggleFav(id,btn){
 if(favSet.has(id))favSet.delete(id);else favSet.add(id);
