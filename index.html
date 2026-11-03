@@ -121,6 +121,7 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .fs-foot .btn-save{flex:1}
 .fs-sec{margin-bottom:18px}
 .fs-label{font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.fs-sec>summary{cursor:pointer;list-style:none}.fs-sec>summary::-webkit-details-marker{display:none}.fs-sec>summary::before{content:'▶';font-size:10px;margin-right:2px}.fs-sec[open]>summary::before{content:'▼'}.fs-cat{margin-left:6px}
 .fs-label small{color:var(--gray);font-weight:500;font-size:11px}
 .fs-others{margin-top:8px}
 .fs-others summary{font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;padding:4px 0;margin-bottom:6px}
@@ -967,8 +968,10 @@ if(k==='q'){F.q='';const qi=document.getElementById('fsText');if(qi)qi.value='';
 else F[k].delete(v);
 renderList();syncFilterSheet();
 });
+let _fsOpenS=null;
 function secHTML(label,note,inner){
-return`<div class="fs-sec"><div class="fs-label">${label}${note?`<small>${note}</small>`:''}</div>${inner}</div>`;
+const o=_fsOpenS?_fsOpenS.has(label):(label==='文字検索'||(label!=='複数選択のしかた'&&/ selected"/.test(inner)));
+return`<details class="fs-sec" data-s="${esc(label)}"${o?' open':''}><summary class="fs-label">${label}${note?`<small>${note}</small>`:''}</summary>${inner}</details>`;
 }
 function chipHTML(k,v,label){
 return`<button type="button" class="chip${F[k].has(v)?' selected':''}" data-fk="${k}" data-fv="${esc(v)}">${esc(label||v)}</button>`;
@@ -979,6 +982,7 @@ const data=cachedVideos||[];
 const body=document.getElementById('filterBody');
 const prevScroll=body.scrollTop;
 const openG=new Set([...body.querySelectorAll('details[data-g]')].filter(d=>d.open).map(d=>d.dataset.g));
+if(body.querySelector('details[data-s]'))_fsOpenS=new Set([...body.querySelectorAll('details[data-s]')].filter(d=>d.open).map(d=>d.dataset.s));
 const genres=cfg.genres.filter(g=>g!=='すべて');
 const sixt=cfg.members;
 const groups=ogGroups(cfg);
@@ -986,7 +990,7 @@ const yearSet=new Set();
 data.forEach(it=>getYearsOf(it).forEach(y=>yearSet.add(y)));
 F.years.forEach(y=>yearSet.add(y));
 const years=[...yearSet].sort();
-const groupHTML=groups.map(g=>{
+const groupOne=g=>{
 const names=(cfg.otherMembers&&cfg.otherMembers[g])||[];
 if(!names.length&&!isAdmin)return'';
 const open=openG.has(g)||names.some(n=>F.members.has(n));
@@ -995,12 +999,15 @@ const chips=names.map(n=>isAdmin
 :chipHTML('members',n)).join('');
 const add=isAdmin?`<div class="om-add"><input class="form-input om-in" data-og="${esc(g)}" placeholder="名前を追加"><button type="button" class="btn btn-primary om-btn" data-oa="${esc(g)}">追加</button></div>`:'';
 return`<details class="fs-others" data-g="${esc(g)}"${open?' open':''}><summary>${esc(g)}（${names.length}名）</summary><div class="chips-grid">${chips||'<span style="font-size:12px;color:var(--gray)">未登録</span>'}</div>${add}</details>`;
-}).join('');
+};
+const ogs=ogGenres(cfg);
+const catLabel=k=>k.replace(OGP,'').replace(/^\(|\)$/g,'').replace(/^[（(]|[）)]$/g,'')||'その他';
+const groupHTML=ogs.length>1?ogs.map(k=>{const gs=(cfg.subgenres[k]||[]);const inner=gs.map(groupOne).join('');if(!inner)return'';const o=openG.has('cat:'+k)||gs.some(g=>((cfg.otherMembers&&cfg.otherMembers[g])||[]).some(n=>F.members.has(n)));return`<details class="fs-others fs-cat" data-g="${esc('cat:'+k)}"${o?' open':''}><summary>${esc(catLabel(k))}（${gs.length}グループ）</summary>${inner}</details>`;}).join(''):groups.map(groupOne).join('');
 const html=
 secHTML('複数選択のしかた','ジャンル・出演者・年代','<div class="chips-grid"><button type="button" class="chip'+(qMode==='or'?' selected':'')+'" data-qm="or">いずれか（OR）</button><button type="button" class="chip'+(qMode==='and'?' selected':'')+'" data-qm="and">すべて（AND）</button></div>')+
 secHTML('文字検索','タイトル・出演者・メモ・収録内容','<input class="form-input" id="fsText" type="search" placeholder="スペース＝すべて含む（AND）／ | ＝どれか（OR）" value="'+esc(F.q)+'">')+
 secHTML('ジャンル名','複数選択可','<div class="chips-grid">'+genres.map(g=>chipHTML('genres',g)).join('')+'</div>')+
-secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/削除ができます':''),'<div class="chips-grid">'+sixt.map(m=>chipHTML('members',m)).join('')+'</div>'+(groupHTML?'<div style="font-size:11px;font-weight:700;color:var(--gray);margin:12px 0 2px">SixTONES以外</div>'+groupHTML:''))+
+secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/削除ができます':''),'<details class="fs-others" data-g="__six"'+((openG.has('__six')||(!body.querySelector('details[data-g]')&&sixt.some(m=>F.members.has(m))))?' open':'')+'><summary>SixTONES（'+sixt.length+'名）</summary><div class="chips-grid">'+sixt.map(m=>chipHTML('members',m)).join('')+'</div></details>'+(groupHTML?'<details class="fs-others" data-g="__og"'+((openG.has('__og')||[...F.members].some(n=>!sixt.includes(n)))?' open':'')+'><summary>SixTONES以外</summary>'+groupHTML+'</details>':''))+
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
 secHTML('配布の可否','複数選択可','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
 secHTML('新着','7日以内に追加された動画','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ表示')+'</div>')+
