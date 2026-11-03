@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ec8aaa"><title>視聴ログ</title><style>
 :root{--pink:#ec8aaa;--pink-light:#f8dbe7;--pink-pale:#fff7fa;--pink-dark:#c95a88;--gray:#6b7280;--border:#ead9e1;--text:#1f2937;--white:#fff}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -80,6 +80,30 @@ function sizeGB(s){const m=/([0-9]+(?:\.[0-9]+)?)\s*([kmgt]?)b?/i.exec(String(s|
 function fmtGB(g){return g>=1024?(g/1024).toFixed(2)+' TB':g>=1?g.toFixed(2)+' GB':(g*1024).toFixed(0)+' MB';}
 function durSec(s){s=String(s||'').normalize('NFKC').trim();let m=/^(\d+):(\d{2}):(\d{2})$/.exec(s);if(m)return +m[1]*3600+ +m[2]*60+ +m[3];m=/^(\d+):(\d{2})$/.exec(s);if(m)return +m[1]*60+ +m[2];m=/(?:(\d+)\s*時間)?\s*(?:(\d+)\s*分)?/.exec(s);if(m&&(m[1]||m[2]))return(+m[1]||0)*3600+(+m[2]||0)*60;return 0;}
 function fmtDur(t){const p=n=>String(n).padStart(2,'0');return p(Math.floor(t/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60);}
+
+function initAuth(){
+const hd=document.querySelector('header');if(!hd)return;
+const btn=document.createElement('button');btn.className='btn sm';btn.id='authBtn';hd.appendChild(btn);
+const bg=document.createElement('div');bg.className='modal-bg';bg.id='mAuth';
+bg.innerHTML='<div class="modal"><h2>管理者ログイン</h2><div class="sub" id="aMsg">管理者のメールアドレスに、6桁のコードを送ります。</div><div id="aS1" style="margin-top:12px"><button class="btn primary" id="aSend" style="width:100%">コードを送る</button><button class="btn" id="aHave" style="width:100%%;margin-top:8px">すでにコードを持っている</button></div><div id="aS2" style="display:none;margin-top:12px"><input id="aCode" inputmode="numeric" maxlength="6" placeholder="6桁のコード" style="font-size:20px;letter-spacing:4px;text-align:center"><button class="btn primary" id="aVerify" style="width:100%;margin-top:10px">ログイン</button></div><div class="row" style="margin-top:12px"><button class="btn" id="aClose" style="margin-left:auto">閉じる</button></div></div>';
+document.body.appendChild(bg);
+const ERR={too_soon:'少し時間をおいてから、もう一度押してください。',rate_limited:'送信回数の上限です。1時間ほど待ってからお試しください。',expired:'コードの有効期限が切れました。もう一度コードを送ってください。',locked:'失敗が続いたため、しばらくロックされています。時間をおいてお試しください。'};
+const msg=t=>{document.getElementById('aMsg').textContent=t;};
+const draw=()=>{btn.textContent=isAdmin()?'ログアウト':'ログイン';};
+const step2=()=>{document.getElementById('aS1').style.display='none';document.getElementById('aS2').style.display='';document.getElementById('aCode').focus();};
+draw();
+btn.onclick=async()=>{if(isAdmin()){const t=tok();try{localStorage.removeItem(TK);}catch{}draw();try{await jsonp({action:'logoutAdmin',token:t},8000);}catch{}toast('ログアウトしました');if(window.onAuth)window.onAuth();return;}
+document.getElementById('aS1').style.display='';document.getElementById('aS2').style.display='none';msg('管理者のメールアドレスに、6桁のコードを送ります。');openModal('mAuth');};
+document.getElementById('aClose').onclick=()=>closeModal('mAuth');
+document.getElementById('aHave').onclick=()=>{msg('届いたコードを入力してください。');step2();};
+document.getElementById('aSend').onclick=async()=>{const b=document.getElementById('aSend');b.disabled=true;msg('送信中…（数秒かかります）');
+try{const d=await jsonp({action:'requestAdminCode'},30000);if(d&&(d.ok||d.error==='too_soon')){msg(d.ok?'管理者のメールにコードを送りました。10分以内に入力してください。':'直前にコードを送信済みです。メールに届いたコードを入力してください。');step2();}else{msg(ERR[d&&d.error]||('送信に失敗しました（'+((d&&d.error)||'応答なし')+'）'));}}catch(e){msg('通信に失敗しました（'+e.message+'）。もう一度お試しください。');}
+b.disabled=false;};
+document.getElementById('aVerify').onclick=async()=>{const code=document.getElementById('aCode').value.trim();if(!/^[0-9]{6}$/.test(code)){msg('6桁の数字を入力してください。');return;}
+const b=document.getElementById('aVerify');b.disabled=true;msg('確認中…');
+try{const d=await jsonp({action:'verifyAdminCode',code},15000);if(d&&d.ok){try{localStorage.setItem(TK,JSON.stringify({token:d.token,expires:d.expires}));}catch{}closeModal('mAuth');draw();toast('ログインしました');if(window.onAuth)window.onAuth();}else{msg(ERR[d&&d.error]||'ログインに失敗しました。');if(d&&(d.error==='expired'||d.error==='locked')){document.getElementById('aS1').style.display='';document.getElementById('aS2').style.display='none';}}}catch{msg('通信に失敗しました。もう一度お試しください。');}
+b.disabled=false;};
+}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function openModal(id){document.getElementById(id).classList.add('show');}
 
@@ -128,4 +152,5 @@ document.getElementById('bkCopy').onclick=async()=>{const t=document.getElementB
 document.getElementById('bkIn').onclick=()=>{try{const o=JSON.parse(document.getElementById('bkText').value);const a=Array.isArray(o)?o:o.logs;if(!Array.isArray(a))throw 0;const have=new Set(logs.map(l=>l.id));let n=0;a.forEach(l=>{if(l&&l.title&&!have.has(l.id)){logs.push(l);n++;}});save();render();toast(n+'件を追加しました');}catch{toast('読み込めませんでした。形式を確認してください');}};
 render();
 
+initAuth();
 </script></body></html>
