@@ -1337,7 +1337,7 @@ const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="f
 secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
 <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(x)}</div>`).join(''):'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(x)}</div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
@@ -1725,6 +1725,7 @@ row.innerHTML=`
 </select>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+<input class="form-input tf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(file.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
 <input class="form-input tf-res" placeholder="解像度（例 1920×1080）" value="${esc(file.res||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-size" placeholder="容量（例 5GB）" value="${esc(file.size||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-dur" placeholder="長さ（例 01:23:45）" value="${esc(file.dur||'')}" style="font-size:12px;padding:6px 8px">
@@ -1873,7 +1874,7 @@ const dist=row.querySelector('.track-dist');
 const date=row.querySelector('.track-date');
 const sec=row.querySelector('.track-section');
 const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
-const fo={};[['res','.tf-res'],['size','.tf-size'],['dur','.tf-dur'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
+const fo={};[['label','.tf-label'],['res','.tf-res'],['size','.tf-size'],['dur','.tf-dur'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
 const tmEl=row.querySelector('.track-time');const tmv=tmEl?tmEl.value.trim():'';
 const mo=[...row.querySelectorAll('.tf-blk')].map(b=>{const o={};[['label','.tm-label'],['res','.tm-res'],['size','.tm-size'],['dur','.tm-dur'],['loc','.tm-loc']].forEach(([k,q])=>{const v=b.querySelector(q).value.trim();if(v)o[k]=v;});return o;}).filter(o=>Object.keys(o).length);if(mo.length)fo.more=mo;
 const hasOther=tmv||(date&&date.value)||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
