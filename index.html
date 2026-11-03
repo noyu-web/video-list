@@ -761,7 +761,7 @@ if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
-function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).map(o=>one(o||{}))].filter(Boolean).join(' ');}
+function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).flatMap(o=>[one(o||{}),...((o&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
 function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
@@ -1337,7 +1337,7 @@ const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="f
 secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
 <div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const tx=[fo.res,fo.size,fo.dur,fo.loc].filter(Boolean).join('　');return tx?`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(tx)}</div>`:'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(x)}</div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
@@ -1686,6 +1686,16 @@ const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
+function allowedTrackNames(){const c=loadConfig(),set=new Set();
+const add=n=>{if(!n)return;set.add(n);((c.otherMembers||{})[n]||[]).forEach(x=>set.add(x));};
+try{document.querySelectorAll('#memberChips .chip.selected,#otherMemberChips .chip.selected').forEach(x=>add(x.dataset.member));}catch{}
+try{(getSelectedGenres()||[]).forEach(g=>add(g.subgenre));}catch{}
+return set;}
+function filterTrackChips(row){const al=allowedTrackNames(),all=row.dataset.all==='1'||!al.size;
+let any=false;row.querySelectorAll('.track-member-chip').forEach(ch=>{const show=all||ch.classList.contains('selected')||al.has(ch.dataset.member);ch.style.display=show?'':'none';});
+row.querySelectorAll('.track-members-wrap > div').forEach(h=>{let n=h.nextElementSibling,v=false;while(n&&n.tagName==='SPAN'){if(n.style.display!=='none')v=true;n=n.nextElementSibling;}h.style.display=v?'':'none';});}
+function refreshTrackChips(){document.querySelectorAll('#tracksWrap > div').forEach(filterTrackChips);}
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#editModal')&&!e.target.closest('.track-member-chip,.tm-all'))setTimeout(refreshTrackChips,0);});
 function addTrackRow(val='',dist='none',date='',members=[],section='',file={},time=''){
 cfg=loadConfig();
 const wrap=document.getElementById('tracksWrap');
@@ -1720,7 +1730,17 @@ row.innerHTML=`
 <input class="form-input tf-dur" placeholder="長さ（例 01:23:45）" value="${esc(file.dur||'')}" style="font-size:12px;padding:6px 8px">
 <input class="form-input tf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(file.loc||'')}" style="font-size:12px;padding:6px 8px">
 </div>
+<div class="tf-more"></div>
+<div style="margin-bottom:6px"><button type="button" class="btn-add-small tf-add">＋ファイル情報を追加（同じ日で時間違いなど）</button></div>
+<div style="text-align:right;margin-bottom:4px"><button type="button" class="btn-add-small tm-all" style="padding:3px 10px;font-size:11px">全員を表示</button></div>
 <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
+const addMore=(o={})=>{const b=document.createElement('div');b.className='tf-blk';b.style.cssText='border-top:1px dashed var(--pink-light);padding-top:6px;margin-bottom:6px';
+b.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:5px"><input class="form-input tm-label" placeholder="ラベル（例 15:00 / 2本目）" value="${esc(o.label||'')}" style="flex:1;font-size:12px;padding:6px 8px"><button class="btn-remove" type="button">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="form-input tm-res" placeholder="解像度" value="${esc(o.res||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-size" placeholder="容量（例 5GB）" value="${esc(o.size||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-dur" placeholder="長さ（例 01:23:45）" value="${esc(o.dur||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-loc" placeholder="保存場所" value="${esc(o.loc||'')}" style="font-size:12px;padding:6px 8px"></div>`;
+b.querySelector('.btn-remove').onclick=()=>b.remove();row.querySelector('.tf-more').appendChild(b);};
+(file.more||[]).forEach(addMore);
+row.querySelector('.tf-add').onclick=()=>addMore();
+row.querySelector('.tm-all').onclick=function(){row.dataset.all=row.dataset.all==='1'?'':'1';this.textContent=row.dataset.all==='1'?'絞り込む':'全員を表示';filterTrackChips(row);};
+filterTrackChips(row);
 row.querySelector('.tr-rm').addEventListener('click',()=>row.remove());
 row.querySelector('.tr-up').addEventListener('click',()=>{
 const prev=row.previousElementSibling;
@@ -1855,6 +1875,7 @@ const sec=row.querySelector('.track-section');
 const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.dataset.member);
 const fo={};[['res','.tf-res'],['size','.tf-size'],['dur','.tf-dur'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
 const tmEl=row.querySelector('.track-time');const tmv=tmEl?tmEl.value.trim():'';
+const mo=[...row.querySelectorAll('.tf-blk')].map(b=>{const o={};[['label','.tm-label'],['res','.tm-res'],['size','.tm-size'],['dur','.tm-dur'],['loc','.tm-loc']].forEach(([k,q])=>{const v=b.querySelector(q).value.trim();if(v)o[k]=v;});return o;}).filter(o=>Object.keys(o).length);if(mo.length)fo.more=mo;
 const hasOther=tmv||(date&&date.value)||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
 if(!input.value.trim()&&!hasOther)return null;
 _trackFiles.push(fo);
