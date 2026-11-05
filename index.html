@@ -1645,7 +1645,7 @@ async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/3-0520</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/6-0420</small>';
 document.getElementById('editTitle').value=item?item.title:'';
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
@@ -1828,7 +1828,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/3-0510］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…［版 11/6-0420］初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -1867,7 +1867,7 @@ for(let k=0;k<fs.length;k++){const pi=await prepImg(fs[k]);const r=await Tessera
 text=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>/\d{2}\s*[\/\-.．／]\s*\d{2}/.test(l)?l.replace(/[ \t　]+/g,' '):l.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1')).join('\n');
 const cp=x=>String(x).replace(/[\s　]/g,'');
 const keep=[],trackRows=[];let curD=null;
-text.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0)));let rest=l;
+text.split('\n').forEach(l0=>{const l=squeezeLead(zen(fixD(zen(l0))));let rest=l;
 const f=dateOf(l)||dateYMD6(l);if(f){rest=rest.replace(f.raw,' ');curD=addDate(f.date);}
 const tms=timesOf(rest,!!f);
 if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]?\s*([0-5]\d)(?!\d)/g,' ');}
@@ -1875,6 +1875,7 @@ const empty=!rest.replace(/[\s\/／・,、~〜\-()（）日月火水木金土祝
 if((f||tms.length)&&empty)return;
 if(f){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:f.date});return;}
 keep.push(l0);});
+if(!trackRows.length&&orderedB.length&&keep.length===orderedB.length){keep.splice(0).forEach((k,i)=>{trackRows.push({title:k.replace(/^[^\u3040-\u9fffA-Za-z]+/,'').trim(),date:orderedB[i]});});}
 if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>{const x=orderedB[i];let dd=0;for(let k=0;k<10;k++)if(x[k]!==r.date[k])dd++;if(dd<=2)r.date=x;});
 text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
@@ -2518,9 +2519,10 @@ box.innerHTML=hit.length?`<div style="font-size:12px;font-weight:700;color:var(-
 
 /* ===== 収録内容をまとめて貼り付け（管理者） ===== */
 const PASTE_SECS=['音源','映像','特典映像','ドキュメント','メイキング','その他'];
+function squeezeLead(l){return String(l).replace(/^([^\dOolI|S]{0,3})([0-9OolI|S](?:\s?[0-9OolI|S]){5,7})(?=\D|$)/,(m,p,d)=>{const t=d.replace(/\s/g,'');if((t.match(/\d/g)||[]).length<4)return m;return p+t.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5');});}
 function lineDateInfo(l0){
 const z=s=>s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
-let l=z(l0);const SP='[-\\/.．／−–—ー一_]';
+let l=squeezeLead(z(l0));const SP='[-\\/.．／−–—ー一_]';
 const mk=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
 const tries=[new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SP+'\\s*(\\d{1,2})\\s*'+SP+'\\s*(\\d{1,2})(?!\\d)'),/(?<!\d)(\d{4}|\d{2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日?/,/(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/,/^[^\d]{0,3}(\d{2})(\d{2})(\d{2})(?!\d)/];
 let hit=null;for(const re of tries){const m=re.exec(l);if(m){const d=mk(m[1],m[2],m[3]);if(d){hit={date:d,raw:m[0]};break;}}}
