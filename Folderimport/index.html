@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ec8aaa"><title>自動取り込み</title><style>
+:root{--pink:#ec8aaa;--pink-light:#f8dbe7;--pink-pale:#fff7fa;--pink-dark:#c95a88;--gray:#6b7280;--border:#ead9e1;--text:#1f2937;--white:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--pink-pale);color:var(--text);min-height:100vh;-webkit-text-size-adjust:100%}
+header{background:var(--white);border-bottom:2px solid var(--pink-light);padding:12px 16px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:17px;color:var(--pink-dark);font-weight:800}
+main{max-width:760px;margin:0 auto;padding:14px 14px 60px}
+.btn{border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn.primary{background:var(--pink);border-color:var(--pink);color:#fff}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn.danger{color:#991b1b;border-color:#fecaca;background:#fff5f5}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.card h3{font-size:14px;margin-bottom:4px}
+.sub{font-size:12px;color:var(--gray);line-height:1.6}
+input,select,textarea{font-family:inherit;font-size:14px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--white);width:100%;color:var(--text)}
+textarea{min-height:80px;resize:vertical}
+label.l{display:block;font-size:12px;font-weight:700;color:var(--gray);margin:10px 0 4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--pink-light);background:var(--white);color:var(--pink-dark);border-radius:16px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.chip.on{background:var(--pink);border-color:var(--pink);color:#fff}
+.bar{height:8px;background:var(--pink-light);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--pink)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--pink-light);color:var(--pink-dark);margin-right:4px;font-weight:700}
+.muted{color:var(--gray);font-size:13px;text-align:center;padding:24px 0;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#374151;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:99;max-width:90vw}
+.toast.show{opacity:1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--white);border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:760px;max-height:88vh;overflow:auto}
+.modal h2{font-size:16px;color:var(--pink-dark);margin-bottom:8px}
+details.card summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--pink-dark)}
+</style></head><body>
+
+<header><h1>自動取り込み</h1></header>
+<main>
+<div id="gate" class="muted" style="display:none">管理者のみ使えます。右上の「ログイン」から、管理者ログインしてください。</div>
+<div id="app" style="display:none">
+<div class="card">
+<label class="l" style="margin-top:0">テンプレート（ジャンルごとの取り込みルール）</label>
+<div class="row"><select id="tSel" class="form-select" style="flex:1"></select><button class="btn sm danger" id="tDel">削除</button></div>
+<div class="row" style="margin-top:6px"><input id="tName" class="form-input" placeholder="名前をつけて、今の設定を保存" style="flex:1"><button class="btn sm primary" id="tSave">保存</button></div>
+<label class="l">登録先のリスト</label><div class="chips" id="sList"><button class="chip on" data-v="1">①</button><button class="chip" data-v="2">②</button></div>
+<label class="l">ジャンル</label><select id="sGenre" class="form-select"></select>
+<label class="l">小ジャンル</label><select id="sSub" class="form-select"></select>
+<label class="l">配布の可否</label><select id="sEx" class="form-select"><option value="ok">交換可</option><option value="partial">一部交換可</option><option value="consult" selected>要相談</option><option value="ng">交換不可</option></select>
+<details style="margin-top:10px"><summary class="sub" style="cursor:pointer;font-weight:700;color:var(--pink-dark)">読み取りルール（テンプレートに保存されます）</summary>
+<label class="l">ファイルのまとめ方</label><div class="chips" id="sMode"><button class="chip on" data-v="folder">フォルダ＝動画1本</button><button class="chip" data-v="file">ファイル1つ＝動画1本</button></div>
+<label class="l">日付の読み取り</label><select id="sDate" class="form-select"><option value="auto">自動（どの形式でも）</option><option value="ymd8">yyyymmdd のみ</option><option value="ymd6">yymmdd のみ</option><option value="sep">区切りあり（2020-08-01・20.08.01）のみ</option><option value="none">読み取らない</option></select>
+<label class="l">スクショの題名の扱い</label><select id="sTm" class="form-select"><option value="auto">日付・時間以外はそのまま題名にする</option><option value="strip">出演者名と記号を除き、残りを題名にする（残らなければ空）</option><option value="blank">常に空にする（日付と出演者だけ読み取る）</option></select>
+<label class="l" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sBr" style="width:18px;height:18px;flex:none"><span>【　】の中が出演者名なら、出演者にして題名から外す</span></label>
+<label class="l">題名から取り除く言葉（、で区切る）</label><input id="sStrip" class="form-input" placeholder="例 HD、完全版">
+<label class="l">収録内容の題名の前につける言葉</label><input id="sPre" class="form-input">
+<label class="l">収録内容の題名の後ろにつける言葉</label><input id="sSuf" class="form-input">
+<label class="l">出演者に必ず入れる名前（、で区切る）</label><input id="sMem" class="form-input" placeholder="例 SixTONES">
+<label class="l">収録内容のセクション</label><select id="sSec" class="form-select"><option value="">なし</option><option>音源</option><option>映像</option><option>特典映像</option><option>ドキュメント</option><option>メイキング</option><option>その他</option></select>
+<label class="l">保存場所</label><input id="sLoc" class="form-input" placeholder="例 HDD-A（空欄なら入れません）">
+</details>
+<div class="row" style="margin-top:14px"><button class="btn primary" id="pickDir">フォルダを選ぶ</button><button class="btn" id="pickFiles">ファイルを選ぶ</button><button class="btn" id="pickImg">スクショから読み取り</button></div>
+<input type="file" id="inDir" webkitdirectory multiple style="display:none"><input type="file" id="inFiles" multiple accept="video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none"><input type="file" id="inImg" multiple accept="image/*" style="display:none">
+<div class="sub" style="margin-top:8px">ファイルは名前・容量・解像度・長さを、スクショは日付・時間・収録内容・出演者を読み取ります。テンプレートを変えると、読み取り済みの内容も選んだルールで作り直します。</div>
+</div>
+<div id="prog" class="sub" style="margin:6px 2px"></div>
+<div id="list"></div>
+<div id="foot" style="display:none;position:sticky;bottom:0;background:var(--white);padding:10px 0;border-top:1px solid var(--border)"><div class="row"><span class="sub" id="fcnt"></span><button class="btn primary" id="go" style="margin-left:auto">選んだものを登録</button></div></div>
+</div>
+</main>
+
+<script>
+
+const GAS_URL='https://script.google.com/macros/s/AKfycbxjLSyDyNKZXg7O45aK9nzq--Msdy-i-u7aXqqsfJlpxvV6Lj3NXCI4FwDLT_4aj8A8/exec';
+const TK='top_admin_token';
+function tok(){try{const o=JSON.parse(localStorage.getItem(TK)||'null');if(o&&o.token&&(!o.expires||o.expires>Date.now()))return o.token;}catch{}return '';}
+const isAdmin=()=>!!tok();
+let _cb=0;
+function jsonp(p,t){return new Promise((res,rej)=>{const n='_c'+(_cb++),s=document.createElement('script');window[n]=d=>{delete window[n];s.remove();res(d);};s.onerror=()=>{delete window[n];s.remove();rej(new Error('error'));};s.src=GAS_URL+'?'+new URLSearchParams({...p,callback:n,t:Date.now()});document.head.appendChild(s);setTimeout(()=>{if(window[n]){delete window[n];s.remove();rej(new Error('timeout'));}},t||20000);});}
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
+function toast(t){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';e.className='toast';document.body.appendChild(e);}e.textContent=t;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),2400);}
+const pj=(v,d)=>{try{const x=typeof v==='string'?JSON.parse(v||'null'):v;return x==null?d:x;}catch{return d;}};
+async function loadVideos(n){const d=await jsonp({action:n===2?'getVideos2':'getVideos',token:tok()});return Array.isArray(d)?d.map(v=>({...v,_list:n})):[];}
+async function loadWishlist(){const d=await jsonp({action:'getWishlist'});return Array.isArray(d)?d:[];}
+async function loadChecks(n){if(!isAdmin())return null;try{const d=await jsonp({action:'getChecks',list:String(n),token:tok()});if(d&&d.ok&&Array.isArray(d.ids))return new Set(d.ids.map(String));}catch{}return null;}
+function tracksOf(v){const a=pj(v.tracks,[]);return Array.isArray(a)?a.map(t=>typeof t==='string'?{title:t}:(t||{})):[];}
+function metaOf(v){const o=pj(v.meta,{});if(!o||typeof o!=='object')return{tr:[]};const tr=Array.isArray(o.tr)?o.tr.slice():[];if(o.res||o.size||o.loc||o.dur){const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||'',dur:o.dur||''};}}return{tr};}
+function schedulesOf(v){const a=pj(v.dates,[]);return(Array.isArray(a)?a:[]).map(x=>typeof x==='string'?{date:x,times:[]}:x).filter(x=>x&&x.date);}
+function genresOf(v){const a=pj(v.genres,[]);return Array.isArray(a)?a:[];}
+function sizeGB(s){const m=/([0-9]+(?:\.[0-9]+)?)\s*([kmgt]?)b?/i.exec(String(s||'').normalize('NFKC'));if(!m)return 0;const n=parseFloat(m[1]),u=m[2].toLowerCase();return u==='t'?n*1024:u==='m'?n/1024:u==='k'?n/1048576:n;}
+function fmtGB(g){return g>=1024?(g/1024).toFixed(2)+' TB':g>=1?g.toFixed(2)+' GB':(g*1024).toFixed(0)+' MB';}
+function durSec(s){s=String(s||'').normalize('NFKC').trim();let m=/^(\d+):(\d{2}):(\d{2})$/.exec(s);if(m)return +m[1]*3600+ +m[2]*60+ +m[3];m=/^(\d+):(\d{2})$/.exec(s);if(m)return +m[1]*60+ +m[2];m=/(?:(\d+)\s*時間)?\s*(?:(\d+)\s*分)?/.exec(s);if(m&&(m[1]||m[2]))return(+m[1]||0)*3600+(+m[2]||0)*60;return 0;}
+function fmtDur(t){const p=n=>String(n).padStart(2,'0');return p(Math.floor(t/3600))+':'+p(Math.floor(t%3600/60))+':'+p(t%60);}
+
+function initAuth(){
+const hd=document.querySelector('header');if(!hd)return;
+const btn=document.createElement('button');btn.className='btn sm';btn.id='authBtn';hd.appendChild(btn);
+const bg=document.createElement('div');bg.className='modal-bg';bg.id='mAuth';
+bg.innerHTML='<div class="modal"><h2>管理者ログイン</h2><div class="sub" id="aMsg">管理者のメールアドレスに、6桁のコードを送ります。</div><div id="aS1" style="margin-top:12px"><button class="btn primary" id="aSend" style="width:100%">コードを送る</button><button class="btn" id="aHave" style="width:100%%;margin-top:8px">すでにコードを持っている</button></div><div id="aS2" style="display:none;margin-top:12px"><input id="aCode" inputmode="numeric" maxlength="6" placeholder="6桁のコード" style="font-size:20px;letter-spacing:4px;text-align:center"><button class="btn primary" id="aVerify" style="width:100%;margin-top:10px">ログイン</button></div><div class="row" style="margin-top:12px"><button class="btn" id="aClose" style="margin-left:auto">閉じる</button></div></div>';
+document.body.appendChild(bg);
+const ERR={too_soon:'少し時間をおいてから、もう一度押してください。',rate_limited:'送信回数の上限です。1時間ほど待ってからお試しください。',expired:'コードの有効期限が切れました。もう一度コードを送ってください。',locked:'失敗が続いたため、しばらくロックされています。時間をおいてお試しください。'};
+const msg=t=>{document.getElementById('aMsg').textContent=t;};
+const draw=()=>{btn.textContent=isAdmin()?'ログアウト':'ログイン';};
+const step2=()=>{document.getElementById('aS1').style.display='none';document.getElementById('aS2').style.display='';document.getElementById('aCode').focus();};
+draw();
+btn.onclick=async()=>{if(isAdmin()){const t=tok();try{localStorage.removeItem(TK);}catch{}draw();try{await jsonp({action:'logoutAdmin',token:t},8000);}catch{}toast('ログアウトしました');if(window.onAuth)window.onAuth();return;}
+document.getElementById('aS1').style.display='';document.getElementById('aS2').style.display='none';msg('管理者のメールアドレスに、6桁のコードを送ります。');openModal('mAuth');};
+document.getElementById('aClose').onclick=()=>closeModal('mAuth');
+document.getElementById('aHave').onclick=()=>{msg('届いたコードを入力してください。');step2();};
+document.getElementById('aSend').onclick=async()=>{const b=document.getElementById('aSend');b.disabled=true;msg('送信中…（数秒かかります）');
+try{const d=await jsonp({action:'requestAdminCode'},30000);if(d&&(d.ok||d.error==='too_soon')){msg(d.ok?'管理者のメールにコードを送りました。10分以内に入力してください。':'直前にコードを送信済みです。メールに届いたコードを入力してください。');step2();}else{msg(ERR[d&&d.error]||('送信に失敗しました（'+((d&&d.error)||'応答なし')+'）'));}}catch(e){msg('通信に失敗しました（'+e.message+'）。もう一度お試しください。');}
+b.disabled=false;};
+document.getElementById('aVerify').onclick=async()=>{const code=document.getElementById('aCode').value.trim();if(!/^[0-9]{6}$/.test(code)){msg('6桁の数字を入力してください。');return;}
+const b=document.getElementById('aVerify');b.disabled=true;msg('確認中…');
+try{const d=await jsonp({action:'verifyAdminCode',code},15000);if(d&&d.ok){try{localStorage.setItem(TK,JSON.stringify({token:d.token,expires:d.expires}));}catch{}closeModal('mAuth');draw();toast('ログインしました');if(window.onAuth)window.onAuth();}else{msg(ERR[d&&d.error]||'ログインに失敗しました。');if(d&&(d.error==='expired'||d.error==='locked')){document.getElementById('aS1').style.display='';document.getElementById('aS2').style.display='none';}}}catch{msg('通信に失敗しました。もう一度お試しください。');}
+b.disabled=false;};
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function openModal(id){document.getElementById(id).classList.add('show');}
+
+
+let CFG={1:null,2:null},EXIST={1:[],2:[]},LST=1,MODE='folder',groups=[],busy=false,SRC=null,RAW=null;
+const TK_KEY='import_tpl_v1';
+const nT=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[\s　_\-・.、,!！?？【】\[\]()（）「」『』]/g,'');
+const MEDIA=/\.(mp4|mkv|mov|m4v|ts|avi|wmv|mp3|m4a|flac|wav|webm)$/i;
+const p2=n=>String(n).padStart(2,'0');
+const $=id=>document.getElementById(id);
+function fmtSize(b){return b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';}
+/* ---- テンプレート ---- */
+function S(){return{list:LST,mode:MODE,genre:$('sGenre').value,sub:$('sSub').value,ex:$('sEx').value,date:$('sDate').value,tm:$('sTm').value,br:$('sBr').checked,strip:$('sStrip').value,pre:$('sPre').value,suf:$('sSuf').value,mem:$('sMem').value,sec:$('sSec').value,loc:$('sLoc').value.trim()};}
+function loadTpls(){try{const a=JSON.parse(localStorage.getItem(TK_KEY)||'[]');return Array.isArray(a)?a:[];}catch{return[];}}
+function saveTpls(a){try{localStorage.setItem(TK_KEY,JSON.stringify(a));}catch{}}
+function drawTpls(sel){const a=loadTpls();$('tSel').innerHTML='<option value="">（テンプレートなし）</option>'+a.map((t,i)=>'<option value="'+i+'">'+esc(t.name)+'</option>').join('');if(sel!=null)$('tSel').value=String(sel);}
+async function applyTpl(t){
+LST=t.list||1;document.querySelectorAll('#sList .chip').forEach(x=>x.classList.toggle('on',+x.dataset.v===LST));
+await loadList();
+MODE=t.mode||'folder';document.querySelectorAll('#sMode .chip').forEach(x=>x.classList.toggle('on',x.dataset.v===MODE));
+if(t.genre){$('sGenre').value=t.genre;fillSub();}$('sSub').value=t.sub||'';
+$('sEx').value=t.ex||'consult';$('sDate').value=t.date||'auto';$('sTm').value=t.tm||'auto';$('sBr').checked=!!t.br;$('sStrip').value=t.strip||'';$('sPre').value=t.pre||'';$('sSuf').value=t.suf||'';$('sMem').value=t.mem||'';$('sSec').value=t.sec||'';$('sLoc').value=t.loc||'';
+rebuild();}
+/* ---- 名前・日付 ---- */
+function okDate(y,m,d){return y>=1990&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31;}
+function parseDate(name,fmt){
+fmt=fmt||'auto';if(fmt==='none')return null;let m,s=name.normalize('NFKC');
+if(fmt==='auto'||fmt==='sep'){
+if(m=/(?<!\d)(20\d{2}|19\d{2})[-_.\/年](\d{1,2})[-_.\/月](\d{1,2})日?(?!\d)/.exec(s)){if(okDate(+m[1],+m[2],+m[3]))return{date:m[1]+'-'+p2(m[2])+'-'+p2(m[3]),tok:m[0]};}
+if(m=/(?<!\d)(\d{2})[-_.\/](\d{2})[-_.\/](\d{2})(?!\d)/.exec(s)){const y=+m[1]<=40?2000+ +m[1]:1900+ +m[1];if(okDate(y,+m[2],+m[3]))return{date:y+'-'+m[2]+'-'+m[3],tok:m[0]};}}
+if(fmt==='auto'||fmt==='ymd8'){if(m=/(?<!\d)(20\d{2}|19\d{2})(\d{2})(\d{2})(?!\d)/.exec(s)){if(okDate(+m[1],+m[2],+m[3]))return{date:m[1]+'-'+m[2]+'-'+m[3],tok:m[0]};}}
+if(fmt==='auto'||fmt==='ymd6'){if(m=/(?<!\d)(\d{2})(\d{2})(\d{2})(?!\d)/.exec(s)){const y=+m[1]<=40?2000+ +m[1]:1900+ +m[1];if(okDate(y,+m[2],+m[3]))return{date:y+'-'+m[2]+'-'+m[3],tok:m[0]};}}
+return null;}
+function baseClean(name,tok){let t=name.replace(/\.[^.]+$/,'');if(tok)t=t.replace(tok,' ');t=t.replace(/_/g,' ').replace(/[\[(（【]?(?<![0-9A-Za-z])(2160|1440|1080|720|480)[pPiI](?![0-9A-Za-z])[\])）】]?/g,' ').replace(/[\[(（【]?(4K|8K|FHD|HD)[\])）】]?/gi,' ').replace(/\s{2,}/g,' ').replace(/^[\s\-・]+|[\s\-・]+$/g,'');return t||name.replace(/\.[^.]+$/,'');}
+function namesDict(){const c=CFG[LST]||{};const set=new Set([...(c.members||[]),...Object.values(c.otherMembers||{}).flat(),...Object.keys(c.otherMembers||{})]);set.delete('SixTONES');return[...set].filter(n=>n&&n.length>=2).sort((a,b)=>b.length-a.length);}
+function findMembers(text){const t=text.normalize('NFKC');return namesDict().filter(n=>t.includes(n.normalize('NFKC')));}
+function tplTitle(t,T,isV){let mem=[];
+if(T.br)t=t.replace(/[【\[]([^】\]]+)[】\]]/g,(a,x)=>{const f=findMembers(x);if(f.length){mem.push(...f);return ' ';}return a;});
+String(T.strip||'').split(/[,、]/).map(x=>x.trim()).filter(Boolean).forEach(w=>{t=t.split(w).join(' ');});
+t=t.replace(/\s{2,}/g,' ').trim();
+return{title:isV?t:(T.pre||'')+t+(T.suf||''),members:mem};}
+const MC=new Map();
+const meta=f=>{const k=f.name+'|'+f.size+'|'+f.lastModified;if(MC.has(k))return MC.get(k);const pr=new Promise(r=>{const isV=/^video/.test(f.type)||/\.(mp4|mkv|mov|m4v|ts|avi|wmv|webm)$/i.test(f.name);const el=document.createElement(isV?'video':'audio'),u=URL.createObjectURL(f);let done=false;const fin=x=>{if(done)return;done=true;URL.revokeObjectURL(u);r(x);};el.preload='metadata';el.onloadedmetadata=()=>{const d=el.duration;fin({res:isV&&el.videoWidth?el.videoWidth+'×'+el.videoHeight:'',dur:isFinite(d)&&d>0?(()=>{const t=Math.round(d);return p2(Math.floor(t/3600))+':'+p2(Math.floor(t%3600/60))+':'+p2(t%60);})():''});};el.onerror=()=>fin({res:'',dur:''});setTimeout(()=>fin({res:'',dur:''}),5000);el.src=u;});MC.set(k,pr);return pr;};
+function markDup(){const ex=EXIST[LST].map(v=>nT(v.title));groups.forEach(g=>{g.dup=!!g.title.trim()&&ex.includes(nT(g.title));});}
+/* ---- ファイル ---- */
+async function buildFiles(files){
+const T=S();files=[...files].filter(f=>MEDIA.test(f.name)||/^(video|audio)\//.test(f.type));
+if(!files.length){$('prog').textContent='取り込める動画・音声ファイルがありません。';groups=[];draw();return;}
+files.sort((a,b)=>(a.webkitRelativePath||a.name).localeCompare(b.webkitRelativePath||b.name,'ja',{numeric:true}));
+const gm=new Map();
+files.forEach(f=>{const rel=f.webkitRelativePath||'';const parts=rel.split('/');const folder=parts.length>1?parts[parts.length-2]:'';const key=MODE==='folder'&&folder?parts.slice(0,-1).join('/'):'f:'+(rel||f.name)+':'+f.size;if(!gm.has(key))gm.set(key,{folder:MODE==='folder'&&folder?folder:'',files:[]});gm.get(key).files.push(f);});
+groups=[];let n=0;const total=files.length;
+for(const g of gm.values()){const tr=[];
+for(const f of g.files){const pd=parseDate(f.name,T.date);const m=await meta(f);n++;$('prog').textContent='読み取り中… '+n+' / '+total;
+const tt=tplTitle(baseClean(f.name,pd&&pd.tok),T);
+tr.push({title:tt.title,date:pd?pd.date:'',time:'',members:[...new Set([...tt.members,...findMembers(f.name+' '+g.folder)])],section:T.sec,fo:{...(m.res?{res:m.res}:{}),size:fmtSize(f.size),...(m.dur?{dur:m.dur}:{}),...(T.loc?{loc:T.loc}:{})}});}
+const ft=g.folder?tplTitle(baseClean(g.folder,(parseDate(g.folder,T.date)||{}).tok),T,true):{title:tr[0].title,members:[]};
+groups.push({title:ft.title,tr,on:true,append:true,folderMembers:[...new Set([...ft.members,...findMembers(g.folder)])]});}
+markDup();groups.forEach(g=>{if(g.dup)g.on=false;});
+$('prog').textContent=total+'個のファイルを読み取りました。内容を確認して登録してください。';draw();}
+/* ---- スクショ ---- */
+const loadT=()=>window.Tesseract?Promise.resolve():new Promise((ok,ng)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>ng(new Error('load'));document.head.appendChild(sc);});
+const prepImg=async f=>{try{const bm=await createImageBitmap(f);const sc=Math.min(3,Math.max(1,1600/bm.width));const w=Math.round(bm.width*sc),h=Math.round(bm.height*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.drawImage(bm,0,0,w,h);const im=cx.getImageData(0,0,w,h),d=im.data,hist=new Array(256).fill(0);
+for(let p=0;p<d.length;p+=4){const g=Math.round(.299*d[p]+.587*d[p+1]+.114*d[p+2]);d[p]=d[p+1]=d[p+2]=g;hist[g]++;}
+const tot=w*h;let sum=0;for(let t=0;t<256;t++)sum+=t*hist[t];let sB=0,wB=0,mx=0,th=128;for(let t=0;t<256;t++){wB+=hist[t];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=t*hist[t];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)*(mB-mF);if(v>mx){mx=v;th=t;}}
+for(let p=0;p<d.length;p+=4){const v=d[p]>th?255:0;d[p]=d[p+1]=d[p+2]=v;}
+cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}catch{return f;}};
+async function ocrRead(fs){
+await loadT();
+const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
+const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
+const SEP='[-\\/.．／−–—ー一_]';
+const DRE=new RegExp('(?<!\\d)(\\d{4}|\\d{2})(?:\\s*'+SEP+'\\s*|\\s*年\\s*|\\s+)(\\d{1,2})(?:\\s*'+SEP+'\\s*|\\s*月\\s*|\\s+)(\\d{1,2})(?!\\d)');
+const DRE_L=new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})\\s*'+SEP+'\\s*(\\d{2})\\d*');
+const DRE_C=new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})(\\d{2})(?!\\d)');
+const DRE8=/(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/;
+const DRE6=/(?<![\d:])(\d{2})(\d{2})(\d{2})(?![\d:])/;
+const TRE=/(?<!\d)([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?!\d)/g;
+const timesOf=(l,hasD)=>{let a=[...l.matchAll(TRE)];if(a.length||hasD)return a;
+a=[...l.matchAll(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]\s*([0-5]\d)(?!\d)/g)];if(a.length)return a;
+if(/^[\d\s\/／~〜\-]+$/.test(l))a=[...l.matchAll(/(?<!\d)([01]\d|2[0-3])([0-5]\d)(?!\d)/g)];return a;};
+const mkD=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
+const dateOf=l=>{for(const re of [DRE,DRE_L,DRE_C,DRE8]){const m=re.exec(l);if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:m[0]};}}return null;};
+const dateOfLoose=l=>dateOf(l)||(()=>{const m=DRE6.exec(l.replace(/\s/g,''));if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:null};}return null;})();
+const prog=(k,tag)=>({logger:m=>{if(m.status==='recognizing text')$('prog').textContent=tag+' '+(k+1)+'/'+fs.length+'枚 '+Math.round((m.progress||0)*100)+'%';}});
+const orderedB=[];let textB='';
+try{const wk=await Tesseract.createWorker('eng');try{await wk.setParameters({tessedit_char_whitelist:'0123456789/-.:',tessedit_pageseg_mode:'6'});}catch{}
+for(let k=0;k<fs.length;k++){const rb=await wk.recognize(fs[k]);textB+=(rb.data.text||'')+'\n';}try{await wk.terminate();}catch{}}catch{}
+const dateObjs=[];
+const addDate=(d,tm)=>{let o=dateObjs.find(x=>x.date===d);if(!o){o={date:d,times:[]};dateObjs.push(o);}(tm||[]).forEach(t=>{if(!o.times.includes(t))o.times.push(t);});return o;};
+let curB=null;
+textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim())));const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}timesOf(l.replace(f&&f.raw?f.raw:'',''),!!f).forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
+let text='';
+for(let k=0;k<fs.length;k++){const pi=await prepImg(fs[k]);const r=await Tesseract.recognize(pi,'jpn+eng',prog(k,'文字を読み取り中'));text+=(r.data.text||'')+'\n';}
+text=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>/\d{2}\s*[\/\-.．／]\s*\d{2}/.test(l)?l.replace(/[ \t　]+/g,' '):l.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1')).join('\n');
+const cp=x=>String(x).replace(/[\s　]/g,'');
+const keep=[],trackRows=[];let curD=null;
+text.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0)));let rest=l;
+const f=dateOf(l);if(f){rest=rest.replace(f.raw,' ');curD=addDate(f.date);}
+const tms=timesOf(rest,!!f);
+if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]?\s*([0-5]\d)(?!\d)/g,' ');}
+const empty=!rest.replace(/[\s\/／・,、~〜\-()（）日月火水木金土祝曜]+/g,'');
+if((f||tms.length)&&empty)return;
+if(f){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:f.date});return;}
+keep.push(l0);});
+if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>{r.date=orderedB[i];});
+text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
+dateObjs.sort((a,b)=>a.date<b.date?-1:1);
+if(orderedB.length){const bs=[...new Set(orderedB)];const dist=(a,b)=>{let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d;};
+const snap=d=>{if(bs.includes(d))return d;let best=null,bd=9;bs.forEach(b=>{const x=dist(d,b);if(x<bd){bd=x;best=b;}});return bd<=2?best:d;};
+trackRows.forEach(r=>{r.date=snap(r.date);});
+const merged=[];dateObjs.forEach(o=>{const d=snap(o.date);let m=merged.find(x=>x.date===d);if(!m){m={date:d,times:[]};merged.push(m);}o.times.forEach(t=>{if(!m.times.includes(t))m.times.push(t);});});
+dateObjs.length=0;merged.forEach(m=>dateObjs.push(m));dateObjs.sort((a,b)=>a.date<b.date?-1:1);}
+const c=CFG[LST]||{members:[],otherMembers:{},subgenres:{}};
+const reg=[...new Set([...(c.members||[]),...Object.values(c.otherMembers||{}).flat(),...Object.keys(c.otherMembers||{})])].filter(Boolean);
+const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
+const matchNames=str=>{const out=new Set();const ns=nz(str);
+reg.forEach(n=>{if(ns.includes(nz(n)))out.add(n);});
+String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nz).filter(t=>t.length>=2).forEach(t=>{
+const pick=cc=>{if(cc.length===1)out.add(cc[0]);else if(cc.length>1){const six=cc.filter(n=>(c.members||[]).includes(n));if(six.length===1)out.add(six[0]);}};
+let cc=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
+if(!cc.length)cc=reg.filter(n=>t.length>=2&&nz(n).endsWith(t));
+if(!cc.length&&t.length>=3)cc=reg.filter(n=>{const a=nz(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nz(n).length>=t.length;});
+pick(cc);});
+return[...out];};
+const tkHave=new Set(trackRows.map(r=>r.date));
+const rows=trackRows.map(r=>({title:r.title,date:r.date,time:((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / '))}));
+dateObjs.forEach(d=>{if(!tkHave.has(d.date))rows.push({title:d.date,date:d.date,time:d.times.join(' / ')});});
+const found=[...new Set([...matchNames(text),...rows.flatMap(r=>matchNames(r.title))])];
+const fc=found.map(cp);
+const left=text.split('\n').filter(l=>{const cc=cp(l);return cc&&!fc.includes(cc);});
+return{rows,left,found,matchNames};}
+function buildImages(){
+const T=S(),R=RAW;
+const nameTok=w=>R.matchNames(w).length>0;
+const MARK=/[♡♥❤★☆♪♬◆◇●○■□▲△▼▽※@＠#＃♩♫♢♣♠]/g;
+const mkTitle=t=>{if(T.tm==='blank')return'';if(T.tm==='strip'){const k=t.replace(MARK,' ').split(/[\s&＆、,，・\/／×x+＋]+/).filter(w=>w&&!nameTok(w)&&!/^[\d:：\-.\/]+$/.test(w));return k.length?tplTitle(k.join(' '),T).title:'';}return tplTitle(t,T).title;};
+let tr=R.rows.map(r=>{const tt=tplTitle(r.title,T);return{title:mkTitle(r.title),date:T.date==='none'?'':r.date,time:r.time,members:[...new Set([...tt.members,...R.matchNames(r.title)])],section:T.sec,fo:{}};});
+if(T.tm!=='auto'){const out=[];tr.forEach(r=>{const m=r.title===''&&r.date?out.find(x=>x.title===''&&x.date===r.date):null;if(m){m.members=[...new Set([...m.members,...r.members])];if(r.time&&!m.time)m.time=r.time;}else out.push(r);});tr=out;}
+tr=tr.map((r,i)=>({r,i})).sort((a,b)=>(a.r.date?0:1)-(b.r.date?0:1)||(a.r.date<b.r.date?-1:a.r.date>b.r.date?1:0)||a.i-b.i).map(x=>x.r);
+const left=R.left.slice();const title=left.length?tplTitle(left.shift().trim(),T,true).title:'';
+left.forEach(l=>{if(T.tm==='blank')return;const t=mkTitle(l.trim());if(!t)return;tr.push({title:t,date:'',time:'',members:R.matchNames(l),section:T.sec,fo:{}});});
+groups=[{title,tr,on:true,append:true,folderMembers:R.found.slice(),fromImg:true}];
+markDup();draw();
+$('prog').textContent='収録内容'+tr.length+'件・出演者'+R.found.length+'名を読み取りました。題名を確認して登録してください（既にある題名なら、その動画に追加できます）。';}
+async function readImages(fs){
+if(busy)return;busy=true;SRC={kind:'img',files:fs};
+try{$('prog').textContent='読み取りの準備中…（初回は時間がかかります）';RAW=await ocrRead(fs);buildImages();}
+catch(e){$('prog').textContent='読み取りに失敗しました（'+(e&&e.message||e)+'）。通信状況を確認して、もう一度お試しください。';}
+busy=false;}
+function rebuild(){if(!SRC||busy)return;if(SRC.kind==='files')buildFiles(SRC.files);else if(RAW)buildImages();}
+/* ---- 表示 ---- */
+function memOf(g){return[...new Set([...g.folderMembers,...g.tr.flatMap(t=>t.members)])];}
+function draw(){
+const L=$('list');
+L.innerHTML=groups.map((g,i)=>{const mem=memOf(g);
+return '<div class="card"><div style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-i="'+i+'" class="ck" style="width:20px;height:20px;flex:none"'+(g.on?' checked':'')+'><input class="form-input ti" data-i="'+i+'" value="'+esc(g.title)+'" placeholder="題名を入力" style="flex:1"></div>'
++'<div class="dupbox" data-i="'+i+'" style="margin-top:6px"></div>'
++(mem.length?'<div class="sub" style="margin:6px 0">出演者：'+esc(mem.join('、'))+'</div>':'')
++'<div style="font-size:12px;margin-top:6px">'+g.tr.map(t=>'<div style="padding:3px 0;border-top:1px solid var(--border)">'+esc(t.title)+(t.date?'　<b>'+esc(t.date)+'</b>':'')+(t.time?'　'+esc(t.time):'')+(t.members.length?'<div class="sub">'+esc(t.members.join('、'))+'</div>':'')+'<span class="sub">　'+esc([t.fo.res,t.fo.size,t.fo.dur].filter(Boolean).join(' '))+'</span></div>').join('')+'</div></div>';}).join('');
+L.querySelectorAll('.ck').forEach(c=>c.onchange=()=>{groups[+c.dataset.i].on=c.checked;cnt();});
+L.querySelectorAll('.ti').forEach(c=>c.oninput=()=>{const g=groups[+c.dataset.i];g.title=c.value;markDup();dupUi();});
+dupUi();$('foot').style.display=groups.length?'':'none';cnt();}
+function dupUi(){document.querySelectorAll('.dupbox').forEach(b=>{const g=groups[+b.dataset.i];if(!g)return;
+if(!g.dup){b.innerHTML='';return;}
+b.innerHTML='<span class="tag">同じ題名の動画があります</span> <label style="font-size:12px"><input type="checkbox" class="ap"'+(g.append?' checked':'')+' style="vertical-align:middle"> その動画の収録内容に追加する</label>';
+b.querySelector('.ap').onchange=e=>{g.append=e.target.checked;};});}
+function cnt(){$('fcnt').textContent=groups.filter(g=>g.on).length+' / '+groups.length+' 件を登録';}
+const strip=v=>{const {_list,...r}=v;return r;};
+async function post(video,isNew){const r=await fetch(GAS_URL+'?'+new URLSearchParams({action:LST===2?'saveVideo2':'saveVideo',token:tok()}),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({video,isNew})});const j=await r.json();return !!(j&&j.ok);}
+async function go(){
+if(busy)return;const sel=groups.filter(g=>g.on&&g.title.trim());if(!sel.length){toast('題名を入れて、登録するものを選んでください');return;}
+const T=S();if(!T.genre){toast('ジャンルを選んでください');return;}
+busy=true;const b=$('go');b.disabled=true;let ok=0,ng=0,i=0;
+const defMem=String(T.mem||'').split(/[,、]/).map(x=>x.trim()).filter(Boolean);
+for(const g of sel){i++;b.textContent='登録中 '+i+' / '+sel.length;
+const mem=[...new Set([...defMem,...memOf(g)])];
+let good=false;
+try{
+const ex=g.dup&&g.append?EXIST[LST].find(v=>nT(v.title)===nT(g.title)):null;
+if(ex){
+const tE=tracksOf(ex),mE=pj(ex.meta,{}),trE=Array.isArray(mE.tr)?mE.tr.slice():[];while(trE.length<tE.length)trE.push({});
+const have=new Set(tE.map(t=>nT(t.title)));
+const add=g.tr.filter(t=>!have.has(nT(t.title)));
+add.forEach(t=>{tE.push({title:t.title,dist:'none',date:t.date,time:t.time,members:t.members,section:t.section});trE.push(t.fo);});
+const dE=schedulesOf(ex);add.forEach(t=>{if(t.date&&!dE.some(x=>x.date===t.date))dE.push({date:t.date,times:[]});});dE.sort((a,b)=>a.date<b.date?-1:1);
+const video={...strip(ex),members:[...new Set([...(ex.members||[]),...mem])],dates:JSON.stringify(dE),tracks:JSON.stringify(tE),meta:trE.some(o=>o&&Object.keys(o).length)?JSON.stringify({...mE,tr:trE}):(ex.meta||'')};
+if(await post(video,false)){good=true;Object.assign(ex,video);}
+}else{
+const dates=[...new Set(g.tr.map(t=>t.date).filter(Boolean))].sort().map(d=>({date:d,times:[]}));
+const tracks=g.tr.map(t=>({title:t.title,dist:'none',date:t.date,time:t.time,members:t.members,section:t.section}));
+const mt={tr:g.tr.map(t=>t.fo)};
+const video={id:String(Date.now())+i,title:g.title.trim(),members:mem,exchange:T.ex,genres:JSON.stringify([{genre:T.genre,subgenre:T.sub||''}]),dates:JSON.stringify(dates),note:'',tracks:JSON.stringify(tracks),meta:mt.tr.some(o=>Object.keys(o).length)?JSON.stringify(mt):''};
+if(await post(video,true)){good=true;EXIST[LST].push(video);}
+}}catch{}
+if(good){ok++;g.done=true;}else ng++;}
+busy=false;b.disabled=false;b.textContent='選んだものを登録';
+groups=groups.filter(g=>!g.done);draw();
+$('prog').textContent=ok+'件を登録しました'+(ng?'（'+ng+'件は失敗。もう一度「登録」を押してください）':'。');toast(ok+'件を登録しました');}
+/* ---- 設定 ---- */
+function fillGenres(){const c=CFG[LST]||{genres:[],subgenres:{}};const gs=(c.genres||[]).filter(g=>g!=='すべて');const cur=$('sGenre').value;$('sGenre').innerHTML=gs.map(g=>'<option>'+esc(g)+'</option>').join('');if(gs.includes(cur))$('sGenre').value=cur;fillSub();}
+function fillSub(){const c=CFG[LST]||{subgenres:{}};const g=$('sGenre').value;const cur=$('sSub').value;$('sSub').innerHTML='<option value="">なし</option>'+((c.subgenres||{})[g]||[]).map(x=>'<option>'+esc(x)+'</option>').join('');if([...$('sSub').options].some(o=>o.value===cur))$('sSub').value=cur;}
+async function loadList(){try{const [v,c]=await Promise.all([loadVideos(LST),jsonp({action:LST===2?'getFullConfig2':'getFullConfig'})]);EXIST[LST]=v;CFG[LST]=c&&c.genres?c:null;}catch{$('prog').textContent='読み込めませんでした。通信状況を確認してください。';}fillGenres();}
+async function load(){if(!isAdmin()){$('gate').style.display='';$('app').style.display='none';return;}$('gate').style.display='none';$('app').style.display='';drawTpls();await loadList();}
+$('sList').onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;LST=+b.dataset.v;document.querySelectorAll('#sList .chip').forEach(x=>x.classList.toggle('on',x===b));await loadList();rebuild();};
+$('sMode').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;MODE=b.dataset.v;document.querySelectorAll('#sMode .chip').forEach(x=>x.classList.toggle('on',x===b));rebuild();};
+$('sGenre').onchange=fillSub;
+['sDate','sTm','sBr','sStrip','sPre','sSuf','sMem','sSec','sLoc'].forEach(id=>$(id).addEventListener('change',rebuild));
+$('tSel').onchange=()=>{const v=$('tSel').value;if(v==='')return;const t=loadTpls()[+v];if(t){$('tName').value=t.name;applyTpl(t);}};
+$('tSave').onclick=()=>{const name=$('tName').value.trim();if(!name){toast('テンプレートの名前を入れてください');return;}const a=loadTpls();const t={...S(),name};const i=a.findIndex(x=>x.name===name);if(i>=0)a[i]=t;else a.push(t);saveTpls(a);drawTpls(a.findIndex(x=>x.name===name));toast('テンプレートを保存しました');};
+$('tDel').onclick=()=>{const v=$('tSel').value;if(v==='')return;const a=loadTpls();a.splice(+v,1);saveTpls(a);drawTpls();$('tName').value='';toast('削除しました');};
+$('pickDir').onclick=()=>$('inDir').click();$('pickFiles').onclick=()=>$('inFiles').click();$('pickImg').onclick=()=>$('inImg').click();
+['inDir','inFiles'].forEach(id=>$(id).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length){SRC={kind:'files',files:fs};RAW=null;buildFiles(fs);}}));
+$('inImg').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)readImages(fs);});
+$('go').onclick=go;
+window.onAuth=load;load();
+
+initAuth();
+</script></body></html>
