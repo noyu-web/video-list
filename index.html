@@ -886,10 +886,10 @@ cfg=loadConfig();
 const t=document.getElementById('tabs');
 t.classList.toggle('open',tabsOpen);
 const _isO=g=>/^SixTONES以外/.test(g);if(!tabsGrp)tabsGrp=_isO(currentGenre)?'O':'S';
-const _gl=tabsOpen?cfg.genres.filter(g=>g==='すべて'||(tabsGrp==='O')===_isO(g)):cfg.genres.filter(g=>g===currentGenre);
+const _gl=tabsOpen?cfg.genres.filter(g=>g==='すべて'||g!=='SixTONES以外'&&(tabsGrp==='O')===_isO(g)):cfg.genres.filter(g=>g===currentGenre);
 const _gb=tabsOpen?`<div class="tab-grp"><button class="tab grp${tabsGrp==='S'?' active':''}" data-grp="S">SixTONES</button><button class="tab grp${tabsGrp==='O'?' active':''}" data-grp="O">SixTONES以外</button></div>`:'';
 t.innerHTML=_gb+_gl.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g.replace(/^SixTONES以外[(（]?/,'').replace(/[)）]$/,'')||g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('')+'';
-t.querySelectorAll('[data-grp]').forEach(b=>b.addEventListener('click',()=>{tabsGrp=b.dataset.grp;renderTabs();}));
+t.querySelectorAll('[data-grp]').forEach(b=>b.addEventListener('click',()=>{tabsGrp=b.dataset.grp;if(tabsGrp==='O'){if(cfg.genres.includes('SixTONES以外')){currentGenre='SixTONES以外';currentSubgenre='すべて';}}else if(_isO(currentGenre)){currentGenre='すべて';currentSubgenre='すべて';}renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 t.querySelectorAll('.tab[data-g]').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
 function renderSubtabs(){
