@@ -1775,6 +1775,7 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+const nzG=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
 function matchNamesG(str){
 cfg=loadConfig();
 const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
@@ -1793,7 +1794,22 @@ const parts=tl(t);if(parts&&parts.length>=2)parts.forEach(k=>{const c2=cfg.membe
 });
 return[...out];};
 
-return matchNames(str);}
+const out=new Set(matchNames(str));
+{const six0=cfg.members||[];const ns0=nz(str);
+six0.forEach(m=>{const k=nz(m);const pre=/^[ァ-ヶー]+$/.test(k)?k:k.slice(0,2);if(!/[\u3040-\u9fff]/.test(pre)||pre.length<2)return;
+if(reg.some(n=>!six0.includes(n)&&nz(n).startsWith(pre)&&ns0.includes(nz(n))))return;
+if(ns0.includes(pre))out.add(m);});}
+return [...out];}
+
+function nameOnlyTok(p){const c=loadConfig();const six=c.members||[];
+const reg=[...new Set([...six,...Object.values(c.otherMembers||{}).flat(),...Object.keys(c.otherMembers||{})])].filter(Boolean);
+let r=nzG(p);reg.map(nzG).sort((a,b)=>b.length-a.length).forEach(n=>{if(n)r=r.split(n).join('');});
+six.forEach(m=>{const k=nzG(m);const pre=/^[ァ-ヶー]+$/.test(k)?k:k.slice(0,2);if(/[぀-鿿]/.test(pre)&&pre.length>=2)r=r.split(pre).join('');});
+const nm=matchNamesG(p).length;return nm>0&&(!/[぀-鿿A-Za-z]/.test(r)||(nm>=2&&r.replace(/[^぀-鿿A-Za-z]/g,'').length<=1));}
+function cleanRowTitle(t){const SEPR=/[&＆、,，・\/／\s×x+＋]+/;
+t=String(t).replace(/[【\[「『（(]([^】\]」』）)]*)[】\]」』）)]/g,(m,x)=>{const ws=x.split(SEPR).filter(Boolean);return ws.length&&ws.every(w=>nameOnlyTok(w)||!/[぀-鿿A-Za-z]/.test(w))?' ':m;});
+const toks=t.split(/\s+/).filter(Boolean).filter(w=>{if(!/[぀-鿿A-Za-z0-9]/.test(w)||/^[のOoＯ]$/.test(w))return false;if(/^[♡♥❤★☆♪♬◆◇●○◯■□▲△▼▽※@＠#＃♩♫♢♣♠OoＯ0\-－ー・\/／]+$/.test(w)&&w.length<=2)return false;const ps=w.split(SEPR).filter(Boolean);if(ps.length&&ps.every(nameOnlyTok))return false;return true;});
+return toks.join(' ').replace(/^[\s♡♥❤★☆♪♬◆◇●○◯■□▲△▼▽※]+|[\s♡♥❤★☆♪♬◆◇●○◯■□▲△▼▽※]+$/g,'').trim();}
 function applyFoundMembers(names){
 const missed=[];
 (names||[]).forEach(n=>{let hit=false;document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===n){c.classList.add('selected');hit=true;}});
@@ -1839,7 +1855,7 @@ try{await wk.terminate();}catch{}
 const dateObjs=[];
 const addDate=(d,tm)=>{let o=dateObjs.find(x=>x.date===d);if(!o){o={date:d,times:[]};dateObjs.push(o);}(tm||[]).forEach(t=>{if(!o.times.includes(t))o.times.push(t);});return o;};
 let curB=null;
-textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim())));const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}timesOf(l.replace(f&&f.raw?f.raw:'',''),!!f).forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
+textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim()))).replace(/^[0-9Oo](?=\d{2}\s*[\/\-.]\s*\d{2})/,'');const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}timesOf(l.replace(f&&f.raw?f.raw:'',''),!!f).forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
 /* 2) 日本語を含む読み取り → タイトル行・出演者 */
 let text='';
 try{stage='日本語の読み取り';
@@ -1860,7 +1876,7 @@ if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>
 text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
 if(orderedB.length){const bs=[...new Set(orderedB)];const dist=(a,b)=>{let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d;};
-const snap=d=>{if(bs.includes(d))return d;let best=null,bd=9;bs.forEach(b=>{const x=dist(d,b);if(x<bd){bd=x;best=b;}});return bd<=2?best:d;};
+const snap=d=>{if(bs.includes(d))return d;let best=null,bd=9;bs.forEach(b=>{const x=dist(d,b);if(x<bd){bd=x;best=b;}});return bd<=1?best:d;};
 trackRows.forEach(r=>{r.date=snap(r.date);});
 const merged=[];dateObjs.forEach(o=>{const d=snap(o.date);let m=merged.find(x=>x.date===d);if(!m){m={date:d,times:[]};merged.push(m);}o.times.forEach(t=>{if(!m.times.includes(t))m.times.push(t);});});
 dateObjs.length=0;merged.forEach(m=>dateObjs.push(m));dateObjs.sort((a,b)=>a.date<b.date?-1:1);}
@@ -1868,9 +1884,9 @@ const dates=dateObjs.map(x=>x.date);
 cfg=loadConfig();
 const matchNames=matchNamesG;
 const rowNames=new Set();
-trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));addTrackRow(r.title,'none',r.date,r.members,'',{},((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / ')));});
+trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));r.title=cleanRowTitle(r.title);addTrackRow(r.title,'none',r.date,r.members,'',{},((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / ')));});
 const tkHave=new Set(trackRows.map(r=>r.date));
-dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date;addTrackRow(tt,'none',d.date,[],'',{},d.times.join(' / '));trackRows.push({title:tt,date:d.date});}});
+dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt='';addTrackRow(tt,'none',d.date,[],'',{},d.times.join(' / '));trackRows.push({title:tt,date:d.date});}});
 const found=[...new Set([...matchNames(text),...rowNames])];
 const missed=[];
 applyFoundMembers(found).forEach(n=>missed.push(n));
