@@ -211,6 +211,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 .code-input:focus{border-color:var(--pink)}
 .link-btn{display:block;margin:12px auto 0;background:none;border:none;color:var(--pink-dark);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline}
 .link-btn:disabled{opacity:.45;text-decoration:none;cursor:default}
+.tl-h{padding:12px 16px 4px;font-size:13px;font-weight:700;color:var(--pink);position:sticky;top:0;background:var(--white);z-index:2}
 </style>
 </head>
 <body>
@@ -246,7 +247,9 @@ body.selecting .list-wrap{padding-bottom:90px}
 <option value="date_old">公演日（古い順）</option>
 <option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
+<option value="timeline">収録日タイムライン</option>
 </select>
+<select id="gapSel" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)"><option value="">未入力：すべて</option><option value="date">日付なし</option><option value="mem">出演者なし</option><option value="track">収録内容なし</option><option value="file">ファイル情報なし</option></select>
 <button type="button" class="fav-only" id="favOnlyBtn"><svg class="hs" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>お気に入りだけ</button>
 </div>
 
@@ -751,7 +754,7 @@ const o=JSON.parse(decodeURIComponent(m[1]));
 if(o.a)qMode='and';
 if(typeof o.t==='string'&&loadConfig().genres.includes(o.t))currentGenre=o.t;
 if(typeof o.u==='string'&&currentGenre!=='すべて')currentSubgenre=o.u;
-if(['default','date_new','date_old','reg_new','reg_old','title','exchange'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
+if(['default','date_new','date_old','reg_new','reg_old','title','exchange','timeline'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
 if(typeof o.q==='string')F.q=o.q;
 [['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
 }catch{}
@@ -1131,8 +1134,9 @@ let data=cachedVideos||await loadVideos();
 renderActiveBar();
 syncHash();
 data=data.filter(matchItem);
+{const gp=document.getElementById('gapSel').value;if(gp)data=data.filter(it=>{if(gp==='date')return !formatSchedules(it.dates).some(x=>x.date);if(gp==='mem')return !(it.members||[]).length;if(gp==='track')return !parseTracks(it).length;if(gp==='file')return !((parseMeta(it).tr||[]).some(x=>x&&(x.res||x.size||x.dur||x.loc)));return true;});}
 const gd=item=>{const dd=formatSchedules(item.dates).map(s=>s.date).filter(Boolean).sort();return dd.length?dd[0]:'';};
-if(sortOrder==='date_new'){
+if(sortOrder==='date_new'||sortOrder==='timeline'){
 data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return db.localeCompare(da);});
 }else if(sortOrder==='date_old'){
 data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return da.localeCompare(db);});
@@ -1148,8 +1152,9 @@ lastShown=data.map(d=>d.id);
 updateProgressLine(data);
 document.getElementById('listCount').textContent=data.length+' 件';
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
-list.innerHTML=data.map((item,idx)=>{
-return`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
+let _tl='';list.innerHTML=data.map((item,idx)=>{
+let hd='';if(sortOrder==='timeline'){const g=gd(item),m=/^(\d{4})\D+(\d{1,2})/.exec(g);const tk=m?m[1]+'年'+Number(m[2])+'月':'日付なし';if(tk!==_tl){_tl=tk;hd='<div class="tl-h">'+tk+'</div>';}}
+return hd+`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
 ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
@@ -1718,6 +1723,14 @@ let any=false;row.querySelectorAll('.track-member-chip').forEach(ch=>{const show
 row.querySelectorAll('.track-members-wrap > div').forEach(h=>{let n=h.nextElementSibling,v=false;while(n&&n.tagName==='SPAN'){if(n.style.display!=='none')v=true;n=n.nextElementSibling;}h.style.display=v?'':'none';});}
 function refreshTrackChips(){document.querySelectorAll('#tracksWrap > div').forEach(filterTrackChips);}
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#editModal')&&!e.target.closest('.track-member-chip,.tm-all'))setTimeout(refreshTrackChips,0);});
+const FIXK='ocr_fix_v1';
+function fixLoad(){try{return JSON.parse(localStorage.getItem(FIXK)||'{}')||{};}catch{return{};}}
+function fixApply(t){const d=fixLoad();let s=String(t||'');Object.keys(d).forEach(k=>{if(k&&s.includes(k))s=s.split(k).join(d[k]);});return s;}
+function fixLearn(a,b){a=String(a||'').trim();b=String(b||'').trim();if(!a||!b||a===b||a.length>40||b.length>40||Math.abs(a.length-b.length)>4)return;
+let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;let j=0;while(j<a.length-i&&j<b.length-i&&a[a.length-1-j]===b[b.length-1-j])j++;
+let x=a.slice(i,a.length-j),y=b.slice(i,b.length-j);if(!x||x.length>12||y.length>12)return;
+if(x.length<2){const l=a.slice(Math.max(0,i-1),i),r1=a.slice(a.length-j,a.length-j+1),r2=b.slice(b.length-j,b.length-j+1);x=l+x+r1;y=l+y+r2;}
+const d=fixLoad();d[x]=y;try{localStorage.setItem(FIXK,JSON.stringify(d));}catch{}}
 function addTrackRow(val='',dist='none',date='',members=[],section='',file={},time=''){
 cfg=loadConfig();
 const wrap=document.getElementById('tracksWrap');
@@ -1907,7 +1920,8 @@ const dates=dateObjs.map(x=>x.date);
 cfg=loadConfig();
 const matchNames=matchNamesG;
 const rowNames=new Set();
-trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));r.title=cleanRowTitle(r.title);addTrackRow(r.title,'none',r.date,r.members,'',{},((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / ')));});
+trackRows.forEach(r=>{r.title=fixApply(r.title);r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));r.title=cleanRowTitle(r.title);addTrackRow(r.title,'none',r.date,r.members,'',{},((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / ')));});
+{const _rs=[...document.getElementById('tracksWrap').querySelectorAll('.track-input')].slice(-trackRows.length);_rs.forEach((inp,i)=>{if(trackRows[i])inp.dataset.ocr=trackRows[i].title||'';});}
 const tkHave=new Set(trackRows.map(r=>r.date));
 dateObjs.forEach(d=>{if(!trackRows.length&&!tkHave.has(d.date)){const tt='';addTrackRow(tt,'none',d.date,[],'',{},d.times.join(' / '));trackRows.push({title:tt,date:d.date});}});
 const found=[...new Set([...matchNames(text),...rowNames])];
@@ -1945,6 +1959,7 @@ _trackFiles=[];
 return[...document.getElementById('tracksWrap').querySelectorAll('div[style*="pink-pale"]')].map(row=>{
 const input=row.querySelector('.track-input');
 if(!input)return null;
+if(input.dataset.ocr&&input.value!==input.dataset.ocr){fixLearn(input.dataset.ocr,input.value);input.dataset.ocr=input.value;}
 const dist=row.querySelector('.track-dist');
 const date=row.querySelector('.track-date');
 const sec=row.querySelector('.track-section');
@@ -2809,6 +2824,7 @@ toastMsg('設定を戻しました');
 
 /* ===== 起動 ===== */
 document.getElementById('sortSelect').addEventListener('change',e=>{sortOrder=e.target.value;renderList();});
+document.getElementById('gapSel').addEventListener('change',()=>renderList());
 
 updateFavOnlyBtn();
 loadToken();
