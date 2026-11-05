@@ -1676,7 +1676,7 @@ extraMembers=[...new Set([...extraMembers,...effectiveOtherSel.filter(m=>!cfg.me
 const chipH=m=>`<button type="button" class="chip${effectiveOtherSel.includes(m)?' selected':''}" data-member="${esc(m)}">${esc(m)}</button>`;
 document.getElementById('otherMemberChips').innerHTML=(grpChips.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark)">グループ名</div>'+grpChips.map(chipH).join('')+(extraMembers.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark);margin-top:4px">個人名</div>':''):'')+extraMembers.map(chipH).join('');
 document.getElementById('otherMemberChips').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
-}else{
+}else if(document.getElementById('otherMemberChips').querySelector('.chip.selected')){otherGroup.classList.remove('hidden');}else{
 otherGroup.classList.add('hidden');
 document.getElementById('otherMemberChips').innerHTML='';
 }
@@ -1775,6 +1775,31 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+function matchNamesG(str){
+cfg=loadConfig();
+const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
+const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
+const matchNames=str=>{const out=new Set();const ns=nz(str);
+reg.forEach(n=>{if(ns.includes(nz(n)))out.add(n);});
+String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nz).filter(t=>t.length>=2).forEach(t=>{
+const pick=c=>{if(c.length===1)out.add(c[0]);else if(c.length>1){const six=c.filter(n=>cfg.members.includes(n));if(six.length===1)out.add(six[0]);}};
+let c=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
+if(!c.length)c=reg.filter(n=>t.length>=2&&nz(n).endsWith(t));
+if(!c.length&&t.length>=3)c=reg.filter(n=>{const a=nz(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nz(n).length>=t.length;});
+pick(c);
+if(t.length>=4){const keys=[...new Set(cfg.members.flatMap(m=>[nz(m),nz(m).slice(0,2)]))].sort((x,y)=>y.length-x.length);
+const tl=(str)=>{if(!str)return[];for(const k of keys){if(k&&str.startsWith(k)){const r=tl(str.slice(k.length));if(r)return[k,...r];}}return null;};
+const parts=tl(t);if(parts&&parts.length>=2)parts.forEach(k=>{const c2=cfg.members.filter(m=>nz(m)===k||nz(m).startsWith(k));if(c2.length===1)out.add(c2[0]);else{const full=cfg.members.filter(m=>nz(m)===k);if(full.length===1)out.add(full[0]);}});}
+});
+return[...out];};
+
+return matchNames(str);}
+function applyFoundMembers(names){
+const missed=[];
+(names||[]).forEach(n=>{let hit=false;document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===n){c.classList.add('selected');hit=true;}});
+if(!hit){const og=document.getElementById('otherMemberGroup'),box=document.getElementById('otherMemberChips');
+if(og&&box){og.classList.remove('hidden');const b=document.createElement('button');b.type='button';b.className='chip selected';b.dataset.member=n;b.textContent=n;b.addEventListener('click',()=>b.classList.toggle('selected'));box.appendChild(b);}else missed.push(n);}});
+return missed;}
 (function(){const oi=document.getElementById('ocrInput');let busy=false;
 const loadT=()=>window.Tesseract?Promise.resolve():new Promise((ok,ng)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=ok;sc.onerror=()=>ng(new Error('load'));document.head.appendChild(sc);});
 const prepImg=async f=>{try{const bm=await createImageBitmap(f);const sc=Math.min(3,Math.max(1,1600/bm.width));const w=Math.round(bm.width*sc),h=Math.round(bm.height*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.drawImage(bm,0,0,w,h);const im=cx.getImageData(0,0,w,h),d=im.data,hist=new Array(256).fill(0);
@@ -1820,7 +1845,7 @@ let text='';
 try{stage='日本語の読み取り';
 for(let k=0;k<fs.length;k++){const pi=await prepImg(fs[k]);const r=await Tesseract.recognize(pi,'jpn+eng',onP(k,'文字を読み取り中'));text+=(r.data.text||'')+'\n';}
 }catch(e){steps.push('日本語の読み取りに失敗: '+(e&&e.message||e));}
-text=text.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1').split('\n').map(l=>l.trim()).filter(Boolean).join('\n');
+text=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>/\d{2}\s*[\/\-.．／]\s*\d{2}/.test(l)?l.replace(/[ \t　]+/g,' '):l.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1')).join('\n');
 const cp=x=>String(x).replace(/[\s　]/g,'');
 const keep=[],trackRows=[];let curD=null;
 text.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0)));let rest=l;
@@ -1841,24 +1866,14 @@ const merged=[];dateObjs.forEach(o=>{const d=snap(o.date);let m=merged.find(x=>x
 dateObjs.length=0;merged.forEach(m=>dateObjs.push(m));dateObjs.sort((a,b)=>a.date<b.date?-1:1);}
 const dates=dateObjs.map(x=>x.date);
 cfg=loadConfig();
-const reg=[...new Set([...cfg.members,...Object.values(cfg.otherMembers||{}).flat(),...ogGroups(cfg)])].filter(Boolean);
-const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
-const matchNames=str=>{const out=new Set();const ns=nz(str);
-reg.forEach(n=>{if(ns.includes(nz(n)))out.add(n);});
-String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nz).filter(t=>t.length>=2).forEach(t=>{
-const pick=c=>{if(c.length===1)out.add(c[0]);else if(c.length>1){const six=c.filter(n=>cfg.members.includes(n));if(six.length===1)out.add(six[0]);}};
-let c=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
-if(!c.length)c=reg.filter(n=>t.length>=2&&nz(n).endsWith(t));
-if(!c.length&&t.length>=3)c=reg.filter(n=>{const a=nz(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nz(n).length>=t.length;});
-pick(c);});
-return[...out];};
+const matchNames=matchNamesG;
 const rowNames=new Set();
 trackRows.forEach(r=>{r.members=matchNames(r.title);r.members.forEach(n=>rowNames.add(n));addTrackRow(r.title,'none',r.date,r.members,'',{},((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / ')));});
 const tkHave=new Set(trackRows.map(r=>r.date));
 dateObjs.forEach(d=>{if(!tkHave.has(d.date)){const tt=d.date;addTrackRow(tt,'none',d.date,[],'',{},d.times.join(' / '));trackRows.push({title:tt,date:d.date});}});
 const found=[...new Set([...matchNames(text),...rowNames])];
 const missed=[];
-found.forEach(n=>{let hit=false;document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip').forEach(c=>{if(c.dataset.member===n){c.classList.add('selected');hit=true;}});if(!hit)missed.push(n);});
+applyFoundMembers(found).forEach(n=>missed.push(n));
 const fc=found.map(cp);
 text=text.split('\n').filter(l=>{const c=cp(l);return c&&!fc.includes(c);}).join('\n');
 const te=document.getElementById('editTitle');
@@ -1879,10 +1894,11 @@ const dim=f=>new Promise(r=>{try{if(!/^video/.test(f.type)&&!/\.(mp4|mkv|mov|m4v
 inp.addEventListener('change',async()=>{const fs=[...inp.files].sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));const ims=fs.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));
 if(ims.length){try{const dt=new DataTransfer();ims.forEach(f=>dt.items.add(f));const oi2=document.getElementById('ocrInput');oi2.files=dt.files;oi2.dispatchEvent(new Event('change'));}catch{toastMsg('画像は「スクショから読み取り」から選んでください');}}
 inp.value='';const fs2=fs.filter(f=>!ims.includes(f));if(!fs2.length)return;
-let firstDate='';
+let firstDate='';const fnames=[];
 for(const f of fs2){const d=new Date(f.lastModified);const ds=isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 if(ds&&(!firstDate||ds<firstDate))firstDate=ds;
-addTrackRow(f.name.replace(/\.[^.]+$/,''),'none','',[],'',{res:await dim(f),size:fmt(f.size),dur:await durOf(f),loc:''});}
+{const mm=matchNamesG(f.name);fnames.push(...mm);addTrackRow(f.name.replace(/\.[^.]+$/,''),'none','',mm,'',{res:await dim(f),size:fmt(f.size),dur:await durOf(f),loc:''});}}
+applyFoundMembers([...new Set(fnames)]);
 toastMsg(fs2.length+'件を追加しました');});})();
 let _trackFiles=[];
 function getTracks(){
