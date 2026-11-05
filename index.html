@@ -1706,10 +1706,12 @@ const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
-function allowedTrackNames(){const c=loadConfig(),set=new Set();
+function allowedTrackNames(){const c=loadConfig(),set=new Set(),six=c.members||[];
 const add=n=>{if(!n)return;set.add(n);((c.otherMembers||{})[n]||[]).forEach(x=>set.add(x));};
-try{document.querySelectorAll('#memberChips .chip.selected,#otherMemberChips .chip.selected').forEach(x=>add(x.dataset.member));}catch{}
-try{(getSelectedGenres()||[]).forEach(g=>add(g.subgenre));}catch{}
+const top=[];try{document.querySelectorAll('#memberChips .chip.selected,#otherMemberChips .chip.selected').forEach(x=>top.push(x.dataset.member));}catch{}
+let og=[];try{og=(getSelectedGenres()||[]).filter(g=>isOG(g.genre));}catch{}
+if(!og.length||top.some(n=>six.includes(n)))six.forEach(n=>set.add(n));
+top.forEach(add);og.forEach(g=>add(g.subgenre));
 return set;}
 function filterTrackChips(row){const al=allowedTrackNames(),all=row.dataset.all==='1'||!al.size;
 let any=false;row.querySelectorAll('.track-member-chip').forEach(ch=>{const show=all||ch.classList.contains('selected')||al.has(ch.dataset.member);ch.style.display=show?'':'none';});
@@ -1893,7 +1895,7 @@ applyFoundMembers(found).forEach(n=>missed.push(n));
 const fc=found.map(cp);
 text=text.split('\n').filter(l=>{const c=cp(l);return c&&!fc.includes(c);}).join('\n');
 const te=document.getElementById('editTitle');
-if(!te.value.trim()&&text){const ls=text.split('\n');te.value=ls.shift().trim();text=ls.join('\n');}
+
 const sum='収録内容'+trackRows.length+'件・出演者'+(found.length-missed.length)+'名';
 if(steps.length)alert('一部の読み取りに失敗しました。\n'+steps.join('\n')+'\n\n通信状況を確認して、もう一度お試しください。\n（'+sum+'は反映済みです）');
 if(!dates.length&&!trackRows.length&&!found.length&&!text.trim()){if(!steps.length)alert('文字を読み取れませんでした。画像を変えてお試しください。');return;}
