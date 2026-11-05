@@ -45,6 +45,14 @@ details.card summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--p
 <label class="l">ジャンル</label><select id="sGenre" class="form-select"></select>
 <label class="l">小ジャンル</label><select id="sSub" class="form-select"></select>
 <label class="l">配布の可否</label><select id="sEx" class="form-select"><option value="ok">交換可</option><option value="partial">一部交換可</option><option value="consult" selected>要相談</option><option value="ng">交換不可</option></select>
+<label class="l">行の書式（スクショ用・1行に1つ。上から順に試します）</label>
+<textarea id="sPats" class="form-input" rows="3" placeholder="例  ♡{日付} {出演者}" style="font-family:inherit"></textarea>
+<div class="sub" style="margin:4px 0">使える印：{日付} {時間} {出演者} {題名} {*}（読み飛ばし）。♡ などの記号は読み取れなくても大丈夫です。</div>
+<div class="chips" id="sEx2"><button class="chip" type="button" data-p="♡{日付} {出演者}">♡日付 出演者</button><button class="chip" type="button" data-p="{日付} {時間} {題名}">日付 時間 題名</button><button class="chip" type="button" data-p="{日付} {題名} 【{出演者}】">日付 題名 【出演者】</button><button class="chip" type="button" data-p="{日付} {出演者} {題名}">日付 出演者 題名</button></div>
+<label class="l"><input type="checkbox" id="sFb" checked style="vertical-align:middle"> 書式に合わない行も自動で読む</label>
+<label class="l">見本（スクショの行をここに貼ると、読み取り結果を確認できます）</label>
+<textarea id="sSample" class="form-input" rows="3" placeholder="例  ♡25/06/06/ 田中 京本" style="font-family:inherit"></textarea>
+<div id="sPrev" class="sub" style="margin-top:4px;white-space:pre-wrap"></div>
 <details style="margin-top:10px"><summary class="sub" style="cursor:pointer;font-weight:700;color:var(--pink-dark)">読み取りルール（テンプレートに保存されます）</summary>
 <label class="l">ファイルのまとめ方</label><div class="chips" id="sMode"><button class="chip on" data-v="folder">フォルダ＝動画1本</button><button class="chip" data-v="file">ファイル1つ＝動画1本</button></div>
 <label class="l">日付の読み取り</label><select id="sDate" class="form-select"><option value="auto">自動（どの形式でも）</option><option value="ymd8">yyyymmdd のみ</option><option value="ymd6">yymmdd のみ</option><option value="sep">区切りあり（2020-08-01・20.08.01）のみ</option><option value="none">読み取らない</option></select>
@@ -126,7 +134,7 @@ const p2=n=>String(n).padStart(2,'0');
 const $=id=>document.getElementById(id);
 function fmtSize(b){return b>=1073741824?(b/1073741824).toFixed(2).replace(/\.?0+$/,'')+'GB':(b/1048576).toFixed(0)+'MB';}
 /* ---- テンプレート ---- */
-function S(){return{list:LST,mode:MODE,genre:$('sGenre').value,sub:$('sSub').value,ex:$('sEx').value,date:$('sDate').value,tm:$('sTm').value,br:$('sBr').checked,strip:$('sStrip').value,pre:$('sPre').value,suf:$('sSuf').value,mem:$('sMem').value,sec:$('sSec').value,loc:$('sLoc').value.trim()};}
+function S(){return{list:LST,mode:MODE,genre:$('sGenre').value,sub:$('sSub').value,ex:$('sEx').value,date:$('sDate').value,tm:$('sTm').value,pats:$('sPats').value,fb:$('sFb').checked,sample:$('sSample').value,br:$('sBr').checked,strip:$('sStrip').value,pre:$('sPre').value,suf:$('sSuf').value,mem:$('sMem').value,sec:$('sSec').value,loc:$('sLoc').value.trim()};}
 function loadTpls(){try{const a=JSON.parse(localStorage.getItem(TK_KEY)||'[]');return Array.isArray(a)?a:[];}catch{return[];}}
 function saveTpls(a){try{localStorage.setItem(TK_KEY,JSON.stringify(a));}catch{}}
 function drawTpls(sel){const a=loadTpls();$('tSel').innerHTML='<option value="">（テンプレートなし）</option>'+a.map((t,i)=>'<option value="'+i+'">'+esc(t.name)+'</option>').join('');if(sel!=null)$('tSel').value=String(sel);}
@@ -135,7 +143,7 @@ LST=t.list||1;document.querySelectorAll('#sList .chip').forEach(x=>x.classList.t
 await loadList();
 MODE=t.mode||'folder';document.querySelectorAll('#sMode .chip').forEach(x=>x.classList.toggle('on',x.dataset.v===MODE));
 if(t.genre){$('sGenre').value=t.genre;fillSub();}$('sSub').value=t.sub||'';
-$('sEx').value=t.ex||'consult';$('sDate').value=t.date||'auto';$('sTm').value=t.tm||'auto';$('sBr').checked=!!t.br;$('sStrip').value=t.strip||'';$('sPre').value=t.pre||'';$('sSuf').value=t.suf||'';$('sMem').value=t.mem||'';$('sSec').value=t.sec||'';$('sLoc').value=t.loc||'';
+$('sEx').value=t.ex||'consult';$('sDate').value=t.date||'auto';$('sTm').value=t.tm||'auto';$('sPats').value=t.pats||'';$('sFb').checked=t.fb!==false;$('sSample').value=t.sample||'';prevPats();$('sBr').checked=!!t.br;$('sStrip').value=t.strip||'';$('sPre').value=t.pre||'';$('sSuf').value=t.suf||'';$('sMem').value=t.mem||'';$('sSec').value=t.sec||'';$('sLoc').value=t.loc||'';
 rebuild();}
 /* ---- 名前・日付 ---- */
 function okDate(y,m,d){return y>=1990&&y<=2100&&m>=1&&m<=12&&d>=1&&d<=31;}
@@ -181,8 +189,6 @@ for(let p=0;p<d.length;p+=4){const g=Math.round(.299*d[p]+.587*d[p+1]+.114*d[p+2
 const tot=w*h;let sum=0;for(let t=0;t<256;t++)sum+=t*hist[t];let sB=0,wB=0,mx=0,th=128;for(let t=0;t<256;t++){wB+=hist[t];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=t*hist[t];const mB=sB/wB,mF=(sum-sB)/wF,v=wB*wF*(mB-mF)*(mB-mF);if(v>mx){mx=v;th=t;}}
 for(let p=0;p<d.length;p+=4){const v=d[p]>th?255:0;d[p]=d[p+1]=d[p+2]=v;}
 cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}catch{return f;}};
-async function ocrRead(fs){
-await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
 const SEP='[-\\/.．／−–—ー一_]';
@@ -198,20 +204,93 @@ if(/^[\d\s\/／~〜\-]+$/.test(l))a=[...l.matchAll(/(?<!\d)([01]\d|2[0-3])([0-5]
 const mkD=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
 const dateOf=l=>{for(const re of [DRE,DRE_L,DRE_C,DRE8]){const m=re.exec(l);if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:m[0]};}}return null;};
 const dateOfLoose=l=>dateOf(l)||(()=>{const m=DRE6.exec(l.replace(/\s/g,''));if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:null};}return null;})();
+const normDate=str=>{const l=zen(fixD(zen(String(str).trim())));const f=dateOfLoose(l);return f?f.date:'';};
+const cpS=x=>String(x).replace(/[\s　]/g,'');
+const nzN=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
+function matchNamesG(str){
+const c=CFG[LST]||{members:[],otherMembers:{}};const six=c.members||[];
+const reg=[...new Set([...six,...Object.values(c.otherMembers||{}).flat(),...Object.keys(c.otherMembers||{})])].filter(Boolean);
+const out=new Set();const ns=nzN(str);
+reg.forEach(n=>{if(ns.includes(nzN(n)))out.add(n);});
+String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nzN).filter(t=>t.length>=2).forEach(t=>{
+const pick=cc=>{if(cc.length===1)out.add(cc[0]);else if(cc.length>1){const sx=cc.filter(n=>six.includes(n));if(sx.length===1)out.add(sx[0]);}};
+let cc=reg.filter(n=>nzN(n).startsWith(t)||nzN(n)===t);
+if(!cc.length)cc=reg.filter(n=>t.length>=2&&nzN(n).endsWith(t));
+if(!cc.length&&t.length>=3)cc=reg.filter(n=>{const a=nzN(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nzN(n).length>=t.length;});
+pick(cc);
+if(t.length>=4){const keys=[...new Set(six.flatMap(m=>[nzN(m),nzN(m).slice(0,2)]))].sort((x,y)=>y.length-x.length);
+const tl=st=>{if(!st)return[];for(const k of keys){if(k&&st.startsWith(k)){const r=tl(st.slice(k.length));if(r)return[k,...r];}}return null;};
+const parts=tl(t);if(parts&&parts.length>=2)parts.forEach(k=>{const c2=six.filter(m=>nzN(m)===k||nzN(m).startsWith(k));if(c2.length===1)out.add(c2[0]);});}
+});
+{const ns0=nzN(str);six.forEach(m=>{const k=nzN(m);const pre=/^[ァ-ヶー]+$/.test(k)?k:k.slice(0,2);if(!/[\u3040-\u9fff]/.test(pre)||pre.length<2)return;
+if(reg.some(n=>!six.includes(n)&&nzN(n).startsWith(pre)&&ns0.includes(nzN(n))))return;
+if(ns0.includes(pre))out.add(m);});}
+return[...out];}
+
+function nameOnlyTok(p){const c=CFG[LST]||{members:[],otherMembers:{}};const six=c.members||[];
+const reg=[...new Set([...six,...Object.values(c.otherMembers||{}).flat(),...Object.keys(c.otherMembers||{})])].filter(Boolean);
+let r=nzN(p);reg.map(nzN).sort((a,b)=>b.length-a.length).forEach(n=>{if(n)r=r.split(n).join('');});
+six.forEach(m=>{const k=nzN(m);const pre=/^[ァ-ヶー]+$/.test(k)?k:k.slice(0,2);if(/[぀-鿿]/.test(pre)&&pre.length>=2)r=r.split(pre).join('');});
+const nm=matchNamesG(p).length;return nm>0&&(!/[぀-鿿A-Za-z]/.test(r)||(nm>=2&&r.replace(/[^぀-鿿A-Za-z]/g,'').length<=1));}
+function cleanRowTitle(t){const SEPR=/[&＆、,，・\/／\s×x+＋]+/;
+t=String(t).replace(/[【\[「『（(]([^】\]」』）)]*)[】\]」』）)]/g,(m,x)=>{const ws=x.split(SEPR).filter(Boolean);return ws.length&&ws.every(w=>nameOnlyTok(w)||!/[぀-鿿A-Za-z]/.test(w))?' ':m;});
+const toks=t.split(/\s+/).filter(Boolean).filter(w=>{if(!/[぀-鿿A-Za-z0-9]/.test(w)||/^[のOoＯ]$/.test(w))return false;if(/^[♡♥❤★☆♪♬◆◇●○◯■□▲△▼▽※@＠#＃♩♫♢♣♠\-－ー・\/／]+$/.test(w)&&w.length<=2)return false;const ps=w.split(SEPR).filter(Boolean);if(ps.length&&ps.every(nameOnlyTok))return false;return true;});
+return toks.join(' ').replace(/^[\s♡♥❤★☆♪♬◆◇●○◯■□▲△▼▽※]+|[\s♡♥❤★☆♪♬◆◇●○◯■□▲△▼▽※]+$/g,'').trim();}
+/* ---- 行の書式 ---- */
+function compilePats(txt){
+return String(txt||'').split('\n').map(x=>x.trim()).filter(Boolean).map(p=>{
+const parts=p.split(/(\{日付\}|\{時間\}|\{出演者\}|\{題名\}|\{\*\})/);
+let src='^\\s*',keys=[],first=true;
+parts.forEach(pt=>{
+if(pt==='{日付}'){src+='(\\d{2,4}\\s*[-\\/.．／年]\\s*\\d{1,2}\\s*[-\\/.．／月]\\s*\\d{1,2}\\s*日?|\\d{6,8})';keys.push('d');first=false;}
+else if(pt==='{時間}'){src+='(\\d{1,2}\\s*[:：]\\s*\\d{2}(?:\\s*[\\/／~〜\\-・,、]\\s*\\d{1,2}\\s*[:：]\\s*\\d{2})*)';keys.push('t');first=false;}
+else if(pt==='{出演者}'){src+='(.*?)';keys.push('m');first=false;}
+else if(pt==='{題名}'){src+='(.*?)';keys.push('n');first=false;}
+else if(pt==='{*}'){src+='.*?';first=false;}
+else if(pt){const symOnly=/^[\s♡♥❤★☆♪♬◆◇●○■□▲△▼▽※@＠#＃♩♫♢♣♠]+$/.test(pt);
+if(symOnly&&first)src+='[^\\d\\s]{0,3}\\s*';
+else{const e=pt.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&').replace(/\s+/g,'\\s*');src+=symOnly?'(?:'+e+')?':e;}
+first=false;}});
+src+='\\s*$';
+try{return{re:new RegExp(src),keys};}catch{return null;}}).filter(Boolean);}
+function matchLine(l0,pats){const l=zen(String(l0).trim());let best=null,bs=-1;
+for(const p of pats){const m=p.re.exec(l);if(!m)continue;const o={date:'',time:'',mtext:'',title:''};
+p.keys.forEach((k,i)=>{const v=(m[i+1]||'').trim();if(k==='d')o.date=normDate(v);else if(k==='t')o.time=v.replace(/\s+/g,'').replace(/[\/／~〜\-・,、]/g,' / ');else if(k==='m')o.mtext=v;else o.title=v;});
+if(p.keys.includes('d')&&!o.date)continue;
+o.title=o.title.replace(/[♡♥❤★☆♪♬◆◇●○■□▲△▼▽※@＠#＃♩♫♢♣♠]/g,' ').replace(/\s{2,}/g,' ').replace(/^[\s\/／・,、\-]+|[\s\/／・,、\-]+$/g,'');
+if(p.keys.length>bs){bs=p.keys.length;best=o;}}
+return best;}
+function prevPats(){
+const el=$('sPrev');if(!el)return;const txt=$('sSample').value;if(!txt.trim()){el.textContent='';return;}
+const pats=compilePats($('sPats').value);
+el.textContent=txt.split('\n').filter(l=>l.trim()).map(l=>{
+const o=pats.length?matchLine(l,pats):null;
+if(!o){const d=dateOf(zen(fixD(zen(l))));return '・'+l.trim()+'\n　→ 書式に合いません'+($('sFb').checked&&d?'（自動：日付 '+d.date+'）':'');}
+const mem=matchNamesG(o.mtext);const un=o.mtext.split(/[&＆、,，・\/／\s]+/).filter(w=>w&&w.length>=2&&!matchNamesG(w).length);
+return '・'+l.trim()+'\n　→ 日付 '+(o.date||'なし')+(o.time?' / 時間 '+o.time:'')+' / 出演者 '+(mem.join('、')||'なし')+(un.length?'（登録にない名前：'+un.join('、')+'）':'')+' / 題名 '+(o.title||'（空）');}).join('\n');}
+/* ---- スクショ読み取り ---- */
+async function ocrRead(fs){
+await loadT();
 const prog=(k,tag)=>({logger:m=>{if(m.status==='recognizing text')$('prog').textContent=tag+' '+(k+1)+'/'+fs.length+'枚 '+Math.round((m.progress||0)*100)+'%';}});
-const orderedB=[];let textB='';
+let textB='';
 try{const wk=await Tesseract.createWorker('eng');try{await wk.setParameters({tessedit_char_whitelist:'0123456789/-.:',tessedit_pageseg_mode:'6'});}catch{}
 for(let k=0;k<fs.length;k++){const rb=await wk.recognize(fs[k]);textB+=(rb.data.text||'')+'\n';}try{await wk.terminate();}catch{}}catch{}
-const dateObjs=[];
-const addDate=(d,tm)=>{let o=dateObjs.find(x=>x.date===d);if(!o){o={date:d,times:[]};dateObjs.push(o);}(tm||[]).forEach(t=>{if(!o.times.includes(t))o.times.push(t);});return o;};
-let curB=null;
-textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim())));const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}timesOf(l.replace(f&&f.raw?f.raw:'',''),!!f).forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
 let text='';
 for(let k=0;k<fs.length;k++){const pi=await prepImg(fs[k]);const r=await Tesseract.recognize(pi,'jpn+eng',prog(k,'文字を読み取り中'));text+=(r.data.text||'')+'\n';}
-text=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>/\d{2}\s*[\/\-.．／]\s*\d{2}/.test(l)?l.replace(/[ \t　]+/g,' '):l.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1')).join('\n');
-const cp=x=>String(x).replace(/[\s　]/g,'');
+const lines=text.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>/\d{2}\s*[\/\-.．／]\s*\d{2}/.test(l)?l.replace(/[ \t　]+/g,' '):l.replace(/([^\x00-\x7F])[ \t]+(?=[^\x00-\x7F])/g,'$1'));
+return{lines,textB};}
+function buildImages(){
+const T=S(),R=RAW;const pats=compilePats(T.pats);
+const dateObjs=[];
+const addDate=(d,tm)=>{let o=dateObjs.find(x=>x.date===d);if(!o){o={date:d,times:[]};dateObjs.push(o);}(tm||[]).forEach(t=>{if(!o.times.includes(t))o.times.push(t);});return o;};
+const orderedB=[];let curB=null;
+R.textB.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0.trim()))).replace(/^[0-9Oo](?=\d{2}\s*[\/\-.]\s*\d{2})/,'');const f=dateOfLoose(l);if(f){orderedB.push(f.date);curB=addDate(f.date);}timesOf(l.replace(f&&f.raw?f.raw:'',''),!!f).forEach(t=>{if(curB)addDate(curB.date,[String(t[1]).padStart(2,'0')+':'+t[2]]);});});
 const keep=[],trackRows=[];let curD=null;
-text.split('\n').forEach(l0=>{const l=zen(fixD(zen(l0)));let rest=l;
+R.lines.forEach(l0=>{
+const pm=pats.length?matchLine(l0,pats):null;
+if(pm){curD=addDate(pm.date,pm.time?pm.time.split(' / '):[]);trackRows.push({title:pm.title,date:pm.date,time:pm.time,mem:pm.mtext,pat:true});return;}
+if(pats.length&&!T.fb)return;
+const l=zen(fixD(zen(l0)));let rest=l;
 const f=dateOf(l);if(f){rest=rest.replace(f.raw,' ');curD=addDate(f.date);}
 const tms=timesOf(rest,!!f);
 if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]?\s*([0-5]\d)(?!\d)/g,' ');}
@@ -220,62 +299,53 @@ if((f||tms.length)&&empty)return;
 if(f){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:f.date});return;}
 keep.push(l0);});
 if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>{r.date=orderedB[i];});
-text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
 if(orderedB.length){const bs=[...new Set(orderedB)];const dist=(a,b)=>{let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d;};
-const snap=d=>{if(bs.includes(d))return d;let best=null,bd=9;bs.forEach(b=>{const x=dist(d,b);if(x<bd){bd=x;best=b;}});return bd<=2?best:d;};
+const snap=d=>{if(bs.includes(d))return d;let best=null,bd=9;bs.forEach(b=>{const x=dist(d,b);if(x<bd){bd=x;best=b;}});return bd<=1?best:d;};
 trackRows.forEach(r=>{r.date=snap(r.date);});
 const merged=[];dateObjs.forEach(o=>{const d=snap(o.date);let m=merged.find(x=>x.date===d);if(!m){m={date:d,times:[]};merged.push(m);}o.times.forEach(t=>{if(!m.times.includes(t))m.times.push(t);});});
 dateObjs.length=0;merged.forEach(m=>dateObjs.push(m));dateObjs.sort((a,b)=>a.date<b.date?-1:1);}
-const c=CFG[LST]||{members:[],otherMembers:{},subgenres:{}};
-const reg=[...new Set([...(c.members||[]),...Object.values(c.otherMembers||{}).flat(),...Object.keys(c.otherMembers||{})])].filter(Boolean);
-const nz=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
-const matchNames=str=>{const out=new Set();const ns=nz(str);
-reg.forEach(n=>{if(ns.includes(nz(n)))out.add(n);});
-String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nz).filter(t=>t.length>=2).forEach(t=>{
-const pick=cc=>{if(cc.length===1)out.add(cc[0]);else if(cc.length>1){const six=cc.filter(n=>(c.members||[]).includes(n));if(six.length===1)out.add(six[0]);}};
-let cc=reg.filter(n=>nz(n).startsWith(t)||nz(n)===t);
-if(!cc.length)cc=reg.filter(n=>t.length>=2&&nz(n).endsWith(t));
-if(!cc.length&&t.length>=3)cc=reg.filter(n=>{const a=nz(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nz(n).length>=t.length;});
-pick(cc);});
-return[...out];};
-const tkHave=new Set(trackRows.map(r=>r.date));
-const rows=trackRows.map(r=>({title:r.title,date:r.date,time:((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / '))}));
-dateObjs.forEach(d=>{if(!tkHave.has(d.date))rows.push({title:d.date,date:d.date,time:d.times.join(' / ')});});
-const found=[...new Set([...matchNames(text),...rows.flatMap(r=>matchNames(r.title))])];
-const fc=found.map(cp);
-const left=text.split('\n').filter(l=>{const cc=cp(l);return cc&&!fc.includes(cc);});
-return{rows,left,found,matchNames};}
-function buildImages(){
-const T=S(),R=RAW;
-const nameTok=w=>R.matchNames(w).length>0;
+const textL=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cpS(l)));
 const MARK=/[♡♥❤★☆♪♬◆◇●○■□▲△▼▽※@＠#＃♩♫♢♣♠]/g;
-const mkTitle=t=>{if(T.tm==='blank')return'';if(T.tm==='strip'){const k=t.replace(MARK,' ').split(/[\s&＆、,，・\/／×x+＋]+/).filter(w=>w&&!nameTok(w)&&!/^[\d:：\-.\/]+$/.test(w));return k.length?tplTitle(k.join(' '),T).title:'';}return tplTitle(t,T).title;};
-let tr=R.rows.map(r=>{const tt=tplTitle(r.title,T);return{title:mkTitle(r.title),date:T.date==='none'?'':r.date,time:r.time,members:[...new Set([...tt.members,...R.matchNames(r.title)])],section:T.sec,fo:{}};});
-if(T.tm!=='auto'){const out=[];tr.forEach(r=>{const m=r.title===''&&r.date?out.find(x=>x.title===''&&x.date===r.date):null;if(m){m.members=[...new Set([...m.members,...r.members])];if(r.time&&!m.time)m.time=r.time;}else out.push(r);});tr=out;}
+const nameTok=w=>matchNamesG(w).length>0;
+const mkTitle=t=>{if(T.tm==='blank')return'';if(T.tm==='strip'){const k=t.replace(MARK,' ').split(/[\s&＆、,，・\/／×x+＋]+/).filter(w=>w&&!nameTok(w)&&!/^[\d:：\-.\/]+$/.test(w));return k.length?tplTitle(k.join(' '),T).title:'';}return tplTitle(cleanRowTitle(t),T).title;};
+let tr=trackRows.map(r=>{const tt=tplTitle(r.title,T);
+const time=r.pat?r.time:((dateObjs.find(x=>x.date===r.date)||{times:[]}).times.join(' / '));
+return{title:r.pat?tt.title:mkTitle(r.title),date:T.date==='none'?'':r.date,time,members:[...new Set([...tt.members,...matchNamesG(r.mem||''),...matchNamesG(r.title)])],section:T.sec,fo:{}};});
+const have=new Set(trackRows.map(r=>r.date));
+dateObjs.forEach(d=>{if(!have.has(d.date)&&!pats.length)tr.push({title:'',date:d.date,time:d.times.join(' / '),members:[],section:T.sec,fo:{}});});
+{const seen=new Set();tr=tr.filter(r=>{const k=r.title+'|'+r.date+'|'+r.time+'|'+r.members.join(',');if(seen.has(k))return false;seen.add(k);return true;});}
+{const out=[];tr.forEach(r=>{const m=r.title===''&&r.date?out.find(x=>x.title===''&&x.date===r.date):null;if(m){m.members=[...new Set([...m.members,...r.members])];const ts=[...new Set([...m.time.split(' / '),...r.time.split(' / ')].filter(Boolean))];m.time=ts.join(' / ');}else out.push(r);});tr=out;}
 tr=tr.map((r,i)=>({r,i})).sort((a,b)=>(a.r.date?0:1)-(b.r.date?0:1)||(a.r.date<b.r.date?-1:a.r.date>b.r.date?1:0)||a.i-b.i).map(x=>x.r);
-const left=R.left.slice();const title=left.length?tplTitle(left.shift().trim(),T,true).title:'';
-left.forEach(l=>{if(T.tm==='blank')return;const t=mkTitle(l.trim());if(!t)return;tr.push({title:t,date:'',time:'',members:R.matchNames(l),section:T.sec,fo:{}});});
-groups=[{title,tr,on:true,append:true,folderMembers:R.found.slice(),fromImg:true}];
+const textAll=textL.join('\n');
+const found=[...new Set([...matchNamesG(textAll),...tr.flatMap(r=>r.members)])];
+const fc=found.map(cpS);
+const left=textL.filter(l=>{const cc=cpS(l);return cc&&!fc.includes(cc);});
+const title='';
+left.forEach(l=>{if(T.tm==='blank')return;const t=mkTitle(l.trim());if(!t)return;tr.push({title:t,date:'',time:'',members:matchNamesG(l),section:T.sec,fo:{}});});
+groups=[{title,tr,on:true,append:true,folderMembers:found.slice(),fromImg:true}];
 markDup();draw();
-$('prog').textContent='収録内容'+tr.length+'件・出演者'+R.found.length+'名を読み取りました。題名を確認して登録してください（既にある題名なら、その動画に追加できます）。';}
+$('prog').textContent='収録内容'+tr.length+'件・出演者'+found.length+'名を読み取りました。題名を確認して登録してください（既にある題名なら、その動画に追加できます）。';}
 async function readImages(fs){
 if(busy)return;busy=true;SRC={kind:'img',files:fs};
 try{$('prog').textContent='読み取りの準備中…（初回は時間がかかります）';RAW=await ocrRead(fs);buildImages();}
 catch(e){$('prog').textContent='読み取りに失敗しました（'+(e&&e.message||e)+'）。通信状況を確認して、もう一度お試しください。';}
 busy=false;}
-function rebuild(){if(!SRC||busy)return;if(SRC.kind==='files')buildFiles(SRC.files);else if(RAW)buildImages();}
+async function rebuild(){if(!SRC||busy)return;const prev=groups.map(g=>g.edited?g.title:null);if(SRC.kind==='files')await buildFiles(SRC.files);else if(RAW)buildImages();if(prev.some(x=>x!=null)&&prev.length===groups.length){groups.forEach((g,i)=>{if(prev[i]!=null){g.title=prev[i];g.edited=true;}});markDup();draw();}}
 /* ---- 表示 ---- */
-function memOf(g){return[...new Set([...g.folderMembers,...g.tr.flatMap(t=>t.members)])];}
+function memOf(g){if(!g.mem)g.mem=[...new Set([...g.folderMembers,...g.tr.flatMap(t=>t.members)])];return g.mem;}
+function memChoices(g){const c=CFG[LST]||{members:[],otherMembers:{}};const sub=$('sSub').value;const og=sub?((c.otherMembers||{})[sub]||[]):[];return[...new Set([...(c.members||[]),...og,...memOf(g)])];}
 function draw(){
 const L=$('list');
 L.innerHTML=groups.map((g,i)=>{const mem=memOf(g);
 return '<div class="card"><div style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-i="'+i+'" class="ck" style="width:20px;height:20px;flex:none"'+(g.on?' checked':'')+'><input class="form-input ti" data-i="'+i+'" value="'+esc(g.title)+'" placeholder="題名を入力" style="flex:1"></div>'
 +'<div class="dupbox" data-i="'+i+'" style="margin-top:6px"></div>'
-+(mem.length?'<div class="sub" style="margin:6px 0">出演者：'+esc(mem.join('、'))+'</div>':'')
++'<div class="sub" style="margin:8px 0 4px">出演者（タップで選択／解除）</div><div class="chips mc" data-i="'+i+'">'+memChoices(g).map(n=>'<button type="button" class="chip'+(mem.includes(n)?' on':'')+'" data-m="'+esc(n)+'">'+esc(n)+'</button>').join('')+'</div><input class="form-input mi" data-i="'+i+'" placeholder="他の名前を追加（入力して Enter）" style="margin-top:6px">'
 +'<div style="font-size:12px;margin-top:6px">'+g.tr.map(t=>'<div style="padding:3px 0;border-top:1px solid var(--border)">'+esc(t.title)+(t.date?'　<b>'+esc(t.date)+'</b>':'')+(t.time?'　'+esc(t.time):'')+(t.members.length?'<div class="sub">'+esc(t.members.join('、'))+'</div>':'')+'<span class="sub">　'+esc([t.fo.res,t.fo.size,t.fo.dur].filter(Boolean).join(' '))+'</span></div>').join('')+'</div></div>';}).join('');
 L.querySelectorAll('.ck').forEach(c=>c.onchange=()=>{groups[+c.dataset.i].on=c.checked;cnt();});
-L.querySelectorAll('.ti').forEach(c=>c.oninput=()=>{const g=groups[+c.dataset.i];g.title=c.value;markDup();dupUi();});
+L.querySelectorAll('.mc').forEach(box=>box.onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;const g=groups[+box.dataset.i],n=b.dataset.m,m=memOf(g),k=m.indexOf(n);if(k>=0)m.splice(k,1);else m.push(n);b.classList.toggle('on',m.includes(n));});
+L.querySelectorAll('.mi').forEach(inp=>inp.addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();const n=inp.value.trim();if(!n)return;const g=groups[+inp.dataset.i],m=memOf(g);if(!m.includes(n))m.push(n);draw();}));
+L.querySelectorAll('.ti').forEach(c=>c.oninput=()=>{const g=groups[+c.dataset.i];g.title=c.value;g.edited=true;markDup();dupUi();});
 dupUi();$('foot').style.display=groups.length?'':'none';cnt();}
 function dupUi(){document.querySelectorAll('.dupbox').forEach(b=>{const g=groups[+b.dataset.i];if(!g)return;
 if(!g.dup){b.innerHTML='';return;}
@@ -321,13 +391,15 @@ async function load(){if(!isAdmin()){$('gate').style.display='';$('app').style.d
 $('sList').onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;LST=+b.dataset.v;document.querySelectorAll('#sList .chip').forEach(x=>x.classList.toggle('on',x===b));await loadList();rebuild();};
 $('sMode').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;MODE=b.dataset.v;document.querySelectorAll('#sMode .chip').forEach(x=>x.classList.toggle('on',x===b));rebuild();};
 $('sGenre').onchange=fillSub;
-['sDate','sTm','sBr','sStrip','sPre','sSuf','sMem','sSec','sLoc'].forEach(id=>$(id).addEventListener('change',rebuild));
+['sPats','sFb','sSample','sDate','sTm','sBr','sStrip','sPre','sSuf','sMem','sSec','sLoc'].forEach(id=>$(id).addEventListener('change',rebuild));
 $('tSel').onchange=()=>{const v=$('tSel').value;if(v==='')return;const t=loadTpls()[+v];if(t){$('tName').value=t.name;applyTpl(t);}};
 $('tSave').onclick=()=>{const name=$('tName').value.trim();if(!name){toast('テンプレートの名前を入れてください');return;}const a=loadTpls();const t={...S(),name};const i=a.findIndex(x=>x.name===name);if(i>=0)a[i]=t;else a.push(t);saveTpls(a);drawTpls(a.findIndex(x=>x.name===name));toast('テンプレートを保存しました');};
 $('tDel').onclick=()=>{const v=$('tSel').value;if(v==='')return;const a=loadTpls();a.splice(+v,1);saveTpls(a);drawTpls();$('tName').value='';toast('削除しました');};
 $('pickDir').onclick=()=>$('inDir').click();$('pickFiles').onclick=()=>$('inFiles').click();$('pickImg').onclick=()=>$('inImg').click();
 ['inDir','inFiles'].forEach(id=>$(id).addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length){SRC={kind:'files',files:fs};RAW=null;buildFiles(fs);}}));
 $('inImg').addEventListener('change',e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)readImages(fs);});
+$('sEx2').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;$('sPats').value=b.dataset.p;const ex={'♡{日付} {出演者}':'♡25/06/06/ 田中 京本','{日付} {時間} {題名}':'25/06/06 12:00 ライブ映像','{日付} {題名} 【{出演者}】':'25/06/06 ラジオ 【田中 京本】','{日付} {出演者} {題名}':'25/06/06 田中 京本 トーク'};if(!$('sSample').value.trim())$('sSample').value=ex[b.dataset.p]||'';prevPats();rebuild();};
+['sPats','sSample','sFb'].forEach(id=>$(id).addEventListener('input',prevPats));
 $('go').onclick=go;
 window.onAuth=load;load();
 
