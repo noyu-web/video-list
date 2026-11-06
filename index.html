@@ -60,10 +60,10 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tag-time{background:#e0f2fe;color:#0369a1;font-family:monospace;font-size:10px;padding:2px 7px}
 .tag-genre{background:#f3e8ff;color:#6b21a8;font-size:10px}
 .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
-.exchange-ok{background:#dcfce7;color:#166534}
-.exchange-ng{background:#fee2e2;color:#991b1b}
-.exchange-partial{background:#fef3c7;color:#92400e}
-.exchange-consult{background:#ede9fe;color:#5b21b6}
+.exchange-ok{background:var(--pink);color:#fff}
+.exchange-ng{background:#f3eef0;color:#9b8a91}
+.exchange-partial{background:var(--pink-light);color:var(--pink-dark)}
+.exchange-consult{background:#fff;color:var(--pink-dark);box-shadow:inset 0 0 0 1px var(--pink)}
 .toggle-wrap{display:flex;align-items:center;gap:6px;margin-top:8px}
 .toggle{position:relative;width:36px;height:20px;cursor:pointer}
 .toggle input{opacity:0;width:0;height:0}
@@ -235,6 +235,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">選択</button>
 <button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">並び替え</button>
 <button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">診断</button>
+<button class="btn" id="dateMergeBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">放送日をまとめる</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -579,7 +580,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="modal-title" id="editModalTitle">動画を追加</div>
 <div class="form-group">
 <label class="form-label">タイトル</label>
-<input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力">
+<input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力" list="titleSug" autocomplete="off">
+<datalist id="titleSug"></datalist>
 </div>
 <div style="border-top:2px solid var(--pink-light);margin:16px 0"></div>
 <div class="form-group">
@@ -608,7 +610,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">ジャンル・小ジャンル（複数選択可）</label>
 <div id="genreSections"></div>
 </div>
-<div class="form-group">
+<div class="form-group" style="display:none">
 <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">配信,放送日</label>
 <div class="dates-section" style="margin-top:6px">
 <div id="dateGroupsWrap"></div>
@@ -1152,7 +1154,7 @@ data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 }
 lastShown=data.map(d=>d.id);
 updateProgressLine(data);
-document.getElementById('listCount').textContent=data.length+' 件';
+{let _n=0;data.forEach(it=>{try{_n+=parseTracks(it).length;}catch{}});document.getElementById('listCount').textContent=data.length+' 件'+(_n?'（収録内容 '+_n+' 行）':'');}
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 let _tl='';list.innerHTML=data.map((item,idx)=>{
 let hd='';if(sortOrder==='timeline'){const g=gd(item),m=/^(\d{4})\D+(\d{1,2})/.exec(g);const tk=m?m[1]+'年'+Number(m[2])+'月':'日付なし';if(tk!==_tl){_tl=tk;hd='<div class="tl-h">'+tk+'</div>';}}
@@ -1338,7 +1340,7 @@ tracksDiv.id='detailTracks';
 const tracks=item.tracks?JSON.parse(item.tracks||'[]'):[];
 if(tracks.length){
 const distLabel={ok:'配布可',ng:'配布不可',none:''};
-const distBg={ok:'background:#dcfce7;color:#166534',ng:'background:#fee2e2;color:#991b1b',none:''};
+const distBg={ok:'background:var(--pink);color:#fff',ng:'background:#f3eef0;color:#9b8a91',none:''};
 let sectionsHtml = '';
 let currentSec = null;
 let secItems = [];
@@ -1654,6 +1656,7 @@ const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
 document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/6-0440</small>';
 document.getElementById('editTitle').value=item?item.title:'';
+{const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
 const sel=item?item.members:[];
@@ -1706,10 +1709,10 @@ renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?formatSchedules(item.dates):[];
-if(schedules.length)schedules.forEach(s=>addDateGroup(s.date,s.times||[]));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 {const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
+{const have=new Set(tracks.map(t=>typeof t==='string'?'':(t.date||'')));schedules.forEach(s=>{if(have.has(s.date))return;have.add(s.date);const ts=(s.times&&s.times.length)?s.times:[''];ts.forEach(tm=>addTrackRow('','none',s.date,[],'',{},tm));});}
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -1749,7 +1752,7 @@ row.innerHTML=`
 <button class="tr-down" type="button" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;cursor:pointer;line-height:1">↓</button>
 </div>
 <select class="track-section form-select" style="width:110px;padding:7px 6px;font-size:12px">${sectionOptions}</select>
-<input class="form-input track-input" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
+<input class="form-input track-input" list="titleSug" autocomplete="off" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
 <button class="btn-remove tr-rm" type="button">✕</button>
 </div>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
@@ -1996,8 +1999,8 @@ const members=[
 ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
 ];
 const genres=getSelectedGenres();
-const schedules=getSchedules();
 const tracks=getTracks();
+const schedules=schedFromTracks(tracks);
 const metaObj={};
 {const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
@@ -2463,6 +2466,22 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
+function schedFromTracks(tr){const m=new Map();tr.forEach(t=>{if(!t||typeof t==='string'||!t.date)return;if(!m.has(t.date))m.set(t.date,[]);if(t.time&&!m.get(t.date).includes(t.time))m.get(t.date).push(t.time);});return[...m.keys()].sort().map(d=>({date:d,times:m.get(d)}));}
+function mergeDatesIntoTracks(tracks,schedules){const out=tracks.slice();const have=new Set(out.map(t=>typeof t==='string'?'':(t.date||'')));let added=0;
+schedules.forEach(s=>{if(have.has(s.date))return;have.add(s.date);const ts=(s.times&&s.times.length)?s.times:[''];ts.forEach(tm=>{out.push({title:'',dist:'none',date:s.date,time:tm,members:[],section:''});added++;});});return{tracks:out,added};}
+document.getElementById('dateMergeBtn').addEventListener('click',async()=>{
+const btn=document.getElementById('dateMergeBtn');if(btn.disabled)return;
+const data=await loadVideos(true);const todo=[];
+data.forEach(v=>{const sc=formatSchedules(v.dates);if(!sc.length)return;let tr=[];try{tr=JSON.parse(v.tracks||'[]');}catch{}const r=mergeDatesIntoTracks(tr,sc);if(r.added)todo.push({...v,tracks:JSON.stringify(r.tracks)});});
+if(!todo.length){toastMsg('まとめる放送日はありません');return;}
+if(!confirm(todo.length+'件の放送日を収録内容にまとめます。よろしいですか？'))return;
+btn.disabled=true;let ng=0;
+for(let i=0;i<todo.length;i++){btn.textContent=(i+1)+' / '+todo.length;const ok=await writeVideo(todo[i],false);if(!ok)ng++;}
+btn.disabled=false;btn.textContent='放送日をまとめる';
+cachedVideos=null;await loadVideos(true);renderList();
+toastMsg(ng?('完了（失敗 '+ng+' 件）'):'完了しました');
+});
+
 document.getElementById('healthCloseBtn').addEventListener('click',()=>document.getElementById('healthModal').classList.add('hidden'));
 document.getElementById('healthModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
 document.getElementById('healthList').addEventListener('click',e=>{
