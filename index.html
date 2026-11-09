@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
@@ -462,7 +462,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
-<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0330</div>
+<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0345</div>
 </div>
 </div>
 
@@ -1223,7 +1223,7 @@ else localStorage.removeItem(TOKEN_KEY);
 function clearToken(){
 isAdmin=false;token='';
 try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem('videos_ls_cache');}catch{}
-if(cachedVideos)cachedVideos.forEach(v=>{v.meta='';});
+if(cachedVideos)cachedVideos.forEach(v=>{let sd=[];try{sd=(JSON.parse(v.meta||'{}').sdel)||[];}catch{}v.meta=sd.length?JSON.stringify({sdel:sd}):'';});
 }
 const ERR={
 too_soon:'少し時間をおいてから、もう一度押してください。',
@@ -1664,10 +1664,10 @@ div.querySelectorAll('.tr-remove').forEach(b=>b.addEventListener('click',()=>b.c
 wrap.appendChild(div);
 }
 document.getElementById('addDateGroupBtn').addEventListener('click',()=>addDateGroup());
-function schedUnion(item){const sc=formatSchedules(item.dates).map((s,i)=>({date:s.date,times:(s.times||[]).slice(),info:((parseMeta(item).sch)||[])[i]||{}}));let tr=[];try{tr=JSON.parse(item.tracks||'[]');}catch{}
-const by=new Map();sc.forEach(s=>{if(!by.has(s.date))by.set(s.date,s);});
-tr.forEach(t=>{if(!t||typeof t==='string'||!t.date)return;let e=by.get(t.date);if(!e){e={date:t.date,times:[],info:{}};by.set(t.date,e);sc.push(e);}if(t.time&&!e.times.includes(t.time))e.times.push(t.time);});
-return sc.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
+function schedUnion(item){const pm=parseMeta(item),sdel=new Set(pm.sdel||[]);const sc0=formatSchedules(item.dates).map((s,i)=>({date:s.date,times:(s.times||[]).slice(),info:(pm.sch||[])[i]||{}}));let tr=[];try{tr=JSON.parse(item.tracks||'[]');}catch{}
+const by=new Map(),sc=[];sc0.forEach(s=>{const e=by.get(s.date);if(!e){by.set(s.date,s);sc.push(s);}else{(s.times||[]).forEach(t=>{if(!e.times.includes(t))e.times.push(t);});if(!Object.keys(e.info||{}).length)e.info=s.info;}});
+tr.forEach(t=>{if(!t||typeof t==='string'||!t.date||sdel.has(t.date))return;let e=by.get(t.date);if(!e){e={date:t.date,times:[],info:{}};by.set(t.date,e);sc.push(e);}if(t.time&&!e.times.includes(t.time))e.times.push(t.time);});
+return sc.filter(s=>!sdel.has(s.date)||sc0.some(x=>x.date===s.date)&&false).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
 function getSchedules(){
 return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].map(dg=>({
 date:dg.querySelector('.dg-date').value.trim(),
@@ -1683,7 +1683,7 @@ async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0330</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0345</small>';
 document.getElementById('editTitle').value=item?item.title:'';
 {const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
@@ -1738,7 +1738,7 @@ renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?schedUnion(item):[];
-schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
+window._openDates=schedules.map(s=>s.date);schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 {const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
@@ -1875,7 +1875,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/10-0330］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…［版 11/10-0345］初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -2030,9 +2030,16 @@ const members=[
 const genres=getSelectedGenres();
 let schedules=getSchedules(),schInfo=getSchedInfo();
 const tracks=getTracks();
-{const have=new Set(schedules.map(x=>x.date));const ix=schedules.map((x,i)=>({s:x,i:schInfo[i]||{}}));tracks.forEach(t=>{if(!t||!t.date)return;let e=ix.find(z=>z.s.date===t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};ix.push(e);have.add(t.date);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});ix.sort((a,b)=>a.s.date<b.s.date?-1:a.s.date>b.s.date?1:0);schedules=ix.map(z=>z.s);schInfo=ix.map(z=>z.i);}
+let _sdel=[];
+{const gi=getSchedInfo();const raw=getSchedules();const mp=new Map(),arr=[];
+raw.forEach((x,i)=>{const inf=gi[i]||{};const e=mp.get(x.date);if(!e){const n={s:{date:x.date,times:x.times.slice()},i:inf};mp.set(x.date,n);arr.push(n);}else{x.times.forEach(t=>{if(!e.s.times.includes(t))e.s.times.push(t);});if(!Object.keys(e.i).length)e.i=inf;}});
+const cur=new Set(arr.map(z=>z.s.date));
+const omm=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);
+_sdel=[...new Set([...(omm.sdel||[]),...(window._openDates||[]).filter(d=>!cur.has(d))])].filter(d=>!cur.has(d));
+tracks.forEach(t=>{if(!t||!t.date||_sdel.includes(t.date))return;let e=mp.get(t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};mp.set(t.date,e);arr.push(e);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});
+arr.sort((x,y)=>x.s.date<y.s.date?-1:x.s.date>y.s.date?1:0);schedules=arr.map(z=>z.s);schInfo=arr.map(z=>z.i);}
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
@@ -2881,3 +2888,4 @@ gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAd
 </script>
 </body>
 </html>
+
