@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -235,7 +235,6 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">選択</button>
 <button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">並び替え</button>
 <button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">診断</button>
-<button class="btn" id="dateMergeBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">放送日をまとめる</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -461,7 +460,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
-<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0310</div>
+<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0320</div>
 </div>
 </div>
 
@@ -611,7 +610,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">ジャンル・小ジャンル（複数選択可）</label>
 <div id="genreSections"></div>
 </div>
-<div class="form-group" style="display:none">
+<div class="form-group">
 <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">配信,放送日</label>
 <div class="dates-section" style="margin-top:6px">
 <div id="dateGroupsWrap"></div>
@@ -1332,9 +1331,9 @@ let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEac
 if(schedules.length){
 schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">配信,放送日</div>'+
 '<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
-schedules.map(s=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
+schedules.map((s,si)=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
 <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:12px;font-weight:700;color:#b8486f">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
-${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=((parseMeta(item).sch)||[])[si]||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
 </div>`).join('')+'</div>';
 }else schDiv.innerHTML='';
 // 収録内容
@@ -1632,12 +1631,26 @@ return result;
 }
 
 // Date groups
-function addDateGroup(dateVal='',times=[]){
+function addDateGroup(dateVal='',times=[],info={}){
 const wrap=document.getElementById('dateGroupsWrap');
 const div=document.createElement('div');div.className='date-group';
 div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" type="date" value="${esc(dateVal)}" style="flex:1"><button class="btn-remove dg-remove" type="button">✕</button></div>
 <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
-<button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>`;
+<button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>
+<div class="dg-finfo" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 6px">
+<input class="form-input dgf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(info.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
+<input class="form-input dgf-res" placeholder="解像度（例 1920×1080）" value="${esc(info.res||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input dgf-size" placeholder="容量（例 5GB）" value="${esc(info.size||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input dgf-dur" placeholder="長さ（例 01:23:45）" value="${esc(info.dur||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input dgf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(info.loc||'')}" style="font-size:12px;padding:6px 8px">
+</div>
+<div class="dg-more"></div>
+<button class="btn-add-small dg-add-more" type="button">＋ファイル情報を追加（同じ日で時間違いなど）</button>`;
+const _addDgMore=(o={})=>{const b=document.createElement('div');b.className='dg-blk';b.style.cssText='border-top:1px dashed var(--pink-light);padding-top:6px;margin:6px 0';
+b.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:5px"><input class="form-input dgf-label" placeholder="ラベル（例 15:00 / 2本目）" value="${esc(o.label||'')}" style="flex:1;font-size:12px;padding:6px 8px"><button class="btn-remove" type="button">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="form-input dgf-res" placeholder="解像度" value="${esc(o.res||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-size" placeholder="容量" value="${esc(o.size||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-dur" placeholder="長さ" value="${esc(o.dur||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-loc" placeholder="保存場所" value="${esc(o.loc||'')}" style="font-size:12px;padding:6px 8px"></div>`;
+b.querySelector('.btn-remove').onclick=()=>b.remove();div.querySelector('.dg-more').appendChild(b);};
+(info.more||[]).forEach(_addDgMore);
+div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
@@ -1655,12 +1668,16 @@ date:dg.querySelector('.dg-date').value.trim(),
 times:[...dg.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim()).filter(Boolean)
 })).filter(s=>s.date);
 }
+function getSchedInfo(){
+const rd=(box,pre)=>{const o={};[['label','label'],['res','res'],['size','size'],['dur','dur'],['loc','loc']].forEach(([k,c])=>{const e=box.querySelector('.'+pre+c);const v=e?e.value.trim():'';if(v)o[k]=v;});return o;};
+return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].filter(dg=>dg.querySelector('.dg-date').value.trim()).map(dg=>{const o=rd(dg.querySelector('.dg-finfo'),'dgf-');const mo=[...dg.querySelectorAll('.dg-more .dg-blk')].map(b=>rd(b,'dgf-')).filter(x=>Object.keys(x).length);if(mo.length)o.more=mo;return o;});
+}
 
 async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/6-0440</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0320</small>';
 document.getElementById('editTitle').value=item?item.title:'';
 {const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
@@ -1715,10 +1732,10 @@ renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?formatSchedules(item.dates):[];
+{const _si=(item?parseMeta(item).sch:null)||[];schedules.forEach((s,si)=>addDateGroup(s.date,s.times||[],_si[si]||{}));}
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 {const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
-{const have=new Set(tracks.map(t=>typeof t==='string'?'':(t.date||'')));schedules.forEach(s=>{if(have.has(s.date))return;have.add(s.date);const ts=(s.times&&s.times.length)?s.times:[''];ts.forEach(tm=>addTrackRow('','none',s.date,[],'',{},tm));});}
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -1852,7 +1869,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/6-0440］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…［版 11/10-0320］初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -2005,10 +2022,10 @@ const members=[
 ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
 ];
 const genres=getSelectedGenres();
+const schedules=getSchedules();const schInfo=getSchedInfo();
 const tracks=getTracks();
-const schedules=schedFromTracks(tracks);
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
@@ -2472,21 +2489,6 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
-function schedFromTracks(tr){const m=new Map();tr.forEach(t=>{if(!t||typeof t==='string'||!t.date)return;if(!m.has(t.date))m.set(t.date,[]);if(t.time&&!m.get(t.date).includes(t.time))m.get(t.date).push(t.time);});return[...m.keys()].sort().map(d=>({date:d,times:m.get(d)}));}
-function mergeDatesIntoTracks(tracks,schedules){const out=tracks.slice();const have=new Set(out.map(t=>typeof t==='string'?'':(t.date||'')));let added=0;
-schedules.forEach(s=>{if(have.has(s.date))return;have.add(s.date);const ts=(s.times&&s.times.length)?s.times:[''];ts.forEach(tm=>{out.push({title:'',dist:'none',date:s.date,time:tm,members:[],section:''});added++;});});return{tracks:out,added};}
-document.getElementById('dateMergeBtn').addEventListener('click',async()=>{
-const btn=document.getElementById('dateMergeBtn');if(btn.disabled)return;
-const data=await loadVideos(true);const todo=[];
-data.forEach(v=>{const sc=formatSchedules(v.dates);if(!sc.length)return;let tr=[];try{tr=JSON.parse(v.tracks||'[]');}catch{}const r=mergeDatesIntoTracks(tr,sc);if(r.added)todo.push({...v,tracks:JSON.stringify(r.tracks)});});
-if(!todo.length){toastMsg('まとめる放送日はありません');return;}
-if(!confirm(todo.length+'件の放送日を収録内容にまとめます。よろしいですか？'))return;
-btn.disabled=true;let ng=0;
-for(let i=0;i<todo.length;i++){btn.textContent=(i+1)+' / '+todo.length;const ok=await writeVideo(todo[i],false);if(!ok)ng++;}
-btn.disabled=false;btn.textContent='放送日をまとめる';
-cachedVideos=null;await loadVideos(true);renderList();
-toastMsg(ng?('完了（失敗 '+ng+' 件）'):'完了しました');
-});
 
 document.getElementById('healthCloseBtn').addEventListener('click',()=>document.getElementById('healthModal').classList.add('hidden'));
 document.getElementById('healthModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
