@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -27,16 +27,9 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tabs{display:flex;padding:0 12px;min-width:max-content}
 .tab{padding:11px 14px;font-size:13px;font-weight:600;color:var(--gray);cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;white-space:nowrap}
 .tab.active{color:var(--pink);border-bottom-color:var(--pink)}
-.tabs.open{flex-wrap:wrap;min-width:0;padding:6px 12px;gap:6px}
-.tabs.open .tab{border-bottom:none;border-radius:14px;padding:6px 12px;background:var(--pink-pale)}
-.tabs.open .tab.active{background:var(--pink-light)}
-.tab-grp{flex:0 0 100%;display:flex;gap:6px}
-.tabs.open .tab.grp{flex:1;text-align:center;background:var(--white);border:1px solid var(--pink-light);font-weight:700}
-.tabs.open .tab.grp.active{background:var(--pink-light);color:var(--pink-dark)}
-.tab-more{color:var(--pink-dark)}
 .subtabs-wrap{background:var(--pink-pale);border-bottom:1px solid var(--pink-light);overflow-x:auto;scrollbar-width:none;display:none}
 .subtabs-wrap.visible{display:block}
-.subtabs{display:flex;padding:6px 12px;gap:6px;min-width:0;flex-wrap:wrap}
+.subtabs{display:flex;padding:6px 12px;gap:6px;min-width:max-content;flex-wrap:wrap}
 .subtab{padding:5px 12px;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;border:1.5px solid var(--border);border-radius:20px;background:var(--white);white-space:nowrap}
 .subtab.active{color:var(--pink-dark);border-color:var(--pink);background:var(--pink-light)}
 .toolbar{padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -63,14 +56,14 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tag-juri{background:#b3d4ff;color:#003d7a}
 .tag-sixtones{background:#e0e0e0;color:#555}
 .tag-all{background:#fce7f3;color:#9d174d}
-.tag-date{background:#eff6ff;color:#1e40af;font-family:monospace;font-size:12px;padding:3px 10px}
-.tag-time{background:#e0f2fe;color:#0369a1;font-family:monospace;font-size:10px;padding:2px 7px}
+.tag-date{background:#fde9f1;color:#b8486f;font-size:12px;padding:3px 10px}
+.tag-time{background:#fff7fa;color:#b8486f;font-size:10px;padding:2px 7px}
 .tag-genre{background:#f3e8ff;color:#6b21a8;font-size:10px}
 .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
-.exchange-ok{background:#dcfce7;color:#166534}
-.exchange-ng{background:#fee2e2;color:#991b1b}
-.exchange-partial{background:#fef3c7;color:#92400e}
-.exchange-consult{background:#ede9fe;color:#5b21b6}
+.exchange-ok{background:var(--pink);color:#fff}
+.exchange-ng{background:#f3eef0;color:#9b8a91}
+.exchange-partial{background:var(--pink-light);color:var(--pink-dark)}
+.exchange-consult{background:#fff;color:var(--pink-dark);box-shadow:inset 0 0 0 1px var(--pink)}
 .toggle-wrap{display:flex;align-items:center;gap:6px;margin-top:8px}
 .toggle{position:relative;width:36px;height:20px;cursor:pointer}
 .toggle input{opacity:0;width:0;height:0}
@@ -218,6 +211,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 .code-input:focus{border-color:var(--pink)}
 .link-btn{display:block;margin:12px auto 0;background:none;border:none;color:var(--pink-dark);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline}
 .link-btn:disabled{opacity:.45;text-decoration:none;cursor:default}
+.fav-only{white-space:nowrap;font-size:11px!important;padding:5px 10px!important}
+#sortSelect,#gapSel{font-size:11px!important;padding:4px 6px!important;min-width:0;max-width:44vw}
 .tl-h{padding:12px 16px 4px;font-size:13px;font-weight:700;color:var(--pink);position:sticky;top:0;background:var(--white);z-index:2}
 </style>
 </head>
@@ -244,8 +239,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div class="active-bar" id="activeBar"></div>
 
-<div style="display:flex;align-items:center;gap:8px;padding:10px 16px 6px">
-<span style="font-size:12px;color:var(--gray)">並び替え</span>
+<div style="display:flex;align-items:center;gap:6px;row-gap:6px;flex-wrap:wrap;padding:10px 16px 6px">
+<span style="font-size:11px;color:var(--gray);white-space:nowrap">並び替え</span>
 <select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
 <option value="default">標準</option>
 <option value="reg_new">登録（新しい順）</option>
@@ -465,6 +460,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
+<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0345</div>
 </div>
 </div>
 
@@ -584,7 +580,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="modal-title" id="editModalTitle">動画を追加</div>
 <div class="form-group">
 <label class="form-label">タイトル</label>
-<input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力">
+<input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力" list="titleSug" autocomplete="off">
+<datalist id="titleSug"></datalist>
 </div>
 <div style="border-top:2px solid var(--pink-light);margin:16px 0"></div>
 <div class="form-group">
@@ -880,17 +877,11 @@ return Array.isArray(parsed)?parsed.filter(s=>s&&s.date&&s.date.trim()):[];
 return str?str.split(',').filter(d=>d&&d.trim()&&d!=='ok'&&d!=='ng').map(d=>({date:d,times:[]})):[];
 }
 }
-let tabsOpen=true,tabsGrp='';
 function renderTabs(){
 cfg=loadConfig();
 const t=document.getElementById('tabs');
-t.classList.toggle('open',tabsOpen);
-const _isO=g=>/^SixTONES以外/.test(g);if(!tabsGrp)tabsGrp=_isO(currentGenre)?'O':'S';
-const _gl=tabsOpen?cfg.genres.filter(g=>g==='すべて'||g!=='SixTONES以外'&&(tabsGrp==='O')===_isO(g)):cfg.genres.filter(g=>g===currentGenre);
-const _gb=tabsOpen?`<div class="tab-grp"><button class="tab grp${tabsGrp==='S'?' active':''}" data-grp="S">SixTONES</button><button class="tab grp${tabsGrp==='O'?' active':''}" data-grp="O">SixTONES以外</button></div>`:'';
-t.innerHTML=_gb+_gl.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g.replace(/^SixTONES以外[(（]?/,'').replace(/[)）]$/,'')||g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('')+'';
-t.querySelectorAll('[data-grp]').forEach(b=>b.addEventListener('click',()=>{tabsGrp=b.dataset.grp;if(tabsGrp==='O'){if(cfg.genres.includes('SixTONES以外')){currentGenre='SixTONES以外';currentSubgenre='すべて';}}else if(_isO(currentGenre)){currentGenre='すべて';currentSubgenre='すべて';}renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
-t.querySelectorAll('.tab[data-g]').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
+t.innerHTML=cfg.genres.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
+t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
 function renderSubtabs(){
 cfg=loadConfig();
@@ -1163,7 +1154,7 @@ data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 }
 lastShown=data.map(d=>d.id);
 updateProgressLine(data);
-document.getElementById('listCount').textContent=data.length+' 件';
+{let _n=0;data.forEach(it=>{try{_n+=parseTracks(it).length;}catch{}});document.getElementById('listCount').textContent=data.length+' 件'+(_n?'（収録内容 '+_n+' 行）':'');}
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 let _tl='';list.innerHTML=data.map((item,idx)=>{
 let hd='';if(sortOrder==='timeline'){const g=gd(item),m=/^(\d{4})\D+(\d{1,2})/.exec(g);const tk=m?m[1]+'年'+Number(m[2])+'月':'日付なし';if(tk!==_tl){_tl=tk;hd='<div class="tl-h">'+tk+'</div>';}}
@@ -1230,7 +1221,7 @@ else localStorage.removeItem(TOKEN_KEY);
 function clearToken(){
 isAdmin=false;token='';
 try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem('videos_ls_cache');}catch{}
-if(cachedVideos)cachedVideos.forEach(v=>{v.meta='';});
+if(cachedVideos)cachedVideos.forEach(v=>{let sd=[];try{sd=(JSON.parse(v.meta||'{}').sdel)||[];}catch{}v.meta=sd.length?JSON.stringify({sdel:sd}):'';});
 }
 const ERR={
 too_soon:'少し時間をおいてから、もう一度押してください。',
@@ -1334,14 +1325,16 @@ document.getElementById('detailGenres').innerHTML='';
 document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
 document.getElementById('detailFileInfo').innerHTML='';
-const schedules=formatSchedules(item.dates);
+const schedules=schedUnion(item);
 const schDiv=document.getElementById('detailSchedules');
+let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEach(t=>{if(t&&t.date)_trDates.add(t.date);});}catch{}
 if(schedules.length){
-schDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">配信,放送日</div>'+
-schedules.map(s=>`<div style="background:var(--pink-pale);border-radius:8px;padding:8px 10px;margin-bottom:6px">
-<div style="font-size:13px;font-weight:600;color:var(--pink-dark)">${esc(s.date)}</div>
-${s.times&&s.times.length?`<div style="font-size:12px;color:var(--gray);margin-top:3px">${s.times.map(t=>esc(t)).join(' / ')}</div>`:''}
-</div>`).join('');
+schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">配信,放送日</div>'+
+'<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
+schedules.map((s,si)=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
+<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:12px;font-weight:700;color:#b8486f">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=s.info||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
+</div>`).join('')+'</div>';
 }else schDiv.innerHTML='';
 // 収録内容
 const tracksDiv=document.getElementById('detailTracks')||document.createElement('div');
@@ -1349,7 +1342,7 @@ tracksDiv.id='detailTracks';
 const tracks=item.tracks?JSON.parse(item.tracks||'[]'):[];
 if(tracks.length){
 const distLabel={ok:'配布可',ng:'配布不可',none:''};
-const distBg={ok:'background:#dcfce7;color:#166534',ng:'background:#fee2e2;color:#991b1b',none:''};
+const distBg={ok:'background:var(--pink);color:#fff',ng:'background:#f3eef0;color:#9b8a91',none:''};
 let sectionsHtml = '';
 let currentSec = null;
 let secItems = [];
@@ -1369,18 +1362,21 @@ const tdate=(typeof t==='string'?'':t.date||'')+(typeof t==='string'||!t.time?''
 const tmembers=typeof t==='string'?[]:(t.members||[]);
 const sec=typeof t==='string'?'':t.section||'';
 if(sec !== currentSec) { flushSec(); currentSec=sec; }
-const badge=dist&&dist!=='none'?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;${distBg[dist]};font-weight:600;margin-left:6px">${distLabel[dist]}</span>`:'';
-const dateBadge=tdate?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:#eff6ff;color:#1e40af;margin-left:6px">${esc(tdate)}</span>`:'';
-const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
-secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
-<div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
-${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(x)}</div>`).join(''):'';})()}
+const badge=dist&&dist!=='none'?`<span style="font-size:11px;padding:2px 8px;border-radius:9px;${distBg[dist]};font-weight:700">${distLabel[dist]}</span>`:'';
+const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||'');
+const dateBadge='';
+const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
+const memberSpan=memberBadges?`<span style="display:inline-flex;flex-wrap:wrap;gap:3px">${memberBadges}</span>`:'';
+secItems.push(`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
+${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(dp)}</span>${tp?`<span style="font-size:12px;font-weight:700;color:#b8486f">${esc(tp)}</span>`:''}${title?'':badge+memberSpan}</div>`:''}
+${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
+${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
-tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容,詳細</div>'+
-`<div style="background:var(--gray-light);border-radius:8px;padding:6px 10px">${sectionsHtml}</div>`;
+tracksDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">収録内容,詳細</div>'+
+`<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">${sectionsHtml}</div>`;
 document.getElementById('detailNote').before(tracksDiv);
 }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
 const note=document.getElementById('detailNote');
@@ -1635,12 +1631,26 @@ return result;
 }
 
 // Date groups
-function addDateGroup(dateVal='',times=[]){
+function addDateGroup(dateVal='',times=[],info={}){
 const wrap=document.getElementById('dateGroupsWrap');
 const div=document.createElement('div');div.className='date-group';
 div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" type="date" value="${esc(dateVal)}" style="flex:1"><button class="btn-remove dg-remove" type="button">✕</button></div>
 <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
-<button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>`;
+<button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>
+<div class="dg-finfo" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 6px">
+<input class="form-input dgf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(info.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
+<input class="form-input dgf-res" placeholder="解像度（例 1920×1080）" value="${esc(info.res||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input dgf-size" placeholder="容量（例 5GB）" value="${esc(info.size||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input dgf-dur" placeholder="長さ（例 01:23:45）" value="${esc(info.dur||'')}" style="font-size:12px;padding:6px 8px">
+<input class="form-input dgf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(info.loc||'')}" style="font-size:12px;padding:6px 8px">
+</div>
+<div class="dg-more"></div>
+<button class="btn-add-small dg-add-more" type="button">＋ファイル情報を追加（同じ日で時間違いなど）</button>`;
+const _addDgMore=(o={})=>{const b=document.createElement('div');b.className='dg-blk';b.style.cssText='border-top:1px dashed var(--pink-light);padding-top:6px;margin:6px 0';
+b.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:5px"><input class="form-input dgf-label" placeholder="ラベル（例 15:00 / 2本目）" value="${esc(o.label||'')}" style="flex:1;font-size:12px;padding:6px 8px"><button class="btn-remove" type="button">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="form-input dgf-res" placeholder="解像度" value="${esc(o.res||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-size" placeholder="容量" value="${esc(o.size||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-dur" placeholder="長さ" value="${esc(o.dur||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-loc" placeholder="保存場所" value="${esc(o.loc||'')}" style="font-size:12px;padding:6px 8px"></div>`;
+b.querySelector('.btn-remove').onclick=()=>b.remove();div.querySelector('.dg-more').appendChild(b);};
+(info.more||[]).forEach(_addDgMore);
+div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
@@ -1652,19 +1662,28 @@ div.querySelectorAll('.tr-remove').forEach(b=>b.addEventListener('click',()=>b.c
 wrap.appendChild(div);
 }
 document.getElementById('addDateGroupBtn').addEventListener('click',()=>addDateGroup());
+function schedUnion(item){const pm=parseMeta(item),sdel=new Set(pm.sdel||[]);const sc0=formatSchedules(item.dates).map((s,i)=>({date:s.date,times:(s.times||[]).slice(),info:(pm.sch||[])[i]||{}}));let tr=[];try{tr=JSON.parse(item.tracks||'[]');}catch{}
+const by=new Map(),sc=[];sc0.forEach(s=>{const e=by.get(s.date);if(!e){by.set(s.date,s);sc.push(s);}else{(s.times||[]).forEach(t=>{if(!e.times.includes(t))e.times.push(t);});if(!Object.keys(e.info||{}).length)e.info=s.info;}});
+tr.forEach(t=>{if(!t||typeof t==='string'||!t.date||sdel.has(t.date))return;let e=by.get(t.date);if(!e){e={date:t.date,times:[],info:{}};by.set(t.date,e);sc.push(e);}if(t.time&&!e.times.includes(t.time))e.times.push(t.time);});
+return sc.filter(s=>!sdel.has(s.date)||sc0.some(x=>x.date===s.date)&&false).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
 function getSchedules(){
 return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].map(dg=>({
 date:dg.querySelector('.dg-date').value.trim(),
 times:[...dg.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim()).filter(Boolean)
 })).filter(s=>s.date);
 }
+function getSchedInfo(){
+const rd=(box,pre)=>{const o={};[['label','label'],['res','res'],['size','size'],['dur','dur'],['loc','loc']].forEach(([k,c])=>{const e=box.querySelector('.'+pre+c);const v=e?e.value.trim():'';if(v)o[k]=v;});return o;};
+return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].filter(dg=>dg.querySelector('.dg-date').value.trim()).map(dg=>{const o=rd(dg.querySelector('.dg-finfo'),'dgf-');const mo=[...dg.querySelectorAll('.dg-more .dg-blk')].map(b=>rd(b,'dgf-')).filter(x=>Object.keys(x).length);if(mo.length)o.more=mo;return o;});
+}
 
 async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/6-0440</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0345</small>';
 document.getElementById('editTitle').value=item?item.title:'';
+{const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
 const sel=item?item.members:[];
@@ -1716,8 +1735,8 @@ document.getElementById('otherMemberChips').innerHTML='';
 renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
-const schedules=item?formatSchedules(item.dates):[];
-if(schedules.length)schedules.forEach(s=>addDateGroup(s.date,s.times||[]));
+const schedules=item?schedUnion(item):[];
+window._openDates=schedules.map(s=>s.date);schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 {const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
@@ -1760,7 +1779,7 @@ row.innerHTML=`
 <button class="tr-down" type="button" style="background:none;border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:11px;cursor:pointer;line-height:1">↓</button>
 </div>
 <select class="track-section form-select" style="width:110px;padding:7px 6px;font-size:12px">${sectionOptions}</select>
-<input class="form-input track-input" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
+<input class="form-input track-input" list="titleSug" autocomplete="off" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
 <button class="btn-remove tr-rm" type="button">✕</button>
 </div>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
@@ -1854,7 +1873,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/6-0440］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…［版 11/10-0345］初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -2007,10 +2026,18 @@ const members=[
 ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
 ];
 const genres=getSelectedGenres();
-const schedules=getSchedules();
+let schedules=getSchedules(),schInfo=getSchedInfo();
 const tracks=getTracks();
+let _sdel=[];
+{const gi=getSchedInfo();const raw=getSchedules();const mp=new Map(),arr=[];
+raw.forEach((x,i)=>{const inf=gi[i]||{};const e=mp.get(x.date);if(!e){const n={s:{date:x.date,times:x.times.slice()},i:inf};mp.set(x.date,n);arr.push(n);}else{x.times.forEach(t=>{if(!e.s.times.includes(t))e.s.times.push(t);});if(!Object.keys(e.i).length)e.i=inf;}});
+const cur=new Set(arr.map(z=>z.s.date));
+const omm=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);
+_sdel=[...new Set([...(omm.sdel||[]),...(window._openDates||[]).filter(d=>!cur.has(d))])].filter(d=>!cur.has(d));
+tracks.forEach(t=>{if(!t||!t.date||_sdel.includes(t.date))return;let e=mp.get(t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};mp.set(t.date,e);arr.push(e);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});
+arr.sort((x,y)=>x.s.date<y.s.date?-1:x.s.date>y.s.date?1:0);schedules=arr.map(z=>z.s);schInfo=arr.map(z=>z.i);}
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
@@ -2474,6 +2501,7 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
+
 document.getElementById('healthCloseBtn').addEventListener('click',()=>document.getElementById('healthModal').classList.add('hidden'));
 document.getElementById('healthModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
 document.getElementById('healthList').addEventListener('click',e=>{
