@@ -1,6 +1,8 @@
  <!DOCTYPE html>
 <html lang="ja">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>所持リスト</title>
@@ -460,7 +462,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
-<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0320</div>
+<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0330</div>
 </div>
 </div>
 
@@ -1325,7 +1327,7 @@ document.getElementById('detailGenres').innerHTML='';
 document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
 document.getElementById('detailFileInfo').innerHTML='';
-const schedules=formatSchedules(item.dates);
+const schedules=schedUnion(item);
 const schDiv=document.getElementById('detailSchedules');
 let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEach(t=>{if(t&&t.date)_trDates.add(t.date);});}catch{}
 if(schedules.length){
@@ -1333,7 +1335,7 @@ schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margi
 '<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
 schedules.map((s,si)=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
 <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:12px;font-weight:700;color:#b8486f">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
-${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=((parseMeta(item).sch)||[])[si]||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=s.info||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
 </div>`).join('')+'</div>';
 }else schDiv.innerHTML='';
 // 収録内容
@@ -1662,6 +1664,10 @@ div.querySelectorAll('.tr-remove').forEach(b=>b.addEventListener('click',()=>b.c
 wrap.appendChild(div);
 }
 document.getElementById('addDateGroupBtn').addEventListener('click',()=>addDateGroup());
+function schedUnion(item){const sc=formatSchedules(item.dates).map((s,i)=>({date:s.date,times:(s.times||[]).slice(),info:((parseMeta(item).sch)||[])[i]||{}}));let tr=[];try{tr=JSON.parse(item.tracks||'[]');}catch{}
+const by=new Map();sc.forEach(s=>{if(!by.has(s.date))by.set(s.date,s);});
+tr.forEach(t=>{if(!t||typeof t==='string'||!t.date)return;let e=by.get(t.date);if(!e){e={date:t.date,times:[],info:{}};by.set(t.date,e);sc.push(e);}if(t.time&&!e.times.includes(t.time))e.times.push(t.time);});
+return sc.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
 function getSchedules(){
 return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].map(dg=>({
 date:dg.querySelector('.dg-date').value.trim(),
@@ -1677,7 +1683,7 @@ async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0320</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0330</small>';
 document.getElementById('editTitle').value=item?item.title:'';
 {const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
@@ -1731,8 +1737,8 @@ document.getElementById('otherMemberChips').innerHTML='';
 renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
-const schedules=item?formatSchedules(item.dates):[];
-{const _si=(item?parseMeta(item).sch:null)||[];schedules.forEach((s,si)=>addDateGroup(s.date,s.times||[],_si[si]||{}));}
+const schedules=item?schedUnion(item):[];
+schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 {const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
@@ -1869,7 +1875,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/10-0320］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…［版 11/10-0330］初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -2022,8 +2028,9 @@ const members=[
 ...[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member)
 ];
 const genres=getSelectedGenres();
-const schedules=getSchedules();const schInfo=getSchedInfo();
+let schedules=getSchedules(),schInfo=getSchedInfo();
 const tracks=getTracks();
+{const have=new Set(schedules.map(x=>x.date));const ix=schedules.map((x,i)=>({s:x,i:schInfo[i]||{}}));tracks.forEach(t=>{if(!t||!t.date)return;let e=ix.find(z=>z.s.date===t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};ix.push(e);have.add(t.date);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});ix.sort((a,b)=>a.s.date<b.s.date?-1:a.s.date>b.s.date?1:0);schedules=ix.map(z=>z.s);schInfo=ix.map(z=>z.i);}
 const metaObj={};
 {const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
