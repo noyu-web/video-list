@@ -1330,12 +1330,12 @@ const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
 let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEach(t=>{if(t&&t.date)_trDates.add(t.date);});}catch{}
 if(schedules.length){
-schDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">配信,放送日</div>'+
-schedules.map(s=>`<div style="background:var(--pink-pale);border-radius:8px;padding:8px 10px;margin-bottom:6px">
-<div style="font-size:14px;font-weight:800;color:#b8486f">${esc(s.date)}</div>
-${s.times&&s.times.length?`<div style="font-size:12px;color:var(--gray);margin-top:3px">${s.times.map(t=>esc(t)).join(' / ')}</div>`:''}
-${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;color:#7a6670;margin-top:4px">${esc(x)}</div>`).join('');})()}
-</div>`).join('');
+schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">配信,放送日</div>'+
+'<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
+schedules.map(s=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
+<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:12px;font-weight:700;color:#b8486f">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
+</div>`).join('')+'</div>';
 }else schDiv.innerHTML='';
 // 収録内容
 const tracksDiv=document.getElementById('detailTracks')||document.createElement('div');
@@ -1372,7 +1372,7 @@ secItems.push(`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
 ${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(dp)}</span>${tp?`<span style="font-size:12px;font-weight:700;color:#b8486f">${esc(tp)}</span>`:''}${title?'':badge+memberSpan}</div>`:''}
 ${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
 ${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:12px;color:#7a6670;margin-top:4px">${esc(x)}</div>`).join(''):'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
