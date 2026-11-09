@@ -56,8 +56,8 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tag-juri{background:#b3d4ff;color:#003d7a}
 .tag-sixtones{background:#e0e0e0;color:#555}
 .tag-all{background:#fce7f3;color:#9d174d}
-.tag-date{background:#eff6ff;color:#1e40af;font-family:monospace;font-size:12px;padding:3px 10px}
-.tag-time{background:#e0f2fe;color:#0369a1;font-family:monospace;font-size:10px;padding:2px 7px}
+.tag-date{background:#fde9f1;color:#b8486f;font-size:12px;padding:3px 10px}
+.tag-time{background:#fff7fa;color:#b8486f;font-size:10px;padding:2px 7px}
 .tag-genre{background:#f3e8ff;color:#6b21a8;font-size:10px}
 .exchange-badge{font-size:11px;padding:3px 9px;border-radius:10px;font-weight:600;white-space:nowrap;flex-shrink:0}
 .exchange-ok{background:var(--pink);color:#fff}
@@ -1327,11 +1327,13 @@ document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge
 document.getElementById('detailFileInfo').innerHTML='';
 const schedules=formatSchedules(item.dates);
 const schDiv=document.getElementById('detailSchedules');
+let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEach(t=>{if(t&&t.date)_trDates.add(t.date);});}catch{}
 if(schedules.length){
 schDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">配信,放送日</div>'+
 schedules.map(s=>`<div style="background:var(--pink-pale);border-radius:8px;padding:8px 10px;margin-bottom:6px">
-<div style="font-size:13px;font-weight:600;color:var(--pink-dark)">${esc(s.date)}</div>
+<div style="font-size:14px;font-weight:800;color:#b8486f">${esc(s.date)}</div>
 ${s.times&&s.times.length?`<div style="font-size:12px;color:var(--gray);margin-top:3px">${s.times.map(t=>esc(t)).join(' / ')}</div>`:''}
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;color:#7a6670;margin-top:4px">${esc(x)}</div>`).join('');})()}
 </div>`).join('');
 }else schDiv.innerHTML='';
 // 収録内容
@@ -1360,18 +1362,20 @@ const tdate=(typeof t==='string'?'':t.date||'')+(typeof t==='string'||!t.time?''
 const tmembers=typeof t==='string'?[]:(t.members||[]);
 const sec=typeof t==='string'?'':t.section||'';
 if(sec !== currentSec) { flushSec(); currentSec=sec; }
-const badge=dist&&dist!=='none'?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;${distBg[dist]};font-weight:600;margin-left:6px">${distLabel[dist]}</span>`:'';
-const dateBadge=tdate?`<span style="font-size:10px;padding:2px 7px;border-radius:8px;background:#eff6ff;color:#1e40af;margin-left:6px">${esc(tdate)}</span>`:'';
+const badge=dist&&dist!=='none'?`<span style="font-size:11px;padding:2px 8px;border-radius:9px;${distBg[dist]};font-weight:700">${distLabel[dist]}</span>`:'';
+const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||'');
+const dateBadge='';
 const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
-secItems.push(`<div style="padding:4px 0;border-bottom:1px solid var(--border)">
-<div style="font-size:13px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">${esc(title)}${badge}${dateBadge}</div>
+secItems.push(`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
+${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(dp)}</span>${tp?`<span style="font-size:12px;font-weight:700;color:#b8486f">${esc(tp)}</span>`:''}${title?'':badge}</div>`:''}
+${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}</div>`:''}
 ${memberBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:11px;color:var(--pink-dark);margin-top:3px">${esc(x)}</div>`).join(''):'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:12px;color:#7a6670;margin-top:4px">${esc(x)}</div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
-tracksDiv.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px">収録内容,詳細</div>'+
-`<div style="background:var(--gray-light);border-radius:8px;padding:6px 10px">${sectionsHtml}</div>`;
+tracksDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">収録内容,詳細</div>'+
+`<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">${sectionsHtml}</div>`;
 document.getElementById('detailNote').before(tracksDiv);
 }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
 const note=document.getElementById('detailNote');
