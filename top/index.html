@@ -176,6 +176,54 @@ body.admin .notice-edit{display:block;}
 
 .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--pink-dark);color:#fff;font-size:13px;font-weight:700;padding:9px 20px;border-radius:24px;opacity:0;pointer-events:none;transition:all .25s;z-index:300;}
 .toast.show{opacity:1;transform:translateX(-50%);}
+
+/* 見やすさ調整 */
+.toggle-title,.guide-title,.slim-name,.drawer-item span:first-child{color:#5a4852;}
+.slim{color:#5a4852;border-color:#ecd5df;}
+.section-label{color:#b8486f;}
+.slim-tag{color:#b8486f;}
+.foot-btn{color:#7a6670;}
+.chev{color:#e07a9e;}
+
+/* デザイン調整 */
+body{background:linear-gradient(180deg,#fff 0,#fff5f9 260px,#fff8fb 100%);}
+main{padding-top:10px;}
+.guide-toggle{border:none;background:linear-gradient(135deg,#f4a7c0,#e8749a);border-radius:18px;margin:6px 0 8px;}
+.guide-head{padding:20px 20px;}
+.guide-title,.guide-toggle .chev{color:#fff!important;}
+.guide-title{font-size:17px;letter-spacing:.06em;}
+.guide-toggle.open .guide-body{padding:0 8px 8px;}
+.section-header{margin:34px 0 6px;}
+.section-label{display:flex;align-items:center;gap:12px;width:100%;}
+.section-label::after{content:"";flex:1;height:1px;background:#f0cfdc;}
+.section-label.big{font-size:13px;letter-spacing:.3em;}
+#mustreadList{border-top:none;counter-reset:mr;}
+#mustreadList>.toggle{counter-increment:mr;}
+#mustreadList>.toggle .toggle-title::before{content:counter(mr,decimal-leading-zero);display:inline-block;width:34px;font-size:12px;font-weight:800;letter-spacing:.08em;color:#e07a9e;}
+.toggle{border-bottom:1px solid #f3e1ea;}
+.toggle.hl{background:#fde9f1;border-radius:14px;padding:0 16px;margin-top:12px;}
+.slim{height:52px;border-radius:999px;justify-content:center;position:relative;border:1.5px solid #f0cfdc;background:#fff;}
+.slim-name{font-size:15px;letter-spacing:.06em;}
+.slim-tag{display:none;}
+.slim::after{content:"›";position:absolute;right:20px;color:#e07a9e;font-size:20px;}
+footer{padding-top:24px;}
+
+/* 見方の更新 */
+.vg-track{counter-reset:vg;}
+.vg-slide{counter-increment:vg;}
+.vg-ico{display:none;}
+.vg-slide h2::before{content:counter(vg,decimal-leading-zero);display:inline-block;margin-right:10px;font-size:11px;letter-spacing:.1em;color:#e07a9e;}
+.vg-m-ex{background:var(--pink);color:#fff;}
+.vg-m-ex.vg-ex2{background:var(--pink-light);color:var(--pink-dark);}
+.vg-m-ex.vg-ex3{background:#fff;color:var(--pink-dark);box-shadow:inset 0 0 0 1px var(--pink);}
+.vg-m-ex.vg-ex4{background:#f3eef0;color:#9b8a91;}
+.vg-m-b{background:var(--pink);color:#fff;}
+
+.toggle.hl{background:none;border-radius:0;padding:0;margin-top:0;border-bottom:1px solid #f3e1ea;}
+.toggle.hl .info-text{font-weight:inherit;color:inherit;}
+.read-btn{display:block;width:100%;margin:4px 0 4px;padding:13px;border:none;border-radius:999px;background:linear-gradient(135deg,#f4a7c0,#e8749a);color:#fff;font-size:14px;font-weight:800;letter-spacing:.04em;font-family:inherit;cursor:pointer;}
+.read-banner{background:#fde9f1;color:#b8486f;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;}
+.read-note{font-size:12px;font-weight:700;color:#b8486f;text-align:center;line-height:1.6;margin:6px 0 4px;}
 </style>
 </head>
 <body>
@@ -226,14 +274,14 @@ body.admin .notice-edit{display:block;}
 <section class="vg-slide">
   <div class="vg-ico">📂</div>
   <h2>ジャンルタブで切り替え</h2>
-  <p>画面上部のタブでジャンルを切り替えられます。一番右には「SixTONES以外」（Snow Manなど他グループの動画）もあります。</p>
-  <div class="vg-mock"><div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">テレビ番組</span><span class="vg-m-tab">ドラマ・映画</span><span class="vg-m-tab">Radio</span><span class="vg-m-tab">FC・FCweb</span><span class="vg-m-tab">SixTONES以外</span></div></div>
+  <p>画面上部のタブでジャンルを切り替えられます。ジャンルによっては、その下に小ジャンルのタブも出ます。</p>
+  <div class="vg-mock"><div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">テレビ番組</span><span class="vg-m-tab">ドラマ・映画</span><span class="vg-m-tab">Radio</span><span class="vg-m-tab">FC・FCweb</span><span class="vg-m-tab">SixTONES以外</span></div><div class="vg-m-tabs" style="margin-top:6px"><span class="vg-m-tab vg-on">すべて</span><span class="vg-m-tab">ISLAND TV</span><span class="vg-m-tab">ガムシャラ</span></div></div>
 </section>
 
 <section class="vg-slide">
   <div class="vg-ico">🗂️</div>
   <h2>カードの見方</h2>
-  <p>1件ずつのカードには、タイトルと出演者タグが表示されます。カードをタップすると詳細（日付・収録内容など）が見られます。</p>
+  <p>1件ずつのカードには、タイトル・出演者タグ・交換の可否が表示されます。カードをタップすると詳細（収録内容など）が見られます。右のハートはお気に入りです。</p>
   <div class="vg-mock">
       <div class="vg-m-card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div>こっから<br><span class="vg-m-tag">SixTONES</span></div><span class="vg-m-ex">交換可</span></div>
       <div class="vg-m-arrow">▼ タップすると、詳細が開きます</div>
@@ -246,14 +294,34 @@ body.admin .notice-edit{display:block;}
           <div class="vg-m-sec">音源</div>
           <div class="vg-m-trk">こっから</div>
           <div class="vg-m-trk">雨</div>
-          <div class="vg-m-trk">Medley from「慣声の法則」at 横浜アリーナ (S.I.X ~ Special Order ~ フィギュア ~ RAM-PAM-PAM ~ WHIP THAT ~ Outrageous)</div>
-          <div class="vg-m-trk">FIREWORKS</div>
-          <div class="vg-m-trk">Tu-tu-lu</div>
-          <div class="vg-m-trk">ABARERO -Dark Electro Rock Remix-</div>
-          <div class="vg-m-trk" style="border-bottom:none">こっから -Instrumental-</div>
+          <div class="vg-m-trk" style="border-bottom:none">FIREWORKS</div>
         </div>
       </div>
     </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico"></div>
+  <h2>収録内容の見方</h2>
+  <p>収録内容は1行ずつ、日付と出演者が並びます。同じ日でも時間が違うものは、別の行になっています。</p>
+  <div class="vg-mock">
+    <div class="vg-m-dbox">
+      <div class="vg-m-trk"><b>2020年4月11日</b><span class="vg-m-tag" style="margin-left:6px">ジェシー</span></div>
+      <div class="vg-m-trk" style="border-bottom:none"><b>2020年4月18日</b><span class="vg-m-tag" style="margin-left:6px">田中樹</span><span class="vg-m-tag" style="margin-left:4px">京本大我</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico"></div>
+  <h2>交換の表示</h2>
+  <p>カードの右上の表示は、交換できるかどうかを表します。</p>
+  <div class="vg-mock">
+    <div class="vg-m-row" style="margin-bottom:6px"><span class="vg-m-ex">交換可</span><span class="vg-m-note" style="margin:0">交換できます</span></div>
+    <div class="vg-m-row" style="margin-bottom:6px"><span class="vg-m-ex vg-ex2">一部交換可</span><span class="vg-m-note" style="margin:0">一部のみ交換できます</span></div>
+    <div class="vg-m-row" style="margin-bottom:6px"><span class="vg-m-ex vg-ex3">要相談</span><span class="vg-m-note" style="margin:0">ご相談ください</span></div>
+    <div class="vg-m-row"><span class="vg-m-ex vg-ex4">交換不可</span><span class="vg-m-note" style="margin:0">交換できません</span></div>
+  </div>
 </section>
 
 <section class="vg-slide">
@@ -309,6 +377,15 @@ body.admin .notice-edit{display:block;}
   <p>選んだ条件は一覧の上に表示されます。タップで1つずつ外せます。絞り込み画面の「リセット」で、まとめて解除できます。</p>
   <div class="vg-mock">
     <span class="vg-m-chip vg-on">田中樹 ✕</span><span class="vg-m-chip vg-on">2020年 ✕</span><span class="vg-m-chip vg-on">交換可 ✕</span>
+  </div>
+</section>
+
+<section class="vg-slide">
+  <div class="vg-ico"></div>
+  <h2>並び替えとお気に入り</h2>
+  <p>「並び替え」で、登録順・日付順・タイトル順・交換可優先・収録日タイムラインを選べます。収録日タイムラインは、年月ごとに区切って並びます。ハートを押した作品は、「お気に入りだけ」でまとめて見られます。</p>
+  <div class="vg-mock">
+    <div class="vg-m-row"><span class="vg-m-chip vg-on" style="margin:0">登録（新しい順）</span><span class="vg-m-chip" style="margin:0">お気に入りだけ</span></div>
   </div>
 </section>
 
@@ -459,6 +536,7 @@ function renderMustread(){
       </button>
       <div class="toggle-body">
         <div class="info-text">${fmt(it.text)}</div>
+        ${it.hl?'<button type="button" class="read-btn" data-act="readdone">最後まで読みました（リンクをコピー）</button><div class="read-note">コピーされた文章（リンクも含む）を、まるごとそのままメッセージに貼り付けてください。</div>':''}
         ${editBox('mustread',it,i,list.length)}
       </div>
     </div>`).join('');
@@ -629,12 +707,28 @@ $('#loginBtn').addEventListener('click',openLogin);
 function openModal(id){$('#'+id).classList.add('open');document.body.style.overflow='hidden';}
 function closeModals(){document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));document.body.style.overflow='';}
 
+/* ---------- 読了リンクの表示 ---------- */
+(function(){const m=/[?&]read=(\d{12})/.exec(location.search);if(!m)return;const v=m[1];
+const t=v.slice(0,4)+'年'+Number(v.slice(4,6))+'月'+Number(v.slice(6,8))+'日 '+v.slice(8,10)+':'+v.slice(10,12);
+const b=document.createElement('div');b.className='read-banner';b.textContent='必読を最後まで読んだ方のリンクです（'+t+' に発行）';
+document.body.insertBefore(b,document.body.firstChild);})();
 /* ---------- クリック処理 ---------- */
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   const act=el.dataset.act;
   if(act==='close-bg'){if(e.target===el)closeModals();return;}
   if(act==='close'){closeModals();return;}
+  if(act==='readdone'){
+    const d=new Date(),p=n=>String(n).padStart(2,'0');
+    const stamp=''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes());
+    const url=location.origin+location.pathname+'?read='+stamp;
+    const msg='必読を最後まで読みました。\n'+url;
+    let ok=false;
+    try{await navigator.clipboard.writeText(msg);ok=true;}catch{}
+    if(!ok){try{const ta=document.createElement('textarea');ta.value=msg;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();ok=document.execCommand('copy');ta.remove();}catch{}}
+    toast(ok?'コピーしました。まるごと貼り付けてください':'コピーできませんでした');
+    return;
+  }
   if(act==='open-menu'){openMenu();return;}
   if(act==='close-menu'){closeMenu();return;}
   if(act==='open-price'){closeMenu();openPrice();return;}
