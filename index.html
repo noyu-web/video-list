@@ -237,6 +237,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">選択</button>
 <button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">並び替え</button>
 <button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">診断</button>
+<button class="btn" id="dateOnlyBulkBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">日付だけを放送日へ</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -462,7 +463,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
-<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0345</div>
+
 </div>
 </div>
 
@@ -623,6 +624,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">収録内容,詳細</label>
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
+<button class="btn-add-small" id="moveDateOnlyBtn" type="button">日付だけの収録内容を放送日へ移す</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">まとめて貼り付け</button>
 <button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
@@ -1683,7 +1685,7 @@ async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0345</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+'';
 document.getElementById('editTitle').value=item?item.title:'';
 {const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
@@ -1824,6 +1826,24 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+document.getElementById('moveDateOnlyBtn').addEventListener('click',()=>{
+let n=0;
+document.querySelectorAll('#tracksWrap div[style*="pink-pale"]').forEach(row=>{
+const input=row.querySelector('.track-input');if(!input)return;
+const date=(row.querySelector('.track-date')||{}).value||'';
+const tm=((row.querySelector('.track-time')||{}).value||'').trim();
+const sec=((row.querySelector('.track-section')||{}).value||'').trim();
+const dist=(row.querySelector('.track-dist')||{}).value||'none';
+const mem=row.querySelectorAll('.track-member-chip.selected').length;
+let fi=false;row.querySelectorAll('input[class*="tf-"],input[class*="tm-"]').forEach(e=>{if(e.value.trim())fi=true;});
+if(!date||input.value.trim()||mem||sec||fi||dist!=='none')return;
+const gs=[...document.querySelectorAll('#dateGroupsWrap .date-group')];
+let g=gs.find(x=>x.querySelector('.dg-date').value.trim()===date);
+if(!g){addDateGroup(date,tm?[tm]:[],{});}
+else if(tm){const ex=[...g.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim());if(!ex.includes(tm)){g.querySelector('.dg-add-time').click();const ins=g.querySelectorAll('.dg-times .time-row input');ins[ins.length-1].value=tm;}}
+row.remove();n++;});
+toastMsg(n?n+'件を放送日へ移しました':'移せる日付だけの項目はありません');
+});
 const nzG=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
 function matchNamesG(str){
 cfg=loadConfig();
@@ -1875,7 +1895,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/10-0345］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -2503,6 +2523,33 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
+function dateOnlyPlan(v){
+let tr=[];try{tr=JSON.parse(v.tracks||'[]');}catch{}
+if(!Array.isArray(tr))return null;
+const pm=parseMeta(v),trf=pm.tr||[];
+const keep=[],keepF=[],mv=[];
+tr.forEach((t,i)=>{const f=trf[i]||{};const empty=t&&typeof t==='object'&&t.date&&!String(t.title||'').trim()&&!(t.members||[]).length&&!String(t.section||'').trim()&&(!t.dist||t.dist==='none')&&!Object.keys(f).some(k=>f[k]&&(k!=='more'||f.more.length));
+if(empty)mv.push(t);else{keep.push(t);keepF.push(f);}});
+if(!mv.length)return null;
+const sc=formatSchedules(v.dates).map((x,i)=>({s:{date:x.date,times:(x.times||[]).slice()},i:(pm.sch||[])[i]||{}}));
+mv.forEach(t=>{let e=sc.find(z=>z.s.date===t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};sc.push(e);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});
+sc.sort((x,y)=>x.s.date<y.s.date?-1:x.s.date>y.s.date?1:0);
+const meta={...pm};delete meta.tr;delete meta.sch;
+if(keepF.some(o=>Object.keys(o).length))meta.tr=keepF;
+if(sc.some(z=>Object.keys(z.i).length))meta.sch=sc.map(z=>z.i);
+return{n:mv.length,video:{...v,tracks:JSON.stringify(keep),dates:JSON.stringify(sc.map(z=>z.s)),meta:Object.keys(meta).length?JSON.stringify(meta):''}};
+}
+document.getElementById('dateOnlyBulkBtn').addEventListener('click',async()=>{
+const data=await loadVideos();
+const plans=data.map(dateOnlyPlan).filter(Boolean);
+if(!plans.length){toastMsg('移せる日付だけの項目はありません');return;}
+const total=plans.reduce((a,p)=>a+p.n,0);
+if(!confirm(plans.length+'件の動画、'+total+'個の日付だけの収録内容を放送日へ移し、収録内容から削除します。実行しますか？'))return;
+let ok=0,fail=0;
+for(const p of plans){let r=false;try{r=await writeVideo(p.video,false);}catch{}if(r)ok++;else fail++;toastMsg('移行中 '+(ok+fail)+' / '+plans.length);}
+cachedVideos=null;await loadVideos(true);renderList();
+toastMsg(fail?('完了 '+ok+'件 / 失敗 '+fail+'件'):('完了 '+ok+'件を移行しました'));
+});
 
 document.getElementById('healthCloseBtn').addEventListener('click',()=>document.getElementById('healthModal').classList.add('hidden'));
 document.getElementById('healthModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
@@ -2888,4 +2935,3 @@ gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAd
 </script>
 </body>
 </html>
-
