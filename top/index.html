@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#e8749a">
 <style>
 :root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--bg:#fff8fb;--white:#fff;--gray:#aaa;--border:#f0dde7;--text:#333;}
+body:not(.ready) #mustreadList,body:not(.ready) #linkList,body:not(.ready) #rulesList{visibility:hidden}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 header{background:var(--bg);padding:env(safe-area-inset-top) 20px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
@@ -591,10 +592,8 @@ function render(){
 
 /* ---------- データ読み込み・保存 ---------- */
 function parseVal(v){if(typeof v!=='string')return v;try{return JSON.parse(v);}catch{return null;}}
-async function loadContents(){
-  try{
-    const data=await jsonp({action:'getTopContents'},10000);
-    if(!data||typeof data!=='object'||data.error)return;
+const CACHE_KEY='top_contents_cache_v1';
+function applyData(data){
     raw={...data};
     const L=parseVal(data.links),M=parseVal(data.mustread),R=parseVal(data.rules);
     if(Array.isArray(L)&&L.length){
@@ -604,8 +603,18 @@ async function loadContents(){
     if(Array.isArray(R)&&R.length)contents.rules=R;
     const N=parseVal(data.notice);
     if(N&&typeof N==='object')contents.notice={text:String(N.text||''),date:String(N.date||'')};
+}
+function cacheContents(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({links:contents.links,mustread:contents.mustread,rules:contents.rules,notice:contents.notice}));}catch{}}
+function showLists(){document.body.classList.add('ready');}
+async function loadContents(){
+  try{
+    const data=await jsonp({action:'getTopContents'},10000);
+    if(!data||typeof data!=='object'||data.error){showLists();return;}
+    applyData(data);
+    cacheContents();
     render();
   }catch{}
+  showLists();
 }
 async function saveContents(){
   const payload={...raw,
@@ -618,7 +627,7 @@ async function saveContents(){
       method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
     const d=await r.json();
     if(d&&d.error==='unauthorized'){clearToken();render();alert('ログインの有効期限が切れました。もう一度ログインしてください。');return false;}
-    if(d&&d.ok){raw=payload;toast('保存しました');return true;}
+    if(d&&d.ok){raw=payload;cacheContents();toast('保存しました');return true;}
   }catch{}
   alert('保存に失敗しました。通信状況を確認してもう一度お試しください。');
   return false;
@@ -853,6 +862,8 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- 起動 ---------- */
 loadToken();
+{let hit=false;try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&typeof c==='object'){if(Array.isArray(c.links)&&c.links.length)contents.links=c.links;if(Array.isArray(c.mustread)&&c.mustread.length)contents.mustread=c.mustread;if(Array.isArray(c.rules)&&c.rules.length)contents.rules=c.rules;if(c.notice&&typeof c.notice==='object')contents.notice=c.notice;hit=true;}}catch{}
+if(hit)showLists();}
 render();
 loadContents();
 if(isAdmin){
@@ -861,3 +872,4 @@ if(isAdmin){
 </script>
 </body>
 </html>
+
