@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
@@ -237,6 +237,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">選択</button>
 <button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">並び替え</button>
 <button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">診断</button>
+<button class="btn" id="titleRepBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">題名置換</button>
 <button class="btn" id="trashBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">ごみ箱</button>
 <button class="btn" id="dateOnlyBulkBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">日付だけを放送日へ</button>
 </div>
@@ -255,7 +256,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <option value="exchange">交換可優先</option>
 <option value="timeline">収録日タイムライン</option>
 </select>
-<select id="gapSel" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)"><option value="">未入力：すべて</option><option value="date">日付なし</option><option value="mem">出演者なし</option><option value="track">収録内容なし</option><option value="file">ファイル情報なし</option></select>
+<select id="gapSel" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)"><option value="">未入力：すべて</option><option value="date">日付なし</option><option value="mem">出演者なし</option><option value="track">収録内容なし</option><option value="file">ファイル情報なし</option><option value="recent">最近編集した動画</option></select>
 <button type="button" class="fav-only" id="favOnlyBtn"><svg class="hs" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>お気に入りだけ</button>
 </div>
 
@@ -317,6 +318,15 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="display:flex;gap:6px">
 <select class="form-select" id="bulkMode"><option value="replace">今のジャンルを置き換え</option><option value="add">今のジャンルに追加</option></select>
 <button class="btn-save" id="bulkGenreApply" style="flex-shrink:0">設定</button>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">出演者をまとめて変更</label>
+<input class="form-input" id="bulkMember" list="bulkMemberSug" placeholder="出演者名" autocomplete="off" style="margin-bottom:6px">
+<datalist id="bulkMemberSug"></datalist>
+<div style="display:flex;gap:6px">
+<select class="form-select" id="bulkMemberMode"><option value="add">出演者に追加</option><option value="remove">出演者から外す</option></select>
+<button class="btn-save" id="bulkMemberApply" style="flex-shrink:0">変更</button>
 </div>
 </div>
 <div class="form-group">
@@ -403,6 +413,20 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 
 <!-- Health Modal -->
+<div class="modal-overlay hidden" id="titleRepModal" style="z-index:205">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0;color:var(--pink-dark)">題名の一括置換</div>
+<button class="btn-icon" id="titleRepCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div id="titleRepScope" style="font-size:12px;color:var(--gray);margin-bottom:10px;line-height:1.6"></div>
+<input class="form-input" id="titleRepFrom" placeholder="置き換える前の文字" autocomplete="off" style="margin-bottom:6px">
+<input class="form-input" id="titleRepTo" placeholder="置き換えた後の文字（空なら削除）" autocomplete="off" style="margin-bottom:10px">
+<div id="titleRepCount" style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px"></div>
+<div id="titleRepList" style="max-height:40vh;overflow-y:auto"></div>
+<button class="btn-save" id="titleRepApply" style="width:100%;margin-top:12px">置き換える</button>
+</div>
+</div>
 <div class="modal-overlay hidden" id="trashModal" style="z-index:205">
 <div class="modal">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -647,6 +671,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
 <button class="btn-add-small" id="moveDateOnlyBtn" type="button">日付だけの収録内容を放送日へ移す</button>
+<button class="btn-add-small" id="sortTracksBtn" type="button">日付順に並べる</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">まとめて貼り付け</button>
 <button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
@@ -654,8 +679,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">メモ</label>
 <textarea class="form-textarea" id="editNote" placeholder="任意"></textarea>
 </div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+<button class="btn-add-small" id="editHistBtn" type="button">変更履歴</button>
+<button class="btn-add-small" id="editDupBtn" type="button">複製して新規追加</button>
+</div>
 <div class="modal-footer">
-<button class="btn-cancel" id="editHistBtn" type="button">変更履歴</button>
 <button class="btn-cancel" id="editCancelBtn">キャンセル</button>
 <button class="btn-save" id="editSaveBtn">保存</button>
 </div>
@@ -851,8 +879,12 @@ catch(e){
 if(isNew)return false;
 try{d=await gasWrite({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew})),id:''});}catch{return false;}
 }
+if(d&&d.ok)recentMark(video.id);
 return !!(d&&d.ok);
 }
+const RECENT_KEY='recent_edit_v1_'+CHECK_LIST;
+function recentMap(){try{const o=JSON.parse(localStorage.getItem(RECENT_KEY)||'{}');return o&&typeof o==='object'?o:{};}catch{return{};}}
+function recentMark(id){try{const o=recentMap();o[String(id)]=Date.now();const ks=Object.keys(o);if(ks.length>300){ks.sort((a,b)=>o[a]-o[b]).slice(0,ks.length-300).forEach(k=>delete o[k]);}localStorage.setItem(RECENT_KEY,JSON.stringify(o));}catch{}}
 async function gasWrite(params){
 const d=await jsonp({...params,token});
 if(d&&d.error==='unauthorized'){
@@ -1180,6 +1212,7 @@ data=[...data].sort((a,b)=>String(a.title).localeCompare(String(b.title),'ja'));
 const o={ok:0,partial:1,consult:2,ng:3};
 data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 }
+{const gp=document.getElementById('gapSel').value;if(gp==='recent'){const rm=recentMap();data=data.filter(it=>rm[it.id]).sort((a,b)=>rm[b.id]-rm[a.id]);}}
 lastShown=data.map(d=>d.id);
 updateProgressLine(data);
 {let _n=0;data.forEach(it=>{try{_n+=parseTracks(it).length;}catch{}});document.getElementById('listCount').textContent=data.length+' 件'+(_n?'（収録内容 '+_n+' 行）':'');}
@@ -1594,10 +1627,33 @@ const subs=cfg.subgenres[currentGenre]||[];
 document.getElementById('subgenreManageList').innerHTML=subs.map((s,i)=>`
 <div class="manage-item" style="display:flex;align-items:center;gap:6px">
 <div style="flex:1;font-size:13px">${esc(s)}</div>
+<button class="btn-remove" style="padding:2px 6px;font-size:11px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer" data-sren="${i}">名前変更</button>
 <button class="btn-remove" style="padding:2px 6px;font-size:16px;background:none;border:none;cursor:pointer" data-up="${i}" ${i===0?'disabled':''}>↑</button>
 <button class="btn-remove" style="padding:2px 6px;font-size:16px;background:none;border:none;cursor:pointer" data-down="${i}" ${i===subs.length-1?'disabled':''}>↓</button>
 <button class="btn-remove" data-si="${i}">削除</button>
 </div>`).join('');
+document.getElementById('subgenreManageList').querySelectorAll('[data-sren]').forEach(b=>b.addEventListener('click',async()=>{
+const idx=parseInt(b.dataset.sren);const g=currentGenre;const list=cfg.subgenres[g]||[];const old=list[idx];
+const nn=(prompt('新しい小ジャンル名',old)||'').trim();if(!nn||nn===old)return;
+if(list.includes(nn)){toastMsg('すでにある小ジャンルです');return;}
+await loadVideos();
+const targets=(cachedVideos||[]).filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===g&&x.subgenre===old));
+if(!confirm('「'+old+'」を「'+nn+'」に変更します。'+(targets.length?'該当の動画'+targets.length+'件も書き換えます。':'')+'よろしいですか？'))return;
+list[idx]=nn;
+if(cfg.otherMembers&&cfg.otherMembers[old]&&!cfg.otherMembers[nn]){cfg.otherMembers[nn]=cfg.otherMembers[old];delete cfg.otherMembers[old];}
+if(F.subs&&F.subs.has&&F.subs.has(old)){F.subs.delete(old);F.subs.add(nn);}
+if(currentSubgenre===old)currentSubgenre=nn;
+if(saveConfig(cfg)===false)return;
+let fail=0,done=0;
+for(const it of targets){
+const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===g&&x.subgenre===old?{...x,subgenre:nn}:x);
+if(!(await writeVideo({...it,genres:JSON.stringify(gs)},false)))fail++;
+done++;toastMsg('書き換え中 '+done+' / '+targets.length);
+}
+cachedVideos=null;await loadVideos(true);
+openSubgenreModal();renderSubtabs();renderList();
+toastMsg(fail?('一部（'+fail+'件）の書き換えに失敗しました'):'「'+nn+'」に変更しました');
+}));
 document.getElementById('subgenreManageList').querySelectorAll('[data-si]').forEach(b=>b.addEventListener('click',()=>{
 cfg.subgenres[currentGenre].splice(parseInt(b.dataset.si),1);saveConfig(cfg);openSubgenreModal();renderSubtabs();
 }));
@@ -2148,6 +2204,7 @@ document.getElementById('bulkTitle').textContent=selected.size+'件をまとめ�
 document.getElementById('bulkForm').classList.remove('hidden');
 document.getElementById('bulkProgress').classList.add('hidden');
 fillBulkGenre();
+{const ns=new Set(cfg.members||[]);Object.values(cfg.otherMembers||{}).forEach(a=>(a||[]).forEach(n=>ns.add(n)));(cachedVideos||[]).forEach(v=>[].concat(v.members||[]).forEach(n=>{if(n)ns.add(n);}));document.getElementById('bulkMemberSug').innerHTML=[...ns].map(n=>`<option value="${esc(n)}"></option>`).join('');document.getElementById('bulkMember').value='';}
 document.getElementById('bulkModal').classList.remove('hidden');
 });
 function closeBulk(){if(bulkBusy)return;document.getElementById('bulkModal').classList.add('hidden');}
@@ -2187,6 +2244,17 @@ document.getElementById('bulkExApply').addEventListener('click',()=>{
 const v=document.getElementById('bulkExchange').value;
 if(!confirm(selected.size+'件の交換可否を「'+exchangeLabel(v)+'」にします。よろしいですか？'))return;
 bulkRun(it=>({...it,exchange:v}));
+});
+document.getElementById('bulkMemberApply').addEventListener('click',()=>{
+const n=document.getElementById('bulkMember').value.trim();
+const mode=document.getElementById('bulkMemberMode').value;
+if(!n){alert('出演者名を入力してください');return;}
+if(!confirm(selected.size+'件の出演者'+(mode==='add'?'に「'+n+'」を追加':'から「'+n+'」を外')+'します。よろしいですか？'))return;
+bulkRun(it=>{
+const cur=[].concat(it.members||[]).filter(Boolean);
+const next=mode==='add'?(cur.includes(n)?cur:[...cur,n]):cur.filter(x=>x!==n);
+return{...it,members:next};
+});
 });
 document.getElementById('bulkGenreApply').addEventListener('click',()=>{
 const g=document.getElementById('bulkGenre').value;
@@ -2547,6 +2615,55 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
+/* ===== 複製・日付順・題名置換 ===== */
+document.getElementById('editDupBtn').addEventListener('click',()=>{
+if(!editingId){toastMsg('保存済みの動画を開いているときに使えます');return;}
+editingId=null;
+window._openDates=[...document.querySelectorAll('#dateGroupsWrap .dg-date')].map(e=>e.value.trim()).filter(Boolean);
+const t=document.getElementById('editTitle');t.value=t.value+'（コピー）';
+document.getElementById('editModalTitle').textContent='動画を追加（複製）';
+toastMsg('複製しました。保存すると新しい動画として追加されます');
+});
+document.getElementById('sortTracksBtn').addEventListener('click',()=>{
+const w=document.getElementById('tracksWrap');
+const rows=[...w.children];
+const key=r=>{const d=((r.querySelector('.track-date')||{}).value||'').trim();const t=((r.querySelector('.track-time')||{}).value||'').trim();return[d||'9999-99-99',t||''];};
+const ix=rows.map((r,i)=>({r,i,k:key(r)}));
+ix.sort((a,b)=>a.k[0]<b.k[0]?-1:a.k[0]>b.k[0]?1:a.k[1]<b.k[1]?-1:a.k[1]>b.k[1]?1:a.i-b.i);
+ix.forEach(x=>w.appendChild(x.r));
+toastMsg('日付順に並べました');
+});
+let _trTargets=[];
+function titleRepScope(){const all=cachedVideos||[];return(selectMode&&selected.size)?all.filter(v=>selected.has(v.id)):all;}
+function titleRepPreview(){
+const from=document.getElementById('titleRepFrom').value,to=document.getElementById('titleRepTo').value;
+const box=document.getElementById('titleRepList'),cnt=document.getElementById('titleRepCount');
+_trTargets=[];
+if(!from){cnt.textContent='';box.innerHTML='';return;}
+titleRepScope().forEach(v=>{const t=String(v.title||'');if(!t.includes(from))return;const nt=t.split(from).join(to).trim();if(nt&&nt!==t)_trTargets.push({v,nt});});
+cnt.textContent=_trTargets.length+'件が対象です';
+box.innerHTML=_trTargets.slice(0,50).map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.6"><div style="color:var(--gray);word-break:break-all">${esc(x.v.title)}</div><div style="color:var(--pink-dark);font-weight:700;word-break:break-all">${esc(x.nt)}</div></div>`).join('')+(_trTargets.length>50?`<div style="font-size:11px;color:var(--gray);padding:8px 0">ほか ${_trTargets.length-50}件</div>`:'');
+}
+document.getElementById('titleRepBtn').addEventListener('click',async()=>{
+await loadVideos();
+const sc=titleRepScope();
+document.getElementById('titleRepScope').textContent=(selectMode&&selected.size)?('選択中の'+sc.length+'件の題名が対象です。'):('この所持リストの全'+sc.length+'件の題名が対象です。「選択」で選んでから開くと、選んだ動画だけが対象になります。');
+document.getElementById('titleRepFrom').value='';document.getElementById('titleRepTo').value='';titleRepPreview();
+document.getElementById('titleRepModal').classList.remove('hidden');
+});
+document.getElementById('titleRepCloseBtn').addEventListener('click',()=>document.getElementById('titleRepModal').classList.add('hidden'));
+document.getElementById('titleRepFrom').addEventListener('input',titleRepPreview);
+document.getElementById('titleRepTo').addEventListener('input',titleRepPreview);
+document.getElementById('titleRepApply').addEventListener('click',async()=>{
+if(!_trTargets.length){toastMsg('対象の題名がありません');return;}
+const list=_trTargets.slice();
+if(!confirm(list.length+'件の題名を置き換えます。よろしいですか？'))return;
+document.getElementById('titleRepModal').classList.add('hidden');
+let ok=0,fail=0;
+for(const x of list){let r=false;try{r=await writeVideo({...x.v,title:x.nt},false);}catch{}if(r)ok++;else fail++;toastMsg('置き換え中 '+(ok+fail)+' / '+list.length);}
+cachedVideos=null;await loadVideos(true);renderList();
+toastMsg(fail?('完了 '+ok+'件 / 失敗 '+fail+'件'):(ok+'件の題名を置き換えました'));
+});
 /* ===== ごみ箱・変更履歴（GAS更新が必要） ===== */
 function fmtJ(iso){const d=new Date(iso);return isNaN(d)?'':d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 function gasOld(d){if(d&&d.error==='unknown action'){toastMsg('先にGASの更新が必要です');return true;}return false;}
