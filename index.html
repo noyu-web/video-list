@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
@@ -780,7 +780,7 @@ if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
-function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).flatMap(o=>[one(o||{}),...((o&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
+function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(Array.isArray(m.tr)?m.tr:[]).flatMap(o=>[one(o||{}),...((o&&Array.isArray(o.more)&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
 function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
@@ -914,13 +914,14 @@ currentGenre='すべて';currentSubgenre='すべて';renderTabs();renderSubtabs(
 function getYearsOf(item){
 const ys=new Set();
 formatSchedules(item.dates).forEach(s=>{const y=String(s.date||'').substring(0,4);if(/^[0-9]{4}$/.test(y))ys.add(y);});
-try{JSON.parse(item.tracks||'[]').forEach(t=>{if(t&&t.date){const y=String(t.date).substring(0,4);if(/^[0-9]{4}$/.test(y))ys.add(y);}});}catch{}
+try{const _a=JSON.parse(item.tracks||'[]');(Array.isArray(_a)?_a:[]).forEach(t=>{if(t&&t.date){const y=String(t.date).substring(0,4);if(/^[0-9]{4}$/.test(y))ys.add(y);}});}catch{}
 return ys;
 }
 function trackTitles(item){
-try{return JSON.parse(item.tracks||'[]').map(t=>typeof t==='string'?t:(t&&t.title)||'').join(' ');}catch{return'';}
+try{const _a=JSON.parse(item.tracks||'[]');return(Array.isArray(_a)?_a:[]).map(t=>typeof t==='string'?t:(t&&t.title)||'').join(' ');}catch{return'';}
 }
-function matchItem(item){
+function matchItem(item){try{return matchItem0(item);}catch(e){return false;}}
+function matchItem0(item){
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
@@ -937,7 +938,7 @@ if(qMode==='and')ok=[...F.years].every(y=>ys.has(y));else F.years.forEach(y=>{if
 if(!ok)return false;
 }
 if(F.q){
-const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
+const hay=[item.title,[].concat(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
 const hayF=fold(hay);
 const segs=fold(F.q).split(/[|｜]/).map(x=>x.split(/\s+/).filter(Boolean)).filter(a=>a.length);
 if(segs.length&&!segs.some(terms=>terms.every(t=>hayF.includes(t))))return false;
@@ -2935,4 +2936,3 @@ gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAd
 </script>
 </body>
 </html>
-
