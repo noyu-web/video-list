@@ -16,6 +16,20 @@ body:not(.ready) .top-loading{display:block}
 .top-loading span{display:inline-block;animation:tlwave 1.2s ease-in-out infinite}
 @keyframes tlwave{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
 @media(prefers-reduced-motion:reduce){.top-loading span{animation:none}}
+#ngModal .ng-note{font-size:11px;color:#a08a96;line-height:1.7;margin-bottom:12px}
+#ngModal input,#ngModal textarea{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--white);color:var(--text);margin-bottom:8px}
+#ngModal textarea{min-height:64px;resize:vertical}
+#ngModal .ng-row{display:flex;gap:8px;margin-bottom:12px}
+#ngModal .ng-row button{flex:1;background:var(--pink-light);color:var(--pink-dark);border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+#ngList{margin-top:8px}
+.ng-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.ng-item .ng-name{font-size:15px;font-weight:700;color:var(--pink-dark);word-break:break-all}
+.ng-item .ng-reason{font-size:13px;color:#7a6772;margin-top:4px;white-space:pre-wrap;word-break:break-all;line-height:1.6}
+.ng-item .ng-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:#b5a2ad}
+.ng-item .ng-meta button{background:none;border:none;color:#c0728f;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:2px 0}
+.ng-empty{text-align:center;color:#b5a2ad;font-size:13px;padding:24px 0}
+.admin-only{display:none!important}
+body.admin .admin-only{display:flex!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 header{background:var(--bg);padding:env(safe-area-inset-top) 20px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
@@ -248,6 +262,7 @@ footer{padding-top:24px;}
   <button class="drawer-item" data-act="open-price"><span>料金表</span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="go" data-target="#secMust"><span>必読</span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="go" data-target="#secLink"><span>LINK</span><span class="chev">›</span></button>
+  <button class="drawer-item admin-only" data-act="menu-ng"><span>取引NGリスト</span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="menu-rules"><span>免責事項</span><span class="chev">›</span></button>
 </nav>
 
@@ -436,6 +451,26 @@ footer{padding-top:24px;}
   </div>
 </div>
 
+<!-- 取引NGリスト（管理者のみ） -->
+<div class="modal" id="ngModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title">取引NGリスト</div>
+      <button class="x-btn" data-act="close">✕</button>
+    </div>
+    <div class="ng-note">管理者のログイン中だけ表示されます。データはこの端末の中にだけ保存され、他の人には見えません。機種変更に備えて、時々「バックアップをコピー」で控えを残してください。</div>
+    <input id="ngName" placeholder="名前・ID（Xのアカウント名など）" autocomplete="off">
+    <textarea id="ngReason" placeholder="理由・メモ"></textarea>
+    <button class="big-btn" data-act="ng-add">追加</button>
+    <input id="ngSearch" placeholder="検索" autocomplete="off" style="margin-top:14px">
+    <div id="ngList"></div>
+    <div class="ng-row" style="margin-top:14px">
+      <button data-act="ng-copy">バックアップをコピー</button>
+      <button data-act="ng-restore">貼り付けて復元</button>
+    </div>
+  </div>
+</div>
+
 <!-- 管理者ログイン -->
 <div class="modal" id="loginModal" data-act="close-bg">
   <div class="sheet">
@@ -590,6 +625,17 @@ function renderNotice(){
   $('#noticeNew').classList.toggle('hidden',!(has&&isNewN));
   if(document.activeElement!==$('#noticeInput'))$('#noticeInput').value=n.text||'';
 }
+const NG_KEY='top_ng_list_v1';
+function ngLoad(){try{const a=JSON.parse(localStorage.getItem(NG_KEY)||'[]');return Array.isArray(a)?a:[];}catch{return[];}}
+function ngSave(a){try{localStorage.setItem(NG_KEY,JSON.stringify(a));}catch{toast('保存できませんでした');}}
+function ngRender(){
+  const box=$('#ngList');if(!box)return;
+  if(!isAdmin){box.innerHTML='';return;}
+  const q=($('#ngSearch').value||'').trim().toLowerCase();
+  const a=ngLoad().filter(x=>!q||(x.name+' '+x.reason).toLowerCase().includes(q));
+  box.innerHTML=a.length?a.map(x=>'<div class="ng-item"><div class="ng-name">'+esc(x.name)+'</div>'+(x.reason?'<div class="ng-reason">'+esc(x.reason)+'</div>':'')+'<div class="ng-meta"><span>'+esc(x.date||'')+'</span><button data-act="ng-del" data-id="'+esc(x.id)+'">削除</button></div></div>').join(''):'<div class="ng-empty">登録はありません</div>';
+}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='ngSearch')ngRender();});
 function render(){
   document.body.classList.toggle('admin',isAdmin);
   $('#adminBadge').classList.toggle('on',isAdmin);
@@ -771,6 +817,33 @@ document.addEventListener('click',async e=>{
   if(act==='verify'){verifyCode();return;}
   if(act==='logout'){logout();return;}
   if(!isAdmin)return;
+  if(act==='menu-ng'){closeMenu();ngRender();openModal('ngModal');return;}
+  if(act==='ng-add'){
+    const n=$('#ngName').value.trim(),r=$('#ngReason').value.trim();
+    if(!n){toast('名前・IDを入力してください');return;}
+    const a=ngLoad();a.unshift({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:n,reason:r,date:todayStr()});
+    ngSave(a);$('#ngName').value='';$('#ngReason').value='';ngRender();toast('追加しました');return;
+  }
+  if(act==='ng-del'){
+    if(!confirm('削除しますか？'))return;
+    ngSave(ngLoad().filter(x=>x.id!==el.dataset.id));ngRender();return;
+  }
+  if(act==='ng-copy'){
+    const t=JSON.stringify(ngLoad());
+    try{await navigator.clipboard.writeText(t);toast('バックアップをコピーしました');}catch{prompt('コピーしてください',t);}
+    return;
+  }
+  if(act==='ng-restore'){
+    let t='';try{t=await navigator.clipboard.readText();}catch{}
+    if(!t)t=prompt('バックアップを貼り付けてください')||'';
+    if(!t)return;
+    try{const a=JSON.parse(t);if(!Array.isArray(a))throw 0;
+      const cur=ngLoad(),ids=new Set(cur.map(x=>x.id));
+      a.forEach(x=>{if(x&&x.id&&x.name&&!ids.has(x.id))cur.push({id:String(x.id),name:String(x.name),reason:String(x.reason||''),date:String(x.date||'')});});
+      cur.sort((x,y)=>String(y.date).localeCompare(String(x.date)));
+      ngSave(cur);ngRender();toast('復元しました');}catch{toast('復元できませんでした');}
+    return;
+  }
 
   const kind=el.dataset.kind,i=parseInt(el.dataset.i);
   if(act==='add-item'){
