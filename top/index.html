@@ -10,7 +10,12 @@
 <meta name="theme-color" content="#e8749a">
 <style>
 :root{--pink:#f4a7c0;--pink-dark:#e07a9e;--pink-light:#fce8ef;--bg:#fff8fb;--white:#fff;--gray:#aaa;--border:#f0dde7;--text:#333;}
-body:not(.ready) #mustreadList,body:not(.ready) #linkList,body:not(.ready) #rulesList{visibility:hidden}
+body:not(.ready) #secMust,body:not(.ready) #mustreadList,body:not(.ready) #secLink,body:not(.ready) #linkList,body:not(.ready) #rulesList{display:none}
+.top-loading{display:none;text-align:center;padding:36px 0;font-size:14px;font-weight:700;color:#d0658f;letter-spacing:.08em}
+body:not(.ready) .top-loading{display:block}
+.top-loading span{display:inline-block;animation:tlwave 1.2s ease-in-out infinite}
+@keyframes tlwave{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+@media(prefers-reduced-motion:reduce){.top-loading span{animation:none}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 header{background:var(--bg);padding:env(safe-area-inset-top) 20px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
@@ -395,6 +400,8 @@ footer{padding-top:24px;}
       </div>
     </div>
   </div>
+
+  <div class="top-loading" id="topLoading" aria-live="polite"><span style="animation-delay:0s">読</span><span style="animation-delay:.1s">み</span><span style="animation-delay:.2s">込</span><span style="animation-delay:.3s">み</span><span style="animation-delay:.4s">中</span><span style="animation-delay:.5s">…</span></div>
 
   <div class="section-header" id="secMust">
     <div class="section-label big">必読</div>
@@ -872,4 +879,3 @@ if(isAdmin){
 </script>
 </body>
 </html>
-
