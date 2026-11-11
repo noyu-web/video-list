@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -212,6 +212,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 .link-btn{display:block;margin:12px auto 0;background:none;border:none;color:var(--pink-dark);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline}
 .link-btn:disabled{opacity:.45;text-decoration:none;cursor:default}
 .fav-only{white-space:nowrap;font-size:11px!important;padding:5px 10px!important}
+.trk-year{border-bottom:1px solid #f3e1ea}.trk-year>summary{cursor:pointer;font-size:12px;font-weight:800;color:#b8486f;padding:10px 0;list-style:none}.trk-year>summary::-webkit-details-marker{display:none}.trk-year>summary::after{content:'＋';float:right;font-weight:700}.trk-year[open]>summary::after{content:'－'}.trk-year .trk-row:last-child{border-bottom:none!important}
+.sr-h{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--pink-pale);border:1px solid var(--pink-light);border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:14px;font-weight:700;color:var(--pink-dark);cursor:pointer}.sr-h .sr-n{flex-shrink:0;font-size:12px;font-weight:700}.sr-in{margin-left:10px}
 #sortSelect,#gapSel{font-size:11px!important;padding:4px 6px!important;min-width:0;max-width:44vw}
 .tl-h{padding:12px 16px 4px;font-size:13px;font-weight:700;color:var(--pink);position:sticky;top:0;background:var(--white);z-index:2}
 </style>
@@ -235,6 +237,9 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn" id="selectBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">選択</button>
 <button class="btn" id="reorderBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">並び替え</button>
 <button class="btn" id="healthBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">診断</button>
+<button class="btn" id="titleRepBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">題名置換</button>
+<button class="btn" id="trashBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">ごみ箱</button>
+<button class="btn" id="dateOnlyBulkBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">日付だけを放送日へ</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -250,8 +255,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 <option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
 <option value="timeline">収録日タイムライン</option>
+<option value="series">シリーズでまとめる</option>
+<option value="tracks_many">収録内容の多い順</option>
+<option value="size_big" id="sortSizeOpt">容量の大きい順</option>
 </select>
-<select id="gapSel" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)"><option value="">未入力：すべて</option><option value="date">日付なし</option><option value="mem">出演者なし</option><option value="track">収録内容なし</option><option value="file">ファイル情報なし</option></select>
+<select id="gapSel" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)"><option value="">未入力：すべて</option><option value="date">日付なし</option><option value="mem">出演者なし</option><option value="track">収録内容なし</option><option value="file">ファイル情報なし</option><option value="recent">最近編集した動画</option></select>
 <button type="button" class="fav-only" id="favOnlyBtn"><svg class="hs" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>お気に入りだけ</button>
 </div>
 
@@ -313,6 +321,15 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="display:flex;gap:6px">
 <select class="form-select" id="bulkMode"><option value="replace">今のジャンルを置き換え</option><option value="add">今のジャンルに追加</option></select>
 <button class="btn-save" id="bulkGenreApply" style="flex-shrink:0">設定</button>
+</div>
+</div>
+<div class="form-group">
+<label class="form-label">出演者をまとめて変更</label>
+<input class="form-input" id="bulkMember" list="bulkMemberSug" placeholder="出演者名" autocomplete="off" style="margin-bottom:6px">
+<datalist id="bulkMemberSug"></datalist>
+<div style="display:flex;gap:6px">
+<select class="form-select" id="bulkMemberMode"><option value="add">出演者に追加</option><option value="remove">出演者から外す</option></select>
+<button class="btn-save" id="bulkMemberApply" style="flex-shrink:0">変更</button>
 </div>
 </div>
 <div class="form-group">
@@ -399,6 +416,41 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 
 <!-- Health Modal -->
+<div class="modal-overlay hidden" id="titleRepModal" style="z-index:205">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0;color:var(--pink-dark)">題名の一括置換</div>
+<button class="btn-icon" id="titleRepCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div id="titleRepScope" style="font-size:12px;color:var(--gray);margin-bottom:10px;line-height:1.6"></div>
+<input class="form-input" id="titleRepFrom" placeholder="置き換える前の文字" autocomplete="off" style="margin-bottom:6px">
+<input class="form-input" id="titleRepTo" placeholder="置き換えた後の文字（空なら削除）" autocomplete="off" style="margin-bottom:10px">
+<div id="titleRepCount" style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px"></div>
+<div id="titleRepList" style="max-height:40vh;overflow-y:auto"></div>
+<button class="btn-save" id="titleRepApply" style="width:100%;margin-top:12px">置き換える</button>
+</div>
+</div>
+<div class="modal-overlay hidden" id="trashModal" style="z-index:205">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0;color:var(--pink-dark)">ごみ箱</div>
+<button class="btn-icon" id="trashCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div id="trashNote" style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">削除した動画は30日間ここに残り、戻せます。</div>
+<div id="trashList"></div>
+<button class="btn-cancel" id="trashPurgeAllBtn" style="width:100%;margin-top:12px">ごみ箱を空にする</button>
+</div>
+</div>
+<div class="modal-overlay hidden" id="histModal" style="z-index:215">
+<div class="modal">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+<div class="modal-title" style="margin-bottom:0;color:var(--pink-dark)">変更履歴</div>
+<button class="btn-icon" id="histCloseBtn" style="font-size:20px">✕</button>
+</div>
+<div style="font-size:12px;color:var(--gray);margin-bottom:12px;line-height:1.6">保存する直前の状態が残っています。戻すと、いま編集中の内容は破棄されます。</div>
+<div id="histList"></div>
+</div>
+</div>
 <div class="modal-overlay hidden" id="healthModal" style="z-index:205">
 <div class="modal">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -460,7 +512,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
-<div style="text-align:right;font-size:10px;color:#b8a9b1;margin-top:8px">版 11/10-0345</div>
+
 </div>
 </div>
 
@@ -621,12 +673,18 @@ body.selecting .list-wrap{padding-bottom:90px}
 <label class="form-label">収録内容,詳細</label>
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
+<button class="btn-add-small" id="moveDateOnlyBtn" type="button">日付だけの収録内容を放送日へ移す</button>
+<button class="btn-add-small" id="sortTracksBtn" type="button">日付順に並べる</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">まとめて貼り付け</button>
 <button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
 <div class="form-group">
 <label class="form-label">メモ</label>
 <textarea class="form-textarea" id="editNote" placeholder="任意"></textarea>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+<button class="btn-add-small" id="editHistBtn" type="button">変更履歴</button>
+<button class="btn-add-small" id="editDupBtn" type="button">複製して新規追加</button>
 </div>
 <div class="modal-footer">
 <button class="btn-cancel" id="editCancelBtn">キャンセル</button>
@@ -758,7 +816,7 @@ const o=JSON.parse(decodeURIComponent(m[1]));
 if(o.a)qMode='and';
 if(typeof o.t==='string'&&loadConfig().genres.includes(o.t))currentGenre=o.t;
 if(typeof o.u==='string'&&currentGenre!=='すべて')currentSubgenre=o.u;
-if(['default','date_new','date_old','reg_new','reg_old','title','exchange','timeline'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
+if(['default','date_new','date_old','reg_new','reg_old','title','exchange','timeline','series','tracks_many','size_big'].includes(o.o)){sortOrder=o.o;document.getElementById('sortSelect').value=o.o;}
 if(typeof o.q==='string')F.q=o.q;
 [['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(Array.isArray(o[a]))o[a].forEach(v=>{if(typeof v==='string')F[k].add(v);});});
 }catch{}
@@ -776,7 +834,7 @@ if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
 return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
-function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(m.tr||[]).flatMap(o=>[one(o||{}),...((o&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
+function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(Array.isArray(m.tr)?m.tr:[]).flatMap(o=>[one(o||{}),...((o&&Array.isArray(o.more)&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
 function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
 function memberClass(m){
@@ -824,8 +882,12 @@ catch(e){
 if(isNew)return false;
 try{d=await gasWrite({action:'saveVideo2',data:encodeURIComponent(JSON.stringify({video,isNew})),id:''});}catch{return false;}
 }
+if(d&&d.ok)recentMark(video.id);
 return !!(d&&d.ok);
 }
+const RECENT_KEY='recent_edit_v1_'+CHECK_LIST;
+function recentMap(){try{const o=JSON.parse(localStorage.getItem(RECENT_KEY)||'{}');return o&&typeof o==='object'?o:{};}catch{return{};}}
+function recentMark(id){try{const o=recentMap();o[String(id)]=Date.now();const ks=Object.keys(o);if(ks.length>300){ks.sort((a,b)=>o[a]-o[b]).slice(0,ks.length-300).forEach(k=>delete o[k]);}localStorage.setItem(RECENT_KEY,JSON.stringify(o));}catch{}}
 async function gasWrite(params){
 const d=await jsonp({...params,token});
 if(d&&d.error==='unauthorized'){
@@ -910,13 +972,14 @@ currentGenre='すべて';currentSubgenre='すべて';renderTabs();renderSubtabs(
 function getYearsOf(item){
 const ys=new Set();
 formatSchedules(item.dates).forEach(s=>{const y=String(s.date||'').substring(0,4);if(/^[0-9]{4}$/.test(y))ys.add(y);});
-try{JSON.parse(item.tracks||'[]').forEach(t=>{if(t&&t.date){const y=String(t.date).substring(0,4);if(/^[0-9]{4}$/.test(y))ys.add(y);}});}catch{}
+try{const _a=JSON.parse(item.tracks||'[]');(Array.isArray(_a)?_a:[]).forEach(t=>{if(t&&t.date){const y=String(t.date).substring(0,4);if(/^[0-9]{4}$/.test(y))ys.add(y);}});}catch{}
 return ys;
 }
 function trackTitles(item){
-try{return JSON.parse(item.tracks||'[]').map(t=>typeof t==='string'?t:(t&&t.title)||'').join(' ');}catch{return'';}
+try{const _a=JSON.parse(item.tracks||'[]');return(Array.isArray(_a)?_a:[]).map(t=>typeof t==='string'?t:(t&&t.title)||'').join(' ');}catch{return'';}
 }
-function matchItem(item){
+function matchItem(item){try{return matchItem0(item);}catch(e){return false;}}
+function matchItem0(item){
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
@@ -933,7 +996,7 @@ if(qMode==='and')ok=[...F.years].every(y=>ys.has(y));else F.years.forEach(y=>{if
 if(!ok)return false;
 }
 if(F.q){
-const hay=[item.title,(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
+const hay=[item.title,[].concat(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
 const hayF=fold(hay);
 const segs=fold(F.q).split(/[|｜]/).map(x=>x.split(/\s+/).filter(Boolean)).filter(a=>a.length);
 if(segs.length&&!segs.some(terms=>terms.every(t=>hayF.includes(t))))return false;
@@ -1148,17 +1211,31 @@ data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)
 const sg=sortOrder==='reg_new'?-1:1;data=[...data].sort((a,b)=>sg*((Number(a.id)||0)-(Number(b.id)||0)));
 }else if(sortOrder==='title'){
 data=[...data].sort((a,b)=>String(a.title).localeCompare(String(b.title),'ja'));
+}else if(sortOrder==='tracks_many'){
+const tn=new Map();data.forEach(it=>{let n=0;try{n=parseTracks(it).length;}catch{}tn.set(it.id,n);});
+data=[...data].sort((a,b)=>tn.get(b.id)-tn.get(a.id));
+}else if(sortOrder==='size_big'){
+const bs=new Map();data.forEach(it=>bs.set(it.id,itemBytes(it)));
+data=[...data].sort((a,b)=>bs.get(b.id)-bs.get(a.id));
 }else if(sortOrder==='exchange'){
 const o={ok:0,partial:1,consult:2,ng:3};
 data=[...data].sort((a,b)=>(o[a.exchange]??9)-(o[b.exchange]??9));
 }
+{const gp=document.getElementById('gapSel').value;if(gp==='recent'){const rm=recentMap();data=data.filter(it=>rm[it.id]).sort((a,b)=>rm[b.id]-rm[a.id]);}}
+const _sr=new Map();
+if(sortOrder==='series'&&!selectMode&&!reorderMode){
+const by=new Map();data.forEach((it,i)=>{const k=seriesKey(it.title);const key=k.length>=2?k:'\u0000'+it.id;if(!by.has(key))by.set(key,{i,items:[]});by.get(key).items.push(it);});
+const out=[];[...by.entries()].forEach(([k,g])=>{if(g.items.length>=2){const label=commonPrefix(g.items.map(x=>String(x.title)))||g.items[0].title;g.items.forEach((it,j)=>_sr.set(it.id,{k,first:j===0,n:g.items.length,label}));}g.items.forEach(it=>out.push(it));});
+data=out;
+}
+{const so=document.getElementById('sortSizeOpt');if(so){so.hidden=!isAdmin;so.disabled=!isAdmin;}}
 lastShown=data.map(d=>d.id);
 updateProgressLine(data);
 {let _n=0;data.forEach(it=>{try{_n+=parseTracks(it).length;}catch{}});document.getElementById('listCount').textContent=data.length+' 件'+(_n?'（収録内容 '+_n+' 行）':'');}
 if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 let _tl='';list.innerHTML=data.map((item,idx)=>{
-let hd='';if(sortOrder==='timeline'){const g=gd(item),m=/^(\d{4})\D+(\d{1,2})/.exec(g);const tk=m?m[1]+'年'+Number(m[2])+'月':'日付なし';if(tk!==_tl){_tl=tk;hd='<div class="tl-h">'+tk+'</div>';}}
-return hd+`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}" data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
+let hd='';const _g=_sr.get(item.id);if(_g&&_g.first)hd='<div class="sr-h" data-sr="'+esc(_g.k)+'"><span>'+esc(_g.label)+'</span><span class="sr-n">'+_g.n+'件 '+(_srOpen.has(_g.k)?'－':'＋')+'</span></div>';if(sortOrder==='timeline'){const g=gd(item),m=/^(\d{4})\D+(\d{1,2})/.exec(g);const tk=m?m[1]+'年'+Number(m[2])+'月':'日付なし';if(tk!==_tl){_tl=tk;hd='<div class="tl-h">'+tk+'</div>';}}
+return hd+`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}${_g?' sr-in':''}"${_g?` data-srk="${esc(_g.k)}"${_srOpen.has(_g.k)?'':' style="display:none"'}`:''} data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
 ${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
@@ -1169,6 +1246,7 @@ ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="tog
 ${reorderMode?`<div class="mv-bar"><span class="mv-no">${idx+1} / ${data.length}</span><div class="mv-grip" data-id="${item.id}">ドラッグ</div><button data-mv="top" data-id="${item.id}" ${idx===0?'disabled':''}>⤒</button><button data-mv="up" data-id="${item.id}" ${idx===0?'disabled':''}>↑</button><button data-mv="down" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>↓</button><button data-mv="bottom" data-id="${item.id}" ${idx===data.length-1?'disabled':''}>⤓</button></div>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="card-actions"><button class="btn-sm btn-edit" data-edit="${item.id}">編集</button><button class="btn-sm btn-delete" data-delete="${item.id}">削除</button></div>`:''}</div>`;
 }).join('');
+list.querySelectorAll('.sr-h').forEach(h=>h.addEventListener('click',()=>{const k=h.dataset.sr;const open=!_srOpen.has(k);if(open)_srOpen.add(k);else _srOpen.delete(k);list.querySelectorAll('.sr-in').forEach(c=>{if(c.dataset.srk===k)c.style.display=open?'':'none';});const n=h.querySelector('.sr-n');n.textContent=n.textContent.replace(/[＋－]/,open?'－':'＋');}));
 list.querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleFav(b.dataset.fav,b);}));
 list.querySelectorAll('[data-chk]').forEach(inp=>{
 inp.closest('label').addEventListener('click',e=>e.stopPropagation());
@@ -1318,6 +1396,39 @@ if(isAdmin&&confirm('ログアウトしますか？'))logout();
 document.getElementById('loginBtn').addEventListener('click',openAuth);
 
 // Detail Modal
+function trkEnhance(root){
+const box=root.querySelector('#trkBox');if(!box)return;
+const rows=[...box.querySelectorAll('.trk-row')];
+const hasSec=!!box.querySelector('.trk-sec');
+// 年ごとの折りたたみ（区分けがなく、年順に並んでいるときだけ）
+if(!hasSec&&rows.length>=12){
+const runs=[];rows.forEach(r=>{const y=r.dataset.y||'';if(!runs.length||runs[runs.length-1].y!==y)runs.push({y,rows:[r]});else runs[runs.length-1].rows.push(r);});
+const ys=new Set(runs.map(x=>x.y));
+if(ys.size>=2&&ys.size===runs.length){
+runs.forEach((g,i)=>{const d=document.createElement('details');d.className='trk-year';d.open=rows.length<=30||i===0;
+const sm=document.createElement('summary');sm.textContent=(g.y?g.y+'年':'日付なし')+'（'+g.rows.length+'件）';d.appendChild(sm);
+box.insertBefore(d,g.rows[0]);g.rows.forEach(r=>d.appendChild(r));});
+}
+}
+// 詳細内の検索
+if(rows.length>=8){
+const inp=document.createElement('input');inp.className='form-input';inp.id='trkSearch';inp.placeholder='収録内容を検索';inp.autocomplete='off';inp.style.cssText='margin-bottom:8px;font-size:13px';
+const cnt=document.createElement('div');cnt.style.cssText='font-size:11px;color:var(--gray);margin:-2px 0 8px;display:none';
+box.before(inp);box.before(cnt);
+inp.addEventListener('input',()=>{
+const q=fold(inp.value.trim());let n=0;
+rows.forEach(r=>{const hit=!q||fold(r.textContent).includes(q);r.style.display=hit?'':'none';if(hit)n++;});
+box.querySelectorAll('details.trk-year').forEach(d=>{const any=[...d.querySelectorAll('.trk-row')].some(r=>r.style.display!=='none');d.style.display=any?'':'none';if(q&&any)d.open=true;});
+box.querySelectorAll('.trk-sec').forEach(h=>{let e=h.nextElementSibling,any=false;while(e&&!e.classList.contains('trk-sec')){if(e.classList.contains('trk-row')&&e.style.display!=='none')any=true;e=e.nextElementSibling;}h.style.display=any?'':'none';});
+cnt.style.display=q?'':'none';cnt.textContent=n+' / '+rows.length+' 件';
+});
+}
+}
+function sizeBytes(v){const m=/([\d.]+)\s*(tb|t|gb|g|mb|m|kb|k)?/i.exec(String(v||''));if(!m)return 0;const n=parseFloat(m[1])||0;const u=(m[2]||'').toLowerCase()[0];return n*(u==='t'?1e12:u==='g'?1e9:u==='m'?1e6:u==='k'?1e3:1);}
+function itemBytes(item){const m=parseMeta(item);let t=0;const one=o=>{if(!o)return;t+=sizeBytes(o.size);(Array.isArray(o.more)?o.more:[]).forEach(x=>{t+=sizeBytes(x&&x.size);});};one(m);(Array.isArray(m.tr)?m.tr:[]).forEach(one);(Array.isArray(m.sch)?m.sch:[]).forEach(one);return t;}
+function seriesKey(t){return String(t||'').normalize('NFKC').toLowerCase().replace(/(vol|ep|part|day|disc|no)\.?\s*\d+/g,'').replace(/[#＃]?\d+(\.\d+)?\s*(回目|回|話|弾|日|月|年|週目|夜|部|巻|号)?/g,'').replace(/[\s　\-‐–—~〜・,.、。:：/／()（）\[\]【】「」『』]+/g,'');}
+function commonPrefix(a){if(!a.length)return'';let p=a[0];a.forEach(x=>{let i=0;while(i<p.length&&i<x.length&&p[i]===x[i])i++;p=p.slice(0,i);});return p.replace(/[\s　\-‐–—~〜・#＃(（\[【「『]+$/,'').trim();}
+const _srOpen=new Set();
 function openDetailModal(item){
 document.getElementById('detailTitle').textContent=item.title;
 const genres=parseGenres(item.genres||item.genre||'');
@@ -1348,7 +1459,7 @@ let currentSec = null;
 let secItems = [];
 const flushSec = () => {
 if(secItems.length===0) return;
-const secHeader = currentSec ? `<div style="font-size:11px;font-weight:700;color:var(--pink-dark);margin:8px 0 4px;border-bottom:1px solid var(--pink-light);padding-bottom:2px">${esc(currentSec)}</div>` : '';
+const secHeader = currentSec ? `<div class="trk-sec" style="font-size:11px;font-weight:700;color:var(--pink-dark);margin:8px 0 4px;border-bottom:1px solid var(--pink-light);padding-bottom:2px">${esc(currentSec)}</div>` : '';
 sectionsHtml += secHeader + secItems.join('');
 secItems = [];
 };
@@ -1367,7 +1478,7 @@ const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||
 const dateBadge='';
 const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
 const memberSpan=memberBadges?`<span style="display:inline-flex;flex-wrap:wrap;gap:3px">${memberBadges}</span>`:'';
-secItems.push(`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
+secItems.push(`<div class="trk-row" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:10px 0;border-bottom:1px solid #f3e1ea">
 ${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(dp)}</span>${tp?`<span style="font-size:12px;font-weight:700;color:#b8486f">${esc(tp)}</span>`:''}${title?'':badge+memberSpan}</div>`:''}
 ${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
 ${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
@@ -1376,8 +1487,9 @@ ${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one
 });
 flushSec();
 tracksDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">収録内容,詳細</div>'+
-`<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">${sectionsHtml}</div>`;
+`<div id="trkBox" style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">${sectionsHtml}</div>`;
 document.getElementById('detailNote').before(tracksDiv);
+trkEnhance(tracksDiv);
 }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
 const note=document.getElementById('detailNote');
 const noteVal=item.note&&item.note!=='[]'&&item.note.trim()?item.note:'';
@@ -1566,10 +1678,33 @@ const subs=cfg.subgenres[currentGenre]||[];
 document.getElementById('subgenreManageList').innerHTML=subs.map((s,i)=>`
 <div class="manage-item" style="display:flex;align-items:center;gap:6px">
 <div style="flex:1;font-size:13px">${esc(s)}</div>
+<button class="btn-remove" style="padding:2px 6px;font-size:11px;background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer" data-sren="${i}">名前変更</button>
 <button class="btn-remove" style="padding:2px 6px;font-size:16px;background:none;border:none;cursor:pointer" data-up="${i}" ${i===0?'disabled':''}>↑</button>
 <button class="btn-remove" style="padding:2px 6px;font-size:16px;background:none;border:none;cursor:pointer" data-down="${i}" ${i===subs.length-1?'disabled':''}>↓</button>
 <button class="btn-remove" data-si="${i}">削除</button>
 </div>`).join('');
+document.getElementById('subgenreManageList').querySelectorAll('[data-sren]').forEach(b=>b.addEventListener('click',async()=>{
+const idx=parseInt(b.dataset.sren);const g=currentGenre;const list=cfg.subgenres[g]||[];const old=list[idx];
+const nn=(prompt('新しい小ジャンル名',old)||'').trim();if(!nn||nn===old)return;
+if(list.includes(nn)){toastMsg('すでにある小ジャンルです');return;}
+await loadVideos();
+const targets=(cachedVideos||[]).filter(it=>parseGenres(it.genres||it.genre||'').some(x=>x.genre===g&&x.subgenre===old));
+if(!confirm('「'+old+'」を「'+nn+'」に変更します。'+(targets.length?'該当の動画'+targets.length+'件も書き換えます。':'')+'よろしいですか？'))return;
+list[idx]=nn;
+if(cfg.otherMembers&&cfg.otherMembers[old]&&!cfg.otherMembers[nn]){cfg.otherMembers[nn]=cfg.otherMembers[old];delete cfg.otherMembers[old];}
+if(F.subs&&F.subs.has&&F.subs.has(old)){F.subs.delete(old);F.subs.add(nn);}
+if(currentSubgenre===old)currentSubgenre=nn;
+if(saveConfig(cfg)===false)return;
+let fail=0,done=0;
+for(const it of targets){
+const gs=parseGenres(it.genres||it.genre||'').map(x=>x.genre===g&&x.subgenre===old?{...x,subgenre:nn}:x);
+if(!(await writeVideo({...it,genres:JSON.stringify(gs)},false)))fail++;
+done++;toastMsg('書き換え中 '+done+' / '+targets.length);
+}
+cachedVideos=null;await loadVideos(true);
+openSubgenreModal();renderSubtabs();renderList();
+toastMsg(fail?('一部（'+fail+'件）の書き換えに失敗しました'):'「'+nn+'」に変更しました');
+}));
 document.getElementById('subgenreManageList').querySelectorAll('[data-si]').forEach(b=>b.addEventListener('click',()=>{
 cfg.subgenres[currentGenre].splice(parseInt(b.dataset.si),1);saveConfig(cfg);openSubgenreModal();renderSubtabs();
 }));
@@ -1681,7 +1816,7 @@ async function openEditModal(id=null){
 cfg=loadConfig();editingId=id;
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
-document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+' <small style="font-size:10px;color:#9ca3af;font-weight:400">版 11/10-0345</small>';
+document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+'';
 document.getElementById('editTitle').value=item?item.title:'';
 {const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
@@ -1822,6 +1957,24 @@ row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click'
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
+document.getElementById('moveDateOnlyBtn').addEventListener('click',()=>{
+let n=0;
+document.querySelectorAll('#tracksWrap div[style*="pink-pale"]').forEach(row=>{
+const input=row.querySelector('.track-input');if(!input)return;
+const date=(row.querySelector('.track-date')||{}).value||'';
+const tm=((row.querySelector('.track-time')||{}).value||'').trim();
+const sec=((row.querySelector('.track-section')||{}).value||'').trim();
+const dist=(row.querySelector('.track-dist')||{}).value||'none';
+const mem=row.querySelectorAll('.track-member-chip.selected').length;
+let fi=false;row.querySelectorAll('input[class*="tf-"],input[class*="tm-"]').forEach(e=>{if(e.value.trim())fi=true;});
+if(!date||input.value.trim()||mem||sec||fi||dist!=='none')return;
+const gs=[...document.querySelectorAll('#dateGroupsWrap .date-group')];
+let g=gs.find(x=>x.querySelector('.dg-date').value.trim()===date);
+if(!g){addDateGroup(date,tm?[tm]:[],{});}
+else if(tm){const ex=[...g.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim());if(!ex.includes(tm)){g.querySelector('.dg-add-time').click();const ins=g.querySelectorAll('.dg-times .time-row input');ins[ins.length-1].value=tm;}}
+row.remove();n++;});
+toastMsg(n?n+'件を放送日へ移しました':'移せる日付だけの項目はありません');
+});
 const nzG=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
 function matchNamesG(str){
 cfg=loadConfig();
@@ -1873,7 +2026,7 @@ cx.putImageData(im,0,0);return await new Promise(r=>cv.toBlob(r,'image/png'));}c
 document.getElementById('ocrBtn').addEventListener('click',()=>{if(!busy)oi.click();});
 oi.addEventListener('change',async()=>{const fs=[...oi.files];oi.value='';if(!fs.length||busy)return;busy=true;
 const steps=[];let stage='準備';
-try{toastMsg('読み取りの準備中…［版 11/10-0345］初回は言語データの読み込みで時間がかかります');
+try{toastMsg('読み取りの準備中…初回は言語データの読み込みで時間がかかります');
 stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
@@ -2048,7 +2201,7 @@ renderList();
 if(!savedOk&&isAdmin)failMsg('保存');
 });
 async function deleteItem(id){
-if(!confirm('削除しますか？'))return;
+if(!confirm('削除しますか？\nごみ箱に30日間残ります。'))return;
 document.getElementById('cardList').innerHTML=loadingHTML('削除中');
 let delOk=false;
 try{const d=await gasWrite({action:'deleteVideo2',data:'',id});delOk=!!(d&&d.ok);}catch{}
@@ -2102,6 +2255,7 @@ document.getElementById('bulkTitle').textContent=selected.size+'件をまとめ�
 document.getElementById('bulkForm').classList.remove('hidden');
 document.getElementById('bulkProgress').classList.add('hidden');
 fillBulkGenre();
+{const ns=new Set(cfg.members||[]);Object.values(cfg.otherMembers||{}).forEach(a=>(a||[]).forEach(n=>ns.add(n)));(cachedVideos||[]).forEach(v=>[].concat(v.members||[]).forEach(n=>{if(n)ns.add(n);}));document.getElementById('bulkMemberSug').innerHTML=[...ns].map(n=>`<option value="${esc(n)}"></option>`).join('');document.getElementById('bulkMember').value='';}
 document.getElementById('bulkModal').classList.remove('hidden');
 });
 function closeBulk(){if(bulkBusy)return;document.getElementById('bulkModal').classList.add('hidden');}
@@ -2141,6 +2295,17 @@ document.getElementById('bulkExApply').addEventListener('click',()=>{
 const v=document.getElementById('bulkExchange').value;
 if(!confirm(selected.size+'件の交換可否を「'+exchangeLabel(v)+'」にします。よろしいですか？'))return;
 bulkRun(it=>({...it,exchange:v}));
+});
+document.getElementById('bulkMemberApply').addEventListener('click',()=>{
+const n=document.getElementById('bulkMember').value.trim();
+const mode=document.getElementById('bulkMemberMode').value;
+if(!n){alert('出演者名を入力してください');return;}
+if(!confirm(selected.size+'件の出演者'+(mode==='add'?'に「'+n+'」を追加':'から「'+n+'」を外')+'します。よろしいですか？'))return;
+bulkRun(it=>{
+const cur=[].concat(it.members||[]).filter(Boolean);
+const next=mode==='add'?(cur.includes(n)?cur:[...cur,n]):cur.filter(x=>x!==n);
+return{...it,members:next};
+});
 });
 document.getElementById('bulkGenreApply').addEventListener('click',()=>{
 const g=document.getElementById('bulkGenre').value;
@@ -2501,6 +2666,149 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
+/* ===== 複製・日付順・題名置換 ===== */
+document.getElementById('editDupBtn').addEventListener('click',()=>{
+if(!editingId){toastMsg('保存済みの動画を開いているときに使えます');return;}
+editingId=null;
+window._openDates=[...document.querySelectorAll('#dateGroupsWrap .dg-date')].map(e=>e.value.trim()).filter(Boolean);
+const t=document.getElementById('editTitle');t.value=t.value+'（コピー）';
+document.getElementById('editModalTitle').textContent='動画を追加（複製）';
+toastMsg('複製しました。保存すると新しい動画として追加されます');
+});
+document.getElementById('sortTracksBtn').addEventListener('click',()=>{
+const w=document.getElementById('tracksWrap');
+const rows=[...w.children];
+const key=r=>{const d=((r.querySelector('.track-date')||{}).value||'').trim();const t=((r.querySelector('.track-time')||{}).value||'').trim();return[d||'9999-99-99',t||''];};
+const ix=rows.map((r,i)=>({r,i,k:key(r)}));
+ix.sort((a,b)=>a.k[0]<b.k[0]?-1:a.k[0]>b.k[0]?1:a.k[1]<b.k[1]?-1:a.k[1]>b.k[1]?1:a.i-b.i);
+ix.forEach(x=>w.appendChild(x.r));
+toastMsg('日付順に並べました');
+});
+let _trTargets=[];
+function titleRepScope(){const all=cachedVideos||[];return(selectMode&&selected.size)?all.filter(v=>selected.has(v.id)):all;}
+function titleRepPreview(){
+const from=document.getElementById('titleRepFrom').value,to=document.getElementById('titleRepTo').value;
+const box=document.getElementById('titleRepList'),cnt=document.getElementById('titleRepCount');
+_trTargets=[];
+if(!from){cnt.textContent='';box.innerHTML='';return;}
+titleRepScope().forEach(v=>{const t=String(v.title||'');if(!t.includes(from))return;const nt=t.split(from).join(to).trim();if(nt&&nt!==t)_trTargets.push({v,nt});});
+cnt.textContent=_trTargets.length+'件が対象です';
+box.innerHTML=_trTargets.slice(0,50).map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.6"><div style="color:var(--gray);word-break:break-all">${esc(x.v.title)}</div><div style="color:var(--pink-dark);font-weight:700;word-break:break-all">${esc(x.nt)}</div></div>`).join('')+(_trTargets.length>50?`<div style="font-size:11px;color:var(--gray);padding:8px 0">ほか ${_trTargets.length-50}件</div>`:'');
+}
+document.getElementById('titleRepBtn').addEventListener('click',async()=>{
+await loadVideos();
+const sc=titleRepScope();
+document.getElementById('titleRepScope').textContent=(selectMode&&selected.size)?('選択中の'+sc.length+'件の題名が対象です。'):('この所持リストの全'+sc.length+'件の題名が対象です。「選択」で選んでから開くと、選んだ動画だけが対象になります。');
+document.getElementById('titleRepFrom').value='';document.getElementById('titleRepTo').value='';titleRepPreview();
+document.getElementById('titleRepModal').classList.remove('hidden');
+});
+document.getElementById('titleRepCloseBtn').addEventListener('click',()=>document.getElementById('titleRepModal').classList.add('hidden'));
+document.getElementById('titleRepFrom').addEventListener('input',titleRepPreview);
+document.getElementById('titleRepTo').addEventListener('input',titleRepPreview);
+document.getElementById('titleRepApply').addEventListener('click',async()=>{
+if(!_trTargets.length){toastMsg('対象の題名がありません');return;}
+const list=_trTargets.slice();
+if(!confirm(list.length+'件の題名を置き換えます。よろしいですか？'))return;
+document.getElementById('titleRepModal').classList.add('hidden');
+let ok=0,fail=0;
+for(const x of list){let r=false;try{r=await writeVideo({...x.v,title:x.nt},false);}catch{}if(r)ok++;else fail++;toastMsg('置き換え中 '+(ok+fail)+' / '+list.length);}
+cachedVideos=null;await loadVideos(true);renderList();
+toastMsg(fail?('完了 '+ok+'件 / 失敗 '+fail+'件'):(ok+'件の題名を置き換えました'));
+});
+/* ===== ごみ箱・変更履歴（GAS更新が必要） ===== */
+function fmtJ(iso){const d=new Date(iso);return isNaN(d)?'':d.getFullYear()+'/'+(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function gasOld(d){if(d&&d.error==='unknown action'){toastMsg('先にGASの更新が必要です');return true;}return false;}
+async function reloadAfterRestore(){cachedVideos=null;await loadVideos(true);renderList();}
+let _trash=[];
+async function openTrash(){
+if(!isAdmin)return;
+const box=document.getElementById('trashList');
+box.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:20px 0">読み込み中</div>';
+document.getElementById('trashModal').classList.remove('hidden');
+let d=null;try{d=await gasWrite({action:'getTrash',list:CHECK_LIST});}catch{}
+if(gasOld(d)){document.getElementById('trashModal').classList.add('hidden');return;}
+if(!d||!d.ok){box.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:20px 0">読み込めませんでした</div>';return;}
+_trash=d.items||[];
+document.getElementById('trashNote').textContent='削除した動画は'+(d.days||30)+'日間ここに残り、戻せます。';
+box.innerHTML=_trash.length?_trash.map((t,i)=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:14px;font-weight:700;color:var(--pink-dark);word-break:break-all">${esc(t.title||'(題名なし)')}</div><div style="font-size:11px;color:var(--gray);margin-top:3px">削除 ${esc(fmtJ(t.deletedAt))}　収録内容 ${t.tracks||0}件</div><div style="display:flex;gap:8px;margin-top:8px"><button type="button" class="btn-save" data-tr="${i}" style="flex:1;padding:8px">戻す</button><button type="button" class="btn-cancel" data-tp="${i}" style="flex:1;padding:8px">完全に削除</button></div></div>`).join(''):'<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px 0">ごみ箱は空です</div>';
+}
+document.getElementById('trashBtn').addEventListener('click',openTrash);
+document.getElementById('trashCloseBtn').addEventListener('click',()=>document.getElementById('trashModal').classList.add('hidden'));
+document.getElementById('trashList').addEventListener('click',async e=>{
+const r=e.target.closest('[data-tr]'),p=e.target.closest('[data-tp]');
+if(r){
+const t=_trash[+r.dataset.tr];if(!t)return;
+let d=null;try{d=await gasWrite({action:'restoreTrash',list:CHECK_LIST,id:t.id});}catch{}
+if(gasOld(d))return;
+if(d&&d.ok){toastMsg('「'+t.title+'」を戻しました');await reloadAfterRestore();openTrash();}
+else if(d&&d.error==='exists')toastMsg('同じIDの動画がすでにあります');
+else failMsg('復元');
+return;
+}
+if(p){
+const t=_trash[+p.dataset.tp];if(!t)return;
+if(!confirm('「'+t.title+'」を完全に削除します。元に戻せません。よろしいですか？'))return;
+let d=null;try{d=await gasWrite({action:'purgeTrash',list:CHECK_LIST,id:t.id});}catch{}
+if(d&&d.ok)openTrash();else failMsg('削除');
+}
+});
+document.getElementById('trashPurgeAllBtn').addEventListener('click',async()=>{
+if(!_trash.length)return;
+if(!confirm('ごみ箱を空にします。元に戻せません。よろしいですか？'))return;
+let d=null;try{d=await gasWrite({action:'purgeTrash',list:CHECK_LIST,id:'all'});}catch{}
+if(d&&d.ok)openTrash();else failMsg('削除');
+});
+let _hist=[];
+async function openHist(){
+if(!isAdmin)return;
+if(!editingId){toastMsg('新しい動画には履歴がありません');return;}
+const box=document.getElementById('histList');
+box.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:20px 0">読み込み中</div>';
+document.getElementById('histModal').classList.remove('hidden');
+let d=null;try{d=await gasWrite({action:'getVideoHistory',list:CHECK_LIST,id:editingId});}catch{}
+if(gasOld(d)){document.getElementById('histModal').classList.add('hidden');return;}
+if(!d||!d.ok){box.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:20px 0">読み込めませんでした</div>';return;}
+_hist=d.items||[];
+box.innerHTML=_hist.length?_hist.map((h,i)=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--pink-dark)">${esc(fmtJ(h.ts))}</div><div style="font-size:14px;margin-top:3px;word-break:break-all">${esc(h.title||'')}</div><div style="font-size:11px;color:var(--gray);margin-top:3px">収録内容 ${h.tracks||0}件　放送日 ${h.dates||0}件${h.note?'　メモ「'+esc(h.note)+'」':''}</div><button type="button" class="btn-save" data-hr="${i}" style="width:100%;padding:8px;margin-top:8px">この状態に戻す</button></div>`).join(''):'<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px 0">履歴はまだありません</div>';
+}
+document.getElementById('editHistBtn').addEventListener('click',openHist);
+document.getElementById('histCloseBtn').addEventListener('click',()=>document.getElementById('histModal').classList.add('hidden'));
+document.getElementById('histList').addEventListener('click',async e=>{
+const r=e.target.closest('[data-hr]');if(!r)return;
+const h=_hist[+r.dataset.hr];if(!h)return;
+if(!confirm(fmtJ(h.ts)+' の状態に戻します。いま編集中の内容は破棄されます。よろしいですか？'))return;
+let d=null;try{d=await gasWrite({action:'restoreHistory',list:CHECK_LIST,id:editingId,ts:h.ts});}catch{}
+if(gasOld(d))return;
+if(d&&d.ok){document.getElementById('histModal').classList.add('hidden');document.getElementById('editModal').classList.add('hidden');toastMsg('戻しました');await reloadAfterRestore();}
+else failMsg('復元');
+});
+function dateOnlyPlan(v){
+let tr=[];try{tr=JSON.parse(v.tracks||'[]');}catch{}
+if(!Array.isArray(tr))return null;
+const pm=parseMeta(v),trf=pm.tr||[];
+const keep=[],keepF=[],mv=[];
+tr.forEach((t,i)=>{const f=trf[i]||{};const empty=t&&typeof t==='object'&&t.date&&!String(t.title||'').trim()&&!(t.members||[]).length&&!String(t.section||'').trim()&&(!t.dist||t.dist==='none')&&!Object.keys(f).some(k=>f[k]&&(k!=='more'||f.more.length));
+if(empty)mv.push(t);else{keep.push(t);keepF.push(f);}});
+if(!mv.length)return null;
+const sc=formatSchedules(v.dates).map((x,i)=>({s:{date:x.date,times:(x.times||[]).slice()},i:(pm.sch||[])[i]||{}}));
+mv.forEach(t=>{let e=sc.find(z=>z.s.date===t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};sc.push(e);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});
+sc.sort((x,y)=>x.s.date<y.s.date?-1:x.s.date>y.s.date?1:0);
+const meta={...pm};delete meta.tr;delete meta.sch;
+if(keepF.some(o=>Object.keys(o).length))meta.tr=keepF;
+if(sc.some(z=>Object.keys(z.i).length))meta.sch=sc.map(z=>z.i);
+return{n:mv.length,video:{...v,tracks:JSON.stringify(keep),dates:JSON.stringify(sc.map(z=>z.s)),meta:Object.keys(meta).length?JSON.stringify(meta):''}};
+}
+document.getElementById('dateOnlyBulkBtn').addEventListener('click',async()=>{
+const data=await loadVideos();
+const plans=data.map(dateOnlyPlan).filter(Boolean);
+if(!plans.length){toastMsg('移せる日付だけの項目はありません');return;}
+const total=plans.reduce((a,p)=>a+p.n,0);
+if(!confirm(plans.length+'件の動画、'+total+'個の日付だけの収録内容を放送日へ移し、収録内容から削除します。実行しますか？'))return;
+let ok=0,fail=0;
+for(const p of plans){let r=false;try{r=await writeVideo(p.video,false);}catch{}if(r)ok++;else fail++;toastMsg('移行中 '+(ok+fail)+' / '+plans.length);}
+cachedVideos=null;await loadVideos(true);renderList();
+toastMsg(fail?('完了 '+ok+'件 / 失敗 '+fail+'件'):('完了 '+ok+'件を移行しました'));
+});
 
 document.getElementById('healthCloseBtn').addEventListener('click',()=>document.getElementById('healthModal').classList.add('hidden'));
 document.getElementById('healthModal').addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
@@ -2883,6 +3191,45 @@ loadFullConfigFromServer().then(()=>{renderTabs();renderSubtabs();showTabs();ens
 if(isAdmin){
 gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAdminUI();}}).catch(()=>{});
 }
+</script>
+
+<!-- 共通メニュー -->
+<style>
+.cm-btn{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:1.5px solid #f8dbe7;background:#fff7fa;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0;margin-right:8px}
+.cm-btn i{display:block;width:15px;height:2px;border-radius:2px;background:#c95a88}
+.cm-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;display:none;align-items:flex-end;justify-content:center}
+.cm-bg.on{display:flex}
+.cm-sheet{width:100%;max-width:480px;background:#fff;border-radius:20px 20px 0 0;padding:18px 18px calc(22px + env(safe-area-inset-bottom))}
+.cm-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cm-title{font-size:15px;font-weight:800;color:#c95a88;letter-spacing:.08em}
+.cm-x{background:none;border:none;font-size:20px;color:#8b8f99;cursor:pointer;font-family:inherit}
+.cm-link{display:flex;justify-content:space-between;align-items:center;padding:14px 4px;border-bottom:1px solid #f1e3ea;text-decoration:none;color:#4b5563;font-size:14px;font-weight:600}
+.cm-link:last-child{border-bottom:none}
+.cm-link.cur{color:#c95a88;font-weight:800}
+.cm-link span:last-child{font-size:11px;color:#c95a88;font-weight:700}
+@media(min-width:600px){.cm-bg{align-items:center}.cm-sheet{border-radius:20px}}
+</style>
+<div class="cm-bg" id="cmBg"><div class="cm-sheet"><div class="cm-head"><div class="cm-title">メニュー</div><button class="cm-x" id="cmClose" type="button">✕</button></div><div id="cmList"></div></div></div>
+<script>
+(function(){
+var B='https://noyu-web.github.io/video-list/';
+var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/'],['自動取り込み',B+'folderimport/','/video-list/folderimport/',1]];
+function adm(){try{var t=JSON.parse(localStorage.getItem('top_admin_token')||'null');return !!(t&&t.token&&(!t.expires||t.expires>Date.now()));}catch(e){return false;}}
+function here(){var p=location.pathname.replace(/index\.html$/,'');if(p.slice(-1)!=='/')p+='/';return p;}
+var bg=document.getElementById('cmBg');
+function open(){
+var p=here(),a=adm();
+document.getElementById('cmList').innerHTML=L.filter(function(x){return !x[3]||a;}).map(function(x){var c=p===x[2];return '<a class="cm-link'+(c?' cur':'')+'" href="'+x[1]+'"><span>'+x[0]+'</span><span>'+(c?'表示中':'›')+'</span></a>';}).join('');
+bg.classList.add('on');
+}
+function close(){bg.classList.remove('on');}
+var btn=document.createElement('button');btn.type='button';btn.className='cm-btn';btn.id='cmBtn';btn.setAttribute('aria-label','メニュー');btn.innerHTML='<i></i><i></i><i></i>';
+var hd=document.querySelector('header');
+if(hd){var hl=hd.querySelector('.header-left');if(hl)hl.insertBefore(btn,hl.firstChild);else hd.insertBefore(btn,hd.firstChild);}
+btn.addEventListener('click',open);
+document.getElementById('cmClose').addEventListener('click',close);
+bg.addEventListener('click',function(e){if(e.target===bg)close();});
+})();
 </script>
 </body>
 </html>
