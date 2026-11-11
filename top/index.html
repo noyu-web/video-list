@@ -30,6 +30,23 @@ body:not(.ready) .top-loading{display:block}
 .ng-empty{text-align:center;color:#b5a2ad;font-size:13px;padding:24px 0}
 .admin-only{display:none!important}
 body.admin .admin-only{display:flex!important}
+.notice-log-btn{display:block;margin:-8px 0 18px auto;background:none;border:none;color:var(--pink-dark);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:4px 0}
+.nlog-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.nlog-item .nlog-date{font-size:11px;font-weight:700;color:var(--pink-dark);display:flex;justify-content:space-between;align-items:center}
+.nlog-item .nlog-date button{display:none;background:none;border:none;color:#c0728f;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+body.admin .nlog-item .nlog-date button{display:inline}
+.nlog-item .nlog-text{font-size:14px;line-height:1.8;color:var(--text);word-break:break-word;margin-top:4px}
+.xs-bar{display:flex;gap:8px;margin:14px 0 22px}
+.xs-bar input{flex:1;min-width:0;font-family:inherit;font-size:14px;padding:11px 16px;border:1.5px solid var(--pink-light);border-radius:24px;background:var(--white);color:var(--text);outline:none}
+.xs-bar input:focus{border-color:var(--pink)}
+.xs-bar button{flex-shrink:0;background:var(--pink);color:#fff;border:none;border-radius:24px;padding:0 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.xs-grp{font-size:12px;font-weight:800;color:var(--pink-dark);margin:16px 0 4px;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:baseline}
+.xs-grp:first-child{margin-top:0}
+.xs-grp a{font-size:11px;font-weight:700;color:var(--pink-dark);text-decoration:none}
+.xs-item{display:block;padding:10px 0;border-bottom:1px solid var(--border);text-decoration:none;color:inherit}
+.xs-item .xs-t{font-size:14px;font-weight:600;color:var(--text);line-height:1.5;word-break:break-all}
+.xs-item .xs-s{font-size:11px;color:var(--gray);margin-top:3px;line-height:1.5;word-break:break-all}
+.xs-msg{text-align:center;color:var(--gray);font-size:13px;padding:24px 0;line-height:1.8}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
 header{background:var(--bg);padding:env(safe-area-inset-top) 20px 0;height:calc(52px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);}
@@ -276,6 +293,7 @@ footer{padding-top:24px;}
     <div class="notice-head"><span class="notice-label">お知らせ</span><span class="notice-new hidden" id="noticeNew">NEW</span><span class="notice-date" id="noticeDate"></span></div>
     <div class="notice-text" id="noticeText"></div>
   </div>
+  <button class="notice-log-btn hidden" id="noticeLogBtn" data-act="open-nlog">過去のお知らせ ›</button>
   <div class="notice-edit" id="noticeEdit">
     <div class="lbl">お知らせの編集（空にして保存すると非表示）</div>
     <textarea class="edit-input" id="noticeInput" rows="3" placeholder="例: 新しい動画を追加しました"></textarea>
@@ -416,6 +434,11 @@ footer{padding-top:24px;}
     </div>
   </div>
 
+  <form class="xs-bar" id="xsForm" autocomplete="off">
+    <input id="xsInput" type="search" placeholder="所持リスト・求めリストをまとめて検索" enterkeyhint="search">
+    <button type="submit">検索</button>
+  </form>
+
   <div class="top-loading" id="topLoading" aria-live="polite"><span style="animation-delay:0s">読</span><span style="animation-delay:.1s">み</span><span style="animation-delay:.2s">込</span><span style="animation-delay:.3s">み</span><span style="animation-delay:.4s">中</span><span style="animation-delay:.5s">…</span></div>
 
   <div class="section-header" id="secMust">
@@ -468,6 +491,28 @@ footer{padding-top:24px;}
       <button data-act="ng-copy">バックアップをコピー</button>
       <button data-act="ng-restore">貼り付けて復元</button>
     </div>
+  </div>
+</div>
+
+<!-- 横断検索 -->
+<div class="modal" id="xsModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title" id="xsTitle">検索結果</div>
+      <button class="x-btn" data-act="close">✕</button>
+    </div>
+    <div id="xsBody"></div>
+  </div>
+</div>
+
+<!-- 過去のお知らせ -->
+<div class="modal" id="nlogModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title">過去のお知らせ</div>
+      <button class="x-btn" data-act="close">✕</button>
+    </div>
+    <div id="nlogList"></div>
   </div>
 </div>
 
@@ -527,6 +572,7 @@ const DEF={
 const clone=o=>JSON.parse(JSON.stringify(o));
 let contents=clone(DEF);   // links / mustread / rules
 contents.notice={text:'',date:''};
+contents.noticeLog=[];
 let raw={};                // シート上のその他のキー（上書き消失防止）
 let isAdmin=false,token='';
 const openSet=new Set();
@@ -624,7 +670,75 @@ function renderNotice(){
   if(n.date){const t=new Date(n.date+'T00:00:00').getTime();isNewN=!isNaN(t)&&Date.now()-t<8*86400000&&Date.now()-t>-86400000;}
   $('#noticeNew').classList.toggle('hidden',!(has&&isNewN));
   if(document.activeElement!==$('#noticeInput'))$('#noticeInput').value=n.text||'';
+  const lg=contents.noticeLog||[];
+  $('#noticeLogBtn').classList.toggle('hidden',!lg.length);
+  $('#nlogList').innerHTML=lg.length?lg.map((x,i)=>'<div class="nlog-item"><div class="nlog-date"><span>'+esc(x.date||'')+'</span><button data-act="del-nlog" data-i="'+i+'">削除</button></div><div class="nlog-text">'+fmt(x.text)+'</div></div>').join(''):'<div class="ng-empty">過去のお知らせはありません</div>';
 }
+function pushNoticeLog(){
+  const n=contents.notice||{};const t=String(n.text||'').trim();if(!t)return;
+  const lg=contents.noticeLog||(contents.noticeLog=[]);
+  if(lg.length&&lg[0].text===t&&lg[0].date===(n.date||''))return;
+  lg.unshift({text:t,date:n.date||''});if(lg.length>30)lg.length=30;
+}
+/* ===== 横断検索 ===== */
+const XS_SRC=[
+  {key:'v1',name:'所持リスト①',action:'getVideos',url:'https://noyu-web.github.io/video-list/'},
+  {key:'v2',name:'所持リスト②',action:'getVideos2',url:'https://noyu-web.github.io/video-list/videolist2/'},
+  {key:'w',name:'求めリスト',action:'getWishlist',url:'https://noyu-web.github.io/video-list/wishlist-app/'}
+];
+const xsCache={};
+function xsFold(t){return String(t||'').normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));}
+function xsMembers(m){return Array.isArray(m)?m.filter(Boolean).join('・'):String(m||'').split(/[,、]/).map(x=>x.trim()).filter(Boolean).join('・');}
+function xsTracks(it){try{const a=JSON.parse(it.tracks||'[]');return Array.isArray(a)?a.map(t=>typeof t==='string'?t:(t&&t.title)||'').filter(Boolean):[];}catch{return[];}}
+async function xsLoad(src){
+  if(xsCache[src.key])return xsCache[src.key];
+  const d=await jsonp({action:src.action},15000);
+  if(!Array.isArray(d))throw new Error('bad');
+  xsCache[src.key]=d;return d;
+}
+function xsLink(src,title){return src.url+'#s='+encodeURIComponent(JSON.stringify({q:title,a:1}));}
+async function xsRun(q){
+  const body=$('#xsBody');
+  $('#xsTitle').textContent='「'+q+'」の検索結果';
+  body.innerHTML='<div class="xs-msg">検索中</div>';
+  openModal('xsModal');
+  const words=xsFold(q).split(/\s+/).filter(Boolean);
+  const res=await Promise.all(XS_SRC.map(async src=>{
+    try{
+      const list=await xsLoad(src);
+      const hits=[];
+      list.forEach(it=>{
+        const title=String(it.title||'');const mem=xsMembers(it.members);const note=String(it.note||'');const trs=src.key==='w'?[]:xsTracks(it);
+        const hay=xsFold([title,mem,note,trs.join(' ')].join(' '));
+        if(!words.every(w=>hay.includes(w)))return;
+        let sub=[mem,src.key==='w'?String(it.date||''):''].filter(Boolean).join('　');
+        if(!words.every(w=>xsFold(title+' '+mem).includes(w))){
+          const ht=trs.find(t=>words.some(w=>xsFold(t).includes(w)));
+          if(ht)sub=(sub?sub+'　':'')+'収録内容: '+ht;
+          else if(note)sub=(sub?sub+'　':'')+'メモ: '+note.slice(0,40);
+        }
+        hits.push({title,sub});
+      });
+      return{src,hits};
+    }catch{return{src,err:true};}
+  }));
+  if(!$('#xsModal').classList.contains('open'))return;
+  const total=res.reduce((a,r)=>a+(r.hits?r.hits.length:0),0);
+  body.innerHTML=res.map(r=>{
+    const head='<div class="xs-grp"><span>'+esc(r.src.name)+(r.err?'':'　'+r.hits.length+'件')+'</span>'+(r.err||!r.hits.length?'':'<a href="'+esc(r.src.url+'#s='+encodeURIComponent(JSON.stringify({q,a:1})))+'">このリストで開く ›</a>')+'</div>';
+    if(r.err)return head+'<div class="xs-msg" style="padding:10px 0">読み込めませんでした</div>';
+    if(!r.hits.length)return head+'<div class="xs-msg" style="padding:10px 0">該当なし</div>';
+    return head+r.hits.slice(0,50).map(h=>'<a class="xs-item" href="'+esc(xsLink(r.src,h.title))+'"><div class="xs-t">'+esc(h.title)+'</div>'+(h.sub?'<div class="xs-s">'+esc(h.sub)+'</div>':'')+'</a>').join('')+(r.hits.length>50?'<div class="xs-msg" style="padding:10px 0">ほか '+(r.hits.length-50)+'件</div>':'');
+  }).join('')+(total?'':'');
+}
+document.addEventListener('submit',e=>{
+  if(!e.target||e.target.id!=='xsForm')return;
+  e.preventDefault();
+  const q=$('#xsInput').value.trim();
+  if(!q){toast('検索する文字を入力してください');return;}
+  $('#xsInput').blur();
+  xsRun(q);
+});
 const NG_KEY='top_ng_list_v1';
 function ngLoad(){try{const a=JSON.parse(localStorage.getItem(NG_KEY)||'[]');return Array.isArray(a)?a:[];}catch{return[];}}
 function ngSave(a){try{localStorage.setItem(NG_KEY,JSON.stringify(a));}catch{toast('保存できませんでした');}}
@@ -656,8 +770,10 @@ function applyData(data){
     if(Array.isArray(R)&&R.length)contents.rules=R;
     const N=parseVal(data.notice);
     if(N&&typeof N==='object')contents.notice={text:String(N.text||''),date:String(N.date||'')};
+    const G=parseVal(data.noticeLog);
+    if(Array.isArray(G))contents.noticeLog=G.filter(x=>x&&x.text).map(x=>({text:String(x.text),date:String(x.date||'')}));
 }
-function cacheContents(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({links:contents.links,mustread:contents.mustread,rules:contents.rules,notice:contents.notice}));}catch{}}
+function cacheContents(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({links:contents.links,mustread:contents.mustread,rules:contents.rules,notice:contents.notice,noticeLog:contents.noticeLog||[]}));}catch{}}
 function showLists(){document.body.classList.add('ready');}
 async function loadContents(){
   try{
@@ -674,7 +790,8 @@ async function saveContents(){
     links:JSON.stringify(contents.links),
     mustread:JSON.stringify(contents.mustread),
     rules:JSON.stringify(contents.rules),
-    notice:JSON.stringify(contents.notice)};
+    notice:JSON.stringify(contents.notice),
+    noticeLog:JSON.stringify(contents.noticeLog||[])};
   try{
     const r=await fetch(GAS_URL+'?action=saveTopContents&token='+encodeURIComponent(token),{
       method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -808,6 +925,7 @@ document.addEventListener('click',async e=>{
     el.closest('.toggle').classList.toggle('open');return;
   }
   if(act==='open-rules'){openModal('rulesModal');return;}
+  if(act==='open-nlog'){openModal('nlogModal');return;}
   if(act==='send-code'){sendCode();return;}
   if(act==='have-code'){
     $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';setStep(2);
@@ -817,6 +935,10 @@ document.addEventListener('click',async e=>{
   if(act==='verify'){verifyCode();return;}
   if(act==='logout'){logout();return;}
   if(!isAdmin)return;
+  if(act==='del-nlog'){
+    if(!confirm('この過去のお知らせを削除しますか？'))return;
+    (contents.noticeLog||[]).splice(parseInt(el.dataset.i),1);render();await saveContents();return;
+  }
   if(act==='menu-ng'){closeMenu();ngRender();openModal('ngModal');return;}
   if(act==='ng-add'){
     const n=$('#ngName').value.trim(),r=$('#ngReason').value.trim();
@@ -870,11 +992,13 @@ document.addEventListener('click',async e=>{
   }
   if(act==='save-notice'){
     const t=$('#noticeInput').value.trim();
+    if(t!==String((contents.notice||{}).text||'').trim())pushNoticeLog();
     contents.notice={text:t,date:t?todayStr():''};
     render();await saveContents();return;
   }
   if(act==='clear-notice'){
-    if(!confirm('お知らせを削除しますか？'))return;
+    if(!confirm('お知らせを削除しますか？\n過去のお知らせには残ります。'))return;
+    pushNoticeLog();
     contents.notice={text:'',date:''};
     render();await saveContents();return;
   }
@@ -942,7 +1066,7 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- 起動 ---------- */
 loadToken();
-{let hit=false;try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&typeof c==='object'){if(Array.isArray(c.links)&&c.links.length)contents.links=c.links;if(Array.isArray(c.mustread)&&c.mustread.length)contents.mustread=c.mustread;if(Array.isArray(c.rules)&&c.rules.length)contents.rules=c.rules;if(c.notice&&typeof c.notice==='object')contents.notice=c.notice;hit=true;}}catch{}
+{let hit=false;try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&typeof c==='object'){if(Array.isArray(c.links)&&c.links.length)contents.links=c.links;if(Array.isArray(c.mustread)&&c.mustread.length)contents.mustread=c.mustread;if(Array.isArray(c.rules)&&c.rules.length)contents.rules=c.rules;if(c.notice&&typeof c.notice==='object')contents.notice=c.notice;if(Array.isArray(c.noticeLog))contents.noticeLog=c.noticeLog;hit=true;}}catch{}
 if(hit)showLists();}
 render();
 loadContents();
