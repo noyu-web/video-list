@@ -669,6 +669,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="dates-section" style="margin-top:6px">
 <div id="dateGroupsWrap"></div>
 <button class="btn-add-small" id="addDateGroupBtn">＋ 日付を追加</button>
+<button class="btn-add-small" id="moveAllDatesBtn" type="button">放送日をすべて収録内容へ移す</button>
 </div>
 </div>
 <div class="form-group">
@@ -1768,12 +1769,29 @@ return result;
 }
 
 // Date groups
+function moveDgToTracks(dg){
+const date=dg.querySelector('.dg-date').value.trim();if(!date)return -1;
+const times=[...dg.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim()).filter(Boolean);
+const rd=box=>{const o={};['label','res','size','dur','loc'].forEach(k=>{const e=box.querySelector('.dgf-'+k);const v=e?e.value.trim():'';if(v)o[k]=v;});return o;};
+const info=rd(dg.querySelector('.dg-finfo'));
+const more=[...dg.querySelectorAll('.dg-more .dg-blk')].map(rd).filter(x=>Object.keys(x).length);
+if(more.length)info.more=more;
+const hasInfo=Object.keys(info).length>0;
+const exist=[...document.querySelectorAll('#tracksWrap .track-date')].filter(e=>e.value.trim()===date).map(e=>{const r=e.closest('div[style*="pink-pale"]')||e.parentElement;return((r.querySelector('.track-time')||{}).value||'').trim();});
+let n=0;
+if(!times.length){if(!exist.length||hasInfo){addTrackRow('','none',date,[],'',hasInfo?info:{},'');n++;}}
+else times.forEach((t,i)=>{if(exist.includes(t)&&!(i===0&&hasInfo))return;addTrackRow('','none',date,[],'',i===0&&hasInfo?info:{},t);n++;});
+(window._movedDates||(window._movedDates=[])).push(date);
+dg.remove();
+return n;
+}
 function addDateGroup(dateVal='',times=[],info={}){
 const wrap=document.getElementById('dateGroupsWrap');
 const div=document.createElement('div');div.className='date-group';
 div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" type="date" value="${esc(dateVal)}" style="flex:1"><button class="btn-remove dg-remove" type="button">✕</button></div>
 <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
 <button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>
+<button class="btn-add-small dg-to-track" type="button">この日付を収録内容へ移す</button>
 <div class="dg-finfo" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 6px">
 <input class="form-input dgf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(info.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
 <input class="form-input dgf-res" placeholder="解像度（例 1920×1080）" value="${esc(info.res||'')}" style="font-size:12px;padding:6px 8px">
@@ -1789,6 +1807,7 @@ b.querySelector('.btn-remove').onclick=()=>b.remove();div.querySelector('.dg-mor
 (info.more||[]).forEach(_addDgMore);
 div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
+div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':'収録内容へ移しました');});
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
 tr.innerHTML=`<input class="form-input" type="time" style="width:110px"><button class="btn-remove tr-remove" type="button">✕</button>`;
@@ -1815,7 +1834,7 @@ return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-grou
 }
 
 async function openEditModal(id=null){
-cfg=loadConfig();editingId=id;
+cfg=loadConfig();editingId=id;window._movedDates=[];
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
 document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+'';
@@ -1873,7 +1892,7 @@ renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?schedUnion(item):[];
-window._openDates=schedules.map(s=>s.date);schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
+window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
 {const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(t.title||t,t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
@@ -2188,7 +2207,7 @@ let _sdel=[];
 raw.forEach((x,i)=>{const inf=gi[i]||{};const e=mp.get(x.date);if(!e){const n={s:{date:x.date,times:x.times.slice()},i:inf};mp.set(x.date,n);arr.push(n);}else{x.times.forEach(t=>{if(!e.s.times.includes(t))e.s.times.push(t);});if(!Object.keys(e.i).length)e.i=inf;}});
 const cur=new Set(arr.map(z=>z.s.date));
 const omm=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);
-_sdel=[...new Set([...(omm.sdel||[]),...(window._openDates||[]).filter(d=>!cur.has(d))])].filter(d=>!cur.has(d));
+_sdel=[...new Set([...(omm.sdel||[]),...(window._openDates||[]).filter(d=>!cur.has(d)),...(window._movedDates||[])])].filter(d=>!cur.has(d));
 tracks.forEach(t=>{if(!t||!t.date||_sdel.includes(t.date))return;let e=mp.get(t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};mp.set(t.date,e);arr.push(e);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});
 arr.sort((x,y)=>x.s.date<y.s.date?-1:x.s.date>y.s.date?1:0);schedules=arr.map(z=>z.s);schInfo=arr.map(z=>z.i);}
 const metaObj={};
@@ -2668,6 +2687,12 @@ document.getElementById('healthList').innerHTML=_healthRows.map((r,i)=>`<button 
 document.getElementById('healthModal').classList.remove('hidden');
 }
 document.getElementById('healthBtn').addEventListener('click',openHealth);
+document.getElementById('moveAllDatesBtn').addEventListener('click',()=>{
+const gs=[...document.querySelectorAll('#dateGroupsWrap .date-group')].filter(g=>g.querySelector('.dg-date').value.trim());
+if(!gs.length){toastMsg('移せる放送日がありません');return;}
+gs.forEach(moveDgToTracks);
+toastMsg(gs.length+'件の放送日を収録内容へ移しました');
+});
 /* ===== 複製・日付順・題名置換 ===== */
 document.getElementById('editDupBtn').addEventListener('click',()=>{
 if(!editingId){toastMsg('保存済みの動画を開いているときに使えます');return;}
