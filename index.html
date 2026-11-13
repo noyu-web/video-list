@@ -1903,7 +1903,7 @@ addSel.innerHTML=otherSubs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`
 if(otherSubs.includes(prevG))addSel.value=prevG;
 addSel.style.display=otherSubs.length>1?'':'none';
 const nowOtherSel=[...document.getElementById('otherMemberChips').querySelectorAll('.chip.selected')].map(c=>c.dataset.member);
-const effectiveOtherSel=hadOther?nowOtherSel:sel;
+const effectiveOtherSel=initial?sel:nowOtherSel;
 const allOG=ogGroups(cfg);
 const grpChips=[...new Set([...otherSubs,...effectiveOtherSel.filter(m=>allOG.includes(m))])];
 extraMembers=[...new Set([...extraMembers,...effectiveOtherSel.filter(m=>!cfg.members.includes(m))])].filter(m=>!allOG.includes(m));
