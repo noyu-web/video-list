@@ -56,8 +56,12 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tag-kochi{background:#fff0b3;color:#7a5c00}
 .tag-mori{background:#b3f0c8;color:#1a5c35}
 .tag-juri{background:#b3d4ff;color:#003d7a}
+.tag-grp{border-radius:6px!important;padding:2px 9px;font-weight:600}
 .tag-sixtones{background:#e0e0e0;color:#555}
 .tag-all{background:#fce7f3;color:#9d174d}
+#detailModal .tag-all{background:#fff;color:#b8486f;border:1px solid #efb7cb}
+#detailModal .trk-row .tag{font-size:12px!important;padding:2px 10px!important}
+#detailModal .trk-row,#detailSchedules>div>div{border-bottom-color:#f1dfe6!important}
 .tag-date{background:#fde9f1;color:#b8486f;font-size:12px;padding:3px 10px}
 .tag-time{background:#fff7fa;color:#b8486f;font-size:10px;padding:2px 7px}
 .tag-genre{background:#f3e8ff;color:#6b21a8;font-size:10px}
@@ -835,12 +839,26 @@ return out;
 }
 function groupTagsHTML(item){
 if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
-return itemGroups(item).map(g=>`<span class="tag" style="font-size:12px;padding:1px 8px;background:#f06292;color:#fff;font-weight:700">${esc(g)}</span>`).join('');
+return itemGroups(item).map(g=>`<span class="tag" style="font-size:11px;padding:2px 9px;background:#f06292;color:#fff;font-weight:600;border-radius:6px">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
 function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(Array.isArray(m.tr)?m.tr:[]).flatMap(o=>[one(o||{}),...((o&&Array.isArray(o.more)&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
 function hasMeta(item){const m=parseMeta(item);return['res','size','loc'].some(k=>m[k])||(m.tr||[]).some(o=>o&&Object.keys(o).length);}
 function isSixTONESMember(m){return SIXTONES_MEMBERS.includes(m)||loadConfig().members.includes(m);}
+const MC_PAL={"red":["#ffb3b3","#7b0000"],"pink":["#ffb3d9","#7b0044"],"black":["#4a4a4a","#ffffff"],"yellow":["#fff0b3","#7a5c00"],"green":["#b3f0c8","#1a5c35"],"blue":["#b3d4ff","#003d7a"],"orange":["#ffd4a8","#7a3d00"],"purple":["#dcc8ff","#4a1d7a"],"white":["#ffffff","#555555"],"lblue":["#c2eaf7","#0b4f66"],"ygreen":["#d9f2a6","#3f5a00"]};
+const MC_MAP={"錦織一清":["red"],"植草克秀":["yellow"],"東山紀之":["black"],"木村拓哉":["red"],"香取慎吾":["green"],"草彅剛":["yellow"],"稲垣吾郎":["blue"],"中居正広":["pink"],"森且行":["white"],"長瀬智也":["red"],"城島茂":["green"],"松岡昌宏":["purple"],"山口達也":["yellow"],"国分太一":["blue"],"森田剛":["red"],"井ノ原快彦":["green"],"長野博":["purple"],"岡田准一":["yellow"],"坂本昌行":["blue"],"三宅健":["orange"],"堂本光一":["red"],"堂本剛":["blue"],"櫻井翔":["red"],"相葉雅紀":["green"],"松本潤":["purple"],"二宮和也":["yellow"],"大野智":["blue"],"滝沢秀明":["pink"],"今井翼":["lblue"],"山下智久":["red"],"加藤シゲアキ":["green"],"小山慶一郎":["purple"],"増田貴久":["yellow"],"手越祐也":["pink"],"渋谷すばる":["red"],"大倉忠義":["green"],"村上信五":["purple"],"安田章大":["blue"],"内博貴":["pink"],"丸山隆平":["orange"],"横山裕":["black"],"錦戸亮":["yellow"],"赤西仁":["red"],"中丸雄一":["purple"],"田中聖":["yellow"],"上田竜也":["blue"],"亀梨和也":["pink"],"田口淳之介":["orange"],"山田涼介":["red"],"岡本圭人":["green"],"高木雄也":["purple"],"八乙女光":["yellow"],"伊野尾慧":["blue"],"知念侑李":["pink"],"有岡大貴":["orange"],"中島裕翔":["lblue"],"薮宏太":["ygreen"],"北山宏光":["red"],"二階堂高嗣":["green"],"宮田俊哉":["purple"],"玉森裕太":["yellow"],"藤ヶ谷太輔":["pink"],"横尾渉":["orange"],"千賀健永":["lblue"],"佐藤勝利":["red"],"松島聡":["green"],"菊池風磨":["purple"],"中島健人":["blue"],"マリウス葉":["orange"],"寺西拓人":["lblue"],"原嘉孝":["ygreen"],"橋本将生":["pink"],"篠塚大輝":["white"],"橋本良亮":["red"],"河合郁人":["purple"],"塚田僚一":["yellow"],"五関晃一":["blue"],"戸塚祥太":["pink"],"重岡大毅":["red"],"神山智洋":["green"],"濱田崇裕":["purple"],"中間淳太":["yellow"],"藤井流星":["blue"],"小瀧望":["pink"],"桐山照史":["orange"],"平野紫耀":["red"],"岸優太":["purple"],"髙橋海人":["yellow"],"岩橋玄樹":["pink"],"永瀬廉":["black"],"神宮寺勇太":["lblue"],"越岡裕貴":["red"],"福田悠太":["green"],"松崎祐介":["purple"],"辰巳雄大":["yellow"],"宮舘涼太":["red"],"阿部亮平":["green"],"深澤辰哉":["purple"],"岩本照":["yellow"],"渡辺翔太":["blue"],"佐久間大介":["pink"],"向井康二":["orange"],"目黒蓮":["black"],"ラウール":["white"],"西畑大吾":["red"],"大橋和也":["green"],"高橋恭平":["purple"],"長尾謙杜":["yellow"],"藤原丈一郎":["blue"],"道枝駿佑":["pink"],"大西流星":["orange"],"宮近海斗":["red"],"中村海人":["green"],"吉澤閑也":["yellow"],"松田元太":["blue"],"七五三掛龍也":["pink"],"松倉海斗":["orange"],"川島如恵留":["white"],"井上瑞稀":["red"],"猪狩蒼弥":["green"],"作間龍斗":["purple"],"橋本涼":["blue"],"髙橋優斗":["white"],"藤井直樹":["green"],"金指一世":["pink"],"菅田琳寧":["red"],"本髙克樹":["green"],"今野大輝":["pink"],"矢花黎":["white"],"前田航気":["blue"],"元木湧":["red"],"ヴァサイェガ渉":["red"],"久保廉":["red"],"安嶋秀生":["green"],"田村海琉":["green"],"檜山光成":["purple"],"長瀬結星":["purple"],"北川拓実":["yellow"],"稲葉通陽":["yellow"],"平塚翔馬":["yellow"],"織山尚大":["blue"],"山井飛翔":["blue"],"川﨑皇輝":["pink"],"青木滉平":["pink"],"瀧陽次朗":["pink"],"鈴木悠仁":["orange"],"黒田光輝":["black"],"豊田陸人":["white"],"内村颯太":["lblue"],"川﨑星輝":["lblue"],"小田将聖":["ygreen"],"嶋﨑斗亜":["red"],"當間琉巧":["green"],"大西風雅":["purple"],"岡﨑彪太郎":["yellow"],"西村拓哉":["blue"],"末澤誠也":["red"],"佐野晶哉":["green"],"小島健":["purple"],"草間リチャード敬太":["yellow"],"正門良規":["blue"],"福本大晴":["orange"],"影山拓也":["red"],"基俊介":["green"],"横原悠毅":["purple"],"松井湊":["yellow"],"鈴木大河":["blue"],"佐藤新":["pink"],"椿泰我":["orange"],"中村浩大":["green"],"和田優希":["purple"],"松尾龍":["yellow"],"林蓮音":["pink"],"中村嶺亜":["pink"],"佐々木大光":["blue"],"岩﨑大昇":["white"],"那須雄登":["blue"],"深田竜生":["green"],"佐藤龍我":["yellow"],"浮所飛貴":["orange"]};
+const MC_KEYS=(()=>{const f=s=>String(s||'').replace(/髙/g,'高').replace(/[﨑嵜]/g,'崎').replace(/嶋/g,'島').replace(/瀧/g,'滝').replace(/涉/g,'渉').replace(/[\s　・]/g,'');const m={};Object.keys(MC_MAP).forEach(k=>{m[f(k)]=MC_MAP[k];});return{f,m};})();
+const _mcMade={};
+function mcClass(cols){
+const key=cols.join('-');if(_mcMade[key])return _mcMade[key];
+let st=document.getElementById('mcStyle');if(!st){st=document.createElement('style');st.id='mcStyle';document.head.appendChild(st);}
+const cn='tag-mc-'+key;let css;
+if(cols.length===1){const p=MC_PAL[cols[0]];css='.'+cn+'{background:'+p[0]+';color:'+p[1]+'}';}
+else{css='.'+cn+'{background:linear-gradient(90deg,'+cols.map(c=>MC_PAL[c][0]).join(',')+');color:#374151}';}
+if(cols.indexOf('white')>=0)css+='.'+cn+'{box-shadow:inset 0 0 0 1px #e3e3e3}';
+st.appendChild(document.createTextNode(css));_mcMade[key]=cn;return cn;
+}
+function isGrpName(m){try{return Object.prototype.hasOwnProperty.call(loadConfig().otherMembers||{},m);}catch{return false;}}
 function memberClass(m){
 if(m==='ジェシー')return'tag-jesse';
 if(m==='京本大我')return'tag-kyomo';
@@ -848,9 +866,12 @@ if(m==='松村北斗')return'tag-matsu';
 if(m==='髙地優吾')return'tag-kochi';
 if(m==='森本慎太郎')return'tag-mori';
 if(m==='田中樹')return'tag-juri';
-if(m==='SixTONES')return'tag-sixtones';
-return'tag-all';
+if(m==='SixTONES')return'tag-sixtones tag-grp';
+const c=MC_KEYS.m[MC_KEYS.f(m)];
+if(c&&c.length)return mcClass(c);
+return(isGrpName(m)?'tag-all tag-grp':'tag-all');
 }
+function fmtDJ(v){v=String(v==null?'':v);const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);if(!m)return esc(v);const d=new Date(+m[1],+m[2]-1,+m[3]);return m[1]+'年'+(+m[2])+'月'+(+m[3])+'日('+'日月火水木金土'[d.getDay()]+')';}
 function exchangeClass(e){return e==='ok'?'exchange-ok':e==='partial'?'exchange-partial':e==='consult'?'exchange-consult':'exchange-ng';}
 function exchangeLabel(e){return e==='ok'?'交換可':e==='partial'?'一部交換可':e==='consult'?'要相談':'交換不可';}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1435,7 +1456,7 @@ const cnt=document.createElement('div');cnt.style.cssText='font-size:11px;color:
 box.before(inp);box.before(cnt);
 inp.addEventListener('input',()=>{
 const q=fold(inp.value.trim());let n=0;
-rows.forEach(r=>{const hit=!q||fold(r.textContent).includes(q);r.style.display=hit?'':'none';if(hit)n++;});
+rows.forEach(r=>{const hit=!q||fold(r.textContent+' '+(r.dataset.d||'')).includes(q);r.style.display=hit?'':'none';if(hit)n++;});
 box.querySelectorAll('details.trk-year').forEach(d=>{const any=[...d.querySelectorAll('.trk-row')].some(r=>r.style.display!=='none');d.style.display=any?'':'none';if(q&&any)d.open=true;});
 box.querySelectorAll('.trk-sec').forEach(h=>{let e=h.nextElementSibling,any=false;while(e&&!e.classList.contains('trk-sec')){if(e.classList.contains('trk-row')&&e.style.display!=='none')any=true;e=e.nextElementSibling;}h.style.display=any?'':'none';});
 cnt.style.display=q?'':'none';cnt.textContent=n+' / '+rows.length+' 件';
@@ -1459,10 +1480,10 @@ const schDiv=document.getElementById('detailSchedules');
 let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEach(t=>{if(t&&t.date)_trDates.add(t.date);});}catch{}
 if(schedules.length){
 schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">配信,放送日</div>'+
-'<div style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
+'<div style="background:#fffafc;border:1.5px solid #f3d3df;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
 schedules.map((s,si)=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
-<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:12px;font-weight:700;color:#b8486f">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
-${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=s.info||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join('');})()}
+<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=s.info||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="margin-top:5px"><span style="display:inline-block;font-size:12px;font-weight:500;color:#7b8089;line-height:1.5">${esc(x)}</span></div>`).join('');})()}
 </div>`).join('')+'</div>';
 }else schDiv.innerHTML='';
 // 収録内容
@@ -1496,16 +1517,16 @@ const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||
 const dateBadge='';
 const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 6px">${esc(m)}</span>`).join('');
 const memberSpan=memberBadges?`<span style="display:inline-flex;flex-wrap:wrap;gap:3px">${memberBadges}</span>`:'';
-secItems.push(`<div class="trk-row" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:10px 0;border-bottom:1px solid #f3e1ea">
-${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:800;color:#b8486f;letter-spacing:.02em">${esc(dp)}</span>${tp?`<span style="font-size:12px;font-weight:700;color:#b8486f">${esc(tp)}</span>`:''}${title?'':badge+memberSpan}</div>`:''}
+secItems.push(`<div class="trk-row" data-d="${esc(dp)}" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:12px 0;border-bottom:1px solid #f3e1ea">
+${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(dp)}</span>${tp?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${esc(tp)}</span>`:''}${title?'':(badge||memberSpan?`<div style="flex:0 0 100%;display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px">${badge}${memberSpan}</div>`:'')}</div>`:''}
 ${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
 ${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="font-size:12px;font-weight:600;color:#d0658f;margin-top:4px">${esc(x)}</div>`).join(''):'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="margin-top:5px"><span style="display:inline-block;font-size:12px;font-weight:500;color:#7b8089;line-height:1.5">${esc(x)}</span></div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
 tracksDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">収録内容,詳細</div>'+
-`<div id="trkBox" style="background:var(--pink-pale);border:1px solid #f3e1ea;border-radius:12px;padding:2px 14px;margin-bottom:14px">${sectionsHtml}</div>`;
+`<div id="trkBox" style="background:#fffafc;border:1.5px solid #f3d3df;border-radius:12px;padding:2px 14px;margin-bottom:14px">${sectionsHtml}</div>`;
 document.getElementById('detailNote').before(tracksDiv);
 trkEnhance(tracksDiv);
 }else if(tracksDiv.parentNode){tracksDiv.innerHTML='';}
@@ -1785,7 +1806,7 @@ return result;
 
 // Date groups
 function moveDgToTracks(dg){
-const date=dg.querySelector('.dg-date').value.trim();if(!date)return -1;
+const date=dgDate(dg);if(!date)return -1;
 const times=[...dg.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim()).filter(Boolean);
 const rd=box=>{const o={};['label','res','size','dur','loc'].forEach(k=>{const e=box.querySelector('.dgf-'+k);const v=e?e.value.trim():'';if(v)o[k]=v;});return o;};
 const info=rd(dg.querySelector('.dg-finfo'));
@@ -1803,9 +1824,11 @@ hit.forEach(r=>{r.style.outline='2px solid var(--pink)';setTimeout(()=>{r.style.
 if(hit.length)hit[hit.length-1].scrollIntoView({block:'center',behavior:'smooth'});
 return n;
 }
+function dgDate(dg){return dg.querySelector('.dg-date').value.trim()||dg.dataset.rawdate||'';}
 function addDateGroup(dateVal='',times=[],info={}){
 const wrap=document.getElementById('dateGroupsWrap');
 const div=document.createElement('div');div.className='date-group';
+{const _r=String(dateVal||'');dateVal=isoDate(_r);if(_r&&!dateVal)div.dataset.rawdate=_r;}info=info||{};times=Array.isArray(times)?times:[];
 div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" type="date" value="${esc(dateVal)}" style="flex:1"><button class="btn-remove dg-remove" type="button">✕</button></div>
 <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
 <button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>
@@ -1841,13 +1864,13 @@ const by=new Map(),sc=[];sc0.forEach(s=>{const e=by.get(s.date);if(!e){by.set(s.
 return sc;}
 function getSchedules(){
 return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].map(dg=>({
-date:dg.querySelector('.dg-date').value.trim(),
+date:dgDate(dg),
 times:[...dg.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim()).filter(Boolean)
 })).filter(s=>s.date);
 }
 function getSchedInfo(){
 const rd=(box,pre)=>{const o={};[['label','label'],['res','res'],['size','size'],['dur','dur'],['loc','loc']].forEach(([k,c])=>{const e=box.querySelector('.'+pre+c);const v=e?e.value.trim():'';if(v)o[k]=v;});return o;};
-return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].filter(dg=>dg.querySelector('.dg-date').value.trim()).map(dg=>{const o=rd(dg.querySelector('.dg-finfo'),'dgf-');const mo=[...dg.querySelectorAll('.dg-more .dg-blk')].map(b=>rd(b,'dgf-')).filter(x=>Object.keys(x).length);if(mo.length)o.more=mo;return o;});
+return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].filter(dg=>dgDate(dg)).map(dg=>{const o=rd(dg.querySelector('.dg-finfo'),'dgf-');const mo=[...dg.querySelectorAll('.dg-more .dg-blk')].map(b=>rd(b,'dgf-')).filter(x=>Object.keys(x).length);if(mo.length)o.more=mo;return o;});
 }
 
 async function openEditModal(id=null){
@@ -1890,6 +1913,8 @@ document.getElementById('otherMemberChips').querySelectorAll('.chip').forEach(c=
 otherGroup.classList.add('hidden');
 document.getElementById('otherMemberChips').innerHTML='';
 }
+{const mc=document.getElementById('memberChips');const shown=new Set([...document.querySelectorAll('#memberChips .chip,#otherMemberChips .chip')].map(c=>c.dataset.member));
+[].concat(effectiveSel||[]).forEach(m=>{if(!m||shown.has(m))return;const bt=document.createElement('button');bt.type='button';bt.className='chip selected';bt.dataset.member=m;bt.textContent=m;bt.addEventListener('click',()=>bt.classList.toggle('selected'));mc.appendChild(bt);shown.add(m);});}
 }
 document.getElementById('otherAddBtn').onclick=()=>{
 const inp=document.getElementById('otherAddInput'),v=inp.value.trim();if(!v)return;
@@ -1936,14 +1961,18 @@ let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;let j=0;while(j<a.length-i
 let x=a.slice(i,a.length-j),y=b.slice(i,b.length-j);if(!x||x.length>12||y.length>12)return;
 if(x.length<2){const l=a.slice(Math.max(0,i-1),i),r1=a.slice(a.length-j,a.length-j+1),r2=b.slice(b.length-j,b.length-j+1);x=l+x+r1;y=l+y+r2;}
 const d=fixLoad();d[x]=y;try{localStorage.setItem(FIXK,JSON.stringify(d));}catch{}}
+function isoDate(v){v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const m=/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D*$/.exec(v);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):'';}
 function addTrackRow(val='',dist='none',date='',members=[],section='',file={},time=''){
+const _rawDate=String(date||'');date=isoDate(_rawDate);members=Array.isArray(members)?members:[];
 cfg=loadConfig();
 const wrap=document.getElementById('tracksWrap');
 const row=document.createElement('div');
 row.style.cssText='background:var(--pink-pale);border-radius:8px;padding:8px;margin-bottom:8px;border:1px solid var(--pink-light)';
+if(_rawDate&&!date)row.dataset.rawdate=_rawDate;
 const allMembers=[...cfg.members,...Object.values(cfg.otherMembers||{}).flat()].filter((m,i,a)=>a.indexOf(m)===i);
-const memberOptions=allMembers.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('')+(()=>{const gl=ogGroups(cfg);return gl.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark);margin-top:4px">グループ名</div>'+gl.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px;border-style:dashed">${esc(m)}</span>`).join(''):'';})();
-const sections=['','音源','映像','特典映像','ドキュメント','メイキング','その他'];
+const _known=new Set([...allMembers,...ogGroups(cfg)]);
+const memberOptions=members.filter(m=>m&&!_known.has(m)).map(m=>`<span class="chip track-member-chip selected" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('')+allMembers.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('')+(()=>{const gl=ogGroups(cfg);return gl.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark);margin-top:4px">グループ名</div>'+gl.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px;border-style:dashed">${esc(m)}</span>`).join(''):'';})();
+const sections=['','音源','映像','特典映像','ドキュメント','メイキング','その他'];if(section&&!sections.includes(section))sections.push(section);
 const sectionOptions=sections.map(s=>`<option value="${s}" ${section===s?'selected':''}>${s||'セクションなし'}</option>`).join('');
 row.innerHTML=`
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
@@ -1956,7 +1985,7 @@ row.innerHTML=`
 <button class="btn-remove tr-rm" type="button">✕</button>
 </div>
 <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-<input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px"><button type="button" class="btn-add-small" onclick="this.previousElementSibling.value=''" style="flex:none;padding:6px 10px">日付削除</button>
+<input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px"><button type="button" class="btn-add-small" onclick="this.previousElementSibling.value='';this.closest('div[style*=pink-pale]').dataset.rawdate=''" style="flex:none;padding:6px 10px">日付削除</button>
 <input class="form-input track-time" type="text" placeholder="時間 例 14:00" value="${esc(time)}" style="width:110px;font-size:13px">
 <select class="track-dist form-select" style="width:100px;padding:7px 6px;font-size:12px">
 <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
@@ -2191,10 +2220,11 @@ const members=[...row.querySelectorAll('.track-member-chip.selected')].map(c=>c.
 const fo={};[['label','.tf-label'],['res','.tf-res'],['size','.tf-size'],['dur','.tf-dur'],['loc','.tf-loc']].forEach(([k,sel])=>{const e=row.querySelector(sel);const v=e?e.value.trim():'';if(v)fo[k]=v;});
 const tmEl=row.querySelector('.track-time');const tmv=tmEl?tmEl.value.trim():'';
 const mo=[...row.querySelectorAll('.tf-blk')].map(b=>{const o={};[['label','.tm-label'],['res','.tm-res'],['size','.tm-size'],['dur','.tm-dur'],['loc','.tm-loc']].forEach(([k,q])=>{const v=b.querySelector(q).value.trim();if(v)o[k]=v;});return o;}).filter(o=>Object.keys(o).length);if(mo.length)fo.more=mo;
-const hasOther=tmv||(date&&date.value)||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
+const rawD=row.dataset.rawdate||'';
+const hasOther=tmv||(date&&date.value)||rawD||members.length||(sec&&sec.value)||Object.keys(fo).length||(dist&&dist.value&&dist.value!=='none');
 if(!input.value.trim()&&!hasOther)return null;
 _trackFiles.push(fo);
-return{title:input.value.trim(),time:tmv,dist:dist?dist.value:'none',date:date?date.value:'',members,section:sec?sec.value:''};
+return{title:input.value.trim(),time:tmv,dist:dist?dist.value:'none',date:(date&&date.value)?date.value:rawD,members,section:sec?sec.value:''};
 }).filter(Boolean);
 }
 document.getElementById('addBtn').addEventListener('click',()=>openEditModal());
@@ -2225,7 +2255,7 @@ let _sdel=[];
 raw.forEach((x,i)=>{const inf=gi[i]||{};const e=mp.get(x.date);if(!e){const n={s:{date:x.date,times:x.times.slice()},i:inf};mp.set(x.date,n);arr.push(n);}else{x.times.forEach(t=>{if(!e.s.times.includes(t))e.s.times.push(t);});if(!Object.keys(e.i).length)e.i=inf;}});
 schedules=arr.map(z=>z.s);schInfo=arr.map(z=>z.i);}
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;else if(!tracks.length&&Array.isArray(om.tr)&&om.tr.some(o=>o&&Object.keys(o).some(k=>k==='more'?(o.more||[]).length:o[k])))metaObj.tr=om.tr;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
@@ -2373,20 +2403,26 @@ const genres=pj(base.genres,[]).slice();
 const bsch=parseMeta(base).sch||[];
 const sched=pj(base.dates,[]).map((x,i)=>typeof x==='string'?{date:x,times:[],_i:bsch[i]||{}}:{date:x.date,times:(x.times||[]).slice(),_i:bsch[i]||{}});
 const tName=x=>typeof x==='string'?'s|'+x:[(x&&x.title)||'',(x&&x.date)||'',(x&&x.time)||'',(x&&x.section)||''].join('|');
-const mkTrack=(it)=>({title:it.title,dist:'none',date:(((pj(it.dates,[])[0])||{}).date)||((pj(it.dates,[])[0])||'')||'',members:(it.members||[]).slice(),section:''});
+const mkTracks=(it,isBase)=>{const im=parseMeta(it);const ds=pj(it.dates,[]).map(x=>typeof x==='string'?{date:x,times:[]}:x).filter(x=>x&&x.date);
+const same=isBase||String(it.title||'')===String(base.title||'');const mem=(it.members||[]).filter(Boolean);
+if(!ds.length)return{rows:[{title:String(it.title||''),time:'',dist:'none',date:'',members:mem.slice(),section:''}],files:[(im.tr||[])[0]||{}]};
+return{rows:ds.map(d=>({title:same?'':String(it.title||''),time:(d.times||[]).filter(Boolean).join('/'),dist:'none',date:d.date,members:mem.slice(),section:''})),
+files:ds.map((d,i)=>{const x=(im.sch||[])[i]||{};return Object.keys(x).length?x:(i===0?((im.tr||[])[0]||{}):{});})};};
 let tracks=pj(base.tracks,[]).slice();
 const bm=parseMeta(base);let tr=(bm.tr||[]).slice();
-if(!tracks.length&&t.length>1){tracks=[mkTrack(base)];tr=[(bm.tr||[])[0]||{}];}
+if(!tracks.length&&t.length>1){const r=mkTracks(base,true);tracks=r.rows;tr=r.files;sched.length=0;}
 while(tr.length<tracks.length)tr.push({});
 const notes=[base.note||''].filter(Boolean);
 for(const it of t.slice(1)){
 const im=parseMeta(it);
-pj(it.dates,[]).forEach((d0,di)=>{const d=typeof d0==='string'?{date:d0,times:[]}:d0;if(!d.date)return;const inf=(im.sch||[])[di]||{};const e=sched.find(x=>x.date===d.date);if(e){(d.times||[]).forEach(tm=>{if(!e.times.includes(tm))e.times.push(tm);});if(!Object.keys(e._i||{}).length)e._i=inf;else if(Object.keys(inf).length&&JSON.stringify(inf)!==JSON.stringify(e._i)){const mo=(inf.more||[]);const one={...inf};delete one.more;e._i={...e._i,more:[...(e._i.more||[]),one,...mo]};}}else sched.push({date:d.date,times:(d.times||[]).slice(),_i:inf});});
 let its=pj(it.tracks,[]);let itr=(im.tr||[]).slice();
+if(!its.length){const r=mkTracks(it,false);its=r.rows;itr=r.files;}
+else{
+pj(it.dates,[]).forEach((d0,di)=>{const d=typeof d0==='string'?{date:d0,times:[]}:d0;if(!d||!d.date)return;const inf=(im.sch||[])[di]||{};const e=sched.find(x=>x.date===d.date);if(e){(d.times||[]).forEach(tm=>{if(!e.times.includes(tm))e.times.push(tm);});if(!Object.keys(e._i||{}).length)e._i=inf;else if(Object.keys(inf).length&&JSON.stringify(inf)!==JSON.stringify(e._i)){const mo=(inf.more||[]);const one={...inf};delete one.more;e._i={...e._i,more:[...(e._i.more||[]),one,...mo]};}}else sched.push({date:d.date,times:(d.times||[]).slice(),_i:inf});});
 const cm=(it.members||[]).filter(Boolean);
-if(its.length&&cm.length)its=its.map(x=>{if(typeof x==='string')return{title:x,dist:'none',date:'',members:cm.slice(),section:''};const xm=(x&&x.members)||[];return xm.length?x:{...x,members:cm.slice()};});
-if(!its.length){its=[mkTrack(it)];itr=[(im.tr||[])[0]||{}];}
+if(cm.length)its=its.map(x=>{if(typeof x==='string')return{title:x,dist:'none',date:'',members:cm.slice(),section:''};const xm=(x&&x.members)||[];return xm.length?x:{...x,members:cm.slice()};});
 if(String(it.title||'')!==String(base.title||''))its=its.map(x=>(x&&typeof x==='object'&&!String(x.title||'').trim())?{...x,title:String(it.title||'')}:x);
+}
 its.forEach((x,k)=>{const fx=JSON.stringify(itr[k]||{});const sx=JSON.stringify(x);if(tracks.some((y,j)=>JSON.stringify(y)===sx&&JSON.stringify(tr[j]||{})===fx))return;tracks.push(x);tr.push(itr[k]||{});});
 if(it.note&&!notes.includes(it.note))notes.push(it.note);
 }
