@@ -1783,6 +1783,9 @@ if(!times.length){if(!exist.length||hasInfo){addTrackRow('','none',date,[],'',ha
 else times.forEach((t,i)=>{if(exist.includes(t)&&!(i===0&&hasInfo))return;addTrackRow('','none',date,[],'',i===0&&hasInfo?info:{},t);n++;});
 (window._movedDates||(window._movedDates=[])).push(date);
 dg.remove();
+const hit=[...document.querySelectorAll('#tracksWrap .track-date')].filter(e=>e.value.trim()===date).map(e=>e.closest('div[style*="pink-pale"]')||e.parentElement);
+hit.forEach(r=>{r.style.outline='2px solid var(--pink)';setTimeout(()=>{r.style.outline='';},4000);});
+if(hit.length)hit[hit.length-1].scrollIntoView({block:'center',behavior:'smooth'});
 return n;
 }
 function addDateGroup(dateVal='',times=[],info={}){
@@ -1807,7 +1810,7 @@ b.querySelector('.btn-remove').onclick=()=>b.remove();div.querySelector('.dg-mor
 (info.more||[]).forEach(_addDgMore);
 div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
-div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':'収録内容へ移しました');});
+div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':n===0?'同じ日付の収録内容がすでにあるので、放送日からだけ外しました':'収録内容の一番下に追加しました（ピンクの枠）');});
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
 tr.innerHTML=`<input class="form-input" type="time" style="width:110px"><button class="btn-remove tr-remove" type="button">✕</button>`;
@@ -1821,7 +1824,7 @@ document.getElementById('addDateGroupBtn').addEventListener('click',()=>addDateG
 function schedUnion(item){const pm=parseMeta(item),sdel=new Set(pm.sdel||[]);const sc0=formatSchedules(item.dates).map((s,i)=>({date:s.date,times:(s.times||[]).slice(),info:(pm.sch||[])[i]||{}}));let tr=[];try{tr=JSON.parse(item.tracks||'[]');}catch{}
 const by=new Map(),sc=[];sc0.forEach(s=>{const e=by.get(s.date);if(!e){by.set(s.date,s);sc.push(s);}else{(s.times||[]).forEach(t=>{if(!e.times.includes(t))e.times.push(t);});if(!Object.keys(e.info||{}).length)e.info=s.info;}});
 tr.forEach(t=>{if(!t||typeof t==='string'||!t.date||sdel.has(t.date))return;let e=by.get(t.date);if(!e){e={date:t.date,times:[],info:{}};by.set(t.date,e);sc.push(e);}if(t.time&&!e.times.includes(t.time))e.times.push(t.time);});
-return sc.filter(s=>!sdel.has(s.date)||sc0.some(x=>x.date===s.date)&&false).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
+return sc.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);}
 function getSchedules(){
 return[...document.getElementById('dateGroupsWrap').querySelectorAll('.date-group')].map(dg=>({
 date:dg.querySelector('.dg-date').value.trim(),
@@ -2690,8 +2693,8 @@ document.getElementById('healthBtn').addEventListener('click',openHealth);
 document.getElementById('moveAllDatesBtn').addEventListener('click',()=>{
 const gs=[...document.querySelectorAll('#dateGroupsWrap .date-group')].filter(g=>g.querySelector('.dg-date').value.trim());
 if(!gs.length){toastMsg('移せる放送日がありません');return;}
-gs.forEach(moveDgToTracks);
-toastMsg(gs.length+'件の放送日を収録内容へ移しました');
+let made=0;gs.forEach(g=>{const k=moveDgToTracks(g);if(k>0)made+=k;});
+toastMsg(made?('収録内容の一番下に'+made+'行を追加しました（ピンクの枠）'):'同じ日付の収録内容がすでにあるので、放送日からだけ外しました');
 });
 /* ===== 複製・日付順・題名置換 ===== */
 document.getElementById('editDupBtn').addEventListener('click',()=>{
@@ -2821,6 +2824,7 @@ const sc=formatSchedules(v.dates).map((x,i)=>({s:{date:x.date,times:(x.times||[]
 mv.forEach(t=>{let e=sc.find(z=>z.s.date===t.date);if(!e){e={s:{date:t.date,times:[]},i:{}};sc.push(e);}if(t.time&&!e.s.times.includes(t.time))e.s.times.push(t.time);});
 sc.sort((x,y)=>x.s.date<y.s.date?-1:x.s.date>y.s.date?1:0);
 const meta={...pm};delete meta.tr;delete meta.sch;
+if(Array.isArray(meta.sdel)){const mvd=new Set(mv.map(t=>t.date));meta.sdel=meta.sdel.filter(d=>!mvd.has(d));if(!meta.sdel.length)delete meta.sdel;}
 if(keepF.some(o=>Object.keys(o).length))meta.tr=keepF;
 if(sc.some(z=>Object.keys(z.i).length))meta.sch=sc.map(z=>z.i);
 return{n:mv.length,video:{...v,tracks:JSON.stringify(keep),dates:JSON.stringify(sc.map(z=>z.s)),meta:Object.keys(meta).length?JSON.stringify(meta):''}};
