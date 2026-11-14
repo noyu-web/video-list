@@ -1970,8 +1970,9 @@ const wrap=document.getElementById('tracksWrap');
 const row=document.createElement('div');
 row.style.cssText='background:var(--pink-pale);border-radius:8px;padding:8px;margin-bottom:8px;border:1px solid var(--pink-light)';
 if(_rawDate&&!date)row.dataset.rawdate=_rawDate;
-const allMembers=[...cfg.members,...Object.values(cfg.otherMembers||{}).flat()].filter((m,i,a)=>a.indexOf(m)===i);
-const _known=new Set([...allMembers,...ogGroups(cfg)]);
+const _og=ogGroups(cfg);
+const allMembers=[...cfg.members,...Object.values(cfg.otherMembers||{}).flat()].filter((m,i,a)=>a.indexOf(m)===i&&!_og.includes(m));
+const _known=new Set([...allMembers,..._og]);
 const memberOptions=members.filter(m=>m&&!_known.has(m)).map(m=>`<span class="chip track-member-chip selected" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('')+allMembers.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px">${esc(m)}</span>`).join('')+(()=>{const gl=ogGroups(cfg);return gl.length?'<div style="flex:0 0 100%;font-size:10px;font-weight:700;color:var(--pink-dark);margin-top:4px">グループ名</div>'+gl.map(m=>`<span class="chip track-member-chip${members.includes(m)?' selected':''}" data-member="${esc(m)}" style="font-size:11px;padding:3px 9px;border-style:dashed">${esc(m)}</span>`).join(''):'';})();
 const sections=['','音源','映像','特典映像','ドキュメント','メイキング','その他'];if(section&&!sections.includes(section))sections.push(section);
 const sectionOptions=sections.map(s=>`<option value="${s}" ${section===s?'selected':''}>${s||'セクションなし'}</option>`).join('');
@@ -2021,7 +2022,7 @@ row.querySelector('.tr-down').addEventListener('click',()=>{
 const next=row.nextElementSibling;
 if(next)row.parentNode.insertBefore(next,row);
 });
-row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
+row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click',()=>{const on=!c.classList.contains('selected');row.querySelectorAll('.track-member-chip').forEach(x=>{if(x.dataset.member===c.dataset.member)x.classList.toggle('selected',on);});}));
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
