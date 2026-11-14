@@ -859,7 +859,7 @@ else{css='.'+cn+'{background:linear-gradient(90deg,'+cols.map(c=>MC_PAL[c][0]).j
 if(cols.indexOf('white')>=0)css+='.'+cn+'{box-shadow:inset 0 0 0 1px #e3e3e3}';
 st.appendChild(document.createTextNode(css));_mcMade[key]=cn;return cn;
 }
-function isGrpName(m){try{return Object.prototype.hasOwnProperty.call(loadConfig().otherMembers||{},m);}catch{return false;}}
+function isGrpName(m){try{const c=loadConfig();return Object.prototype.hasOwnProperty.call(c.otherMembers||{},m)||ogGroups(c).includes(m);}catch{return false;}}
 function memberClass(m){
 if(m==='ジェシー')return'tag-jesse';
 if(m==='京本大我')return'tag-kyomo';
