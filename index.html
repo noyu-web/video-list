@@ -240,10 +240,6 @@ body.selecting .list-wrap{padding-bottom:90px}
 #sortSelect,#gapSel{font-size:11px!important;padding:4px 6px!important;min-width:0;max-width:44vw}
 .tl-h{padding:12px 16px 4px;font-size:13px;font-weight:700;color:var(--pink);position:sticky;top:0;background:var(--white);z-index:2}
 
-.fold-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#b8486f;background:#fff;border:1px solid #efb7cb;border-radius:999px;padding:5px 12px;cursor:pointer;font-family:inherit}
-.fold-row{padding:8px 16px 0;display:flex;gap:8px;flex-wrap:wrap}
-.fold-closed{display:none!important}
-#adminToolbar.tb-closed .btn:not(#addBtn):not(#tbFold){display:none!important}
 </style>
 </head>
 <body>
@@ -3452,36 +3448,6 @@ const _o=window.openEditModal;
 if(typeof _o==='function'){window.openEditModal=async function(){const r=await _o.apply(this,arguments);apply();return r;};}
 })();
 
-(function(){
-function g(k,d){try{var v=localStorage.getItem('fold_'+k);return v===null?d:v==='1';}catch(e){return d;}}
-function s(k,v){try{localStorage.setItem('fold_'+k,v?'1':'0');}catch(e){}}
-var tabsWrap=document.querySelector('.tabs-wrap'),subWrap=document.getElementById('subtabsWrap'),tb=document.getElementById('adminToolbar'),sortRow=document.getElementById('sortSelect').parentNode;
-var row=document.createElement('div');row.className='fold-row';
-var bT=document.createElement('button');bT.type='button';bT.className='fold-btn';
-var bS=document.createElement('button');bS.type='button';bS.className='fold-btn';
-row.appendChild(bT);row.appendChild(bS);tabsWrap.parentNode.insertBefore(row,tabsWrap);
-var bA=document.createElement('button');bA.type='button';bA.id='tbFold';bA.className='btn';bA.style.cssText='background:#fff;color:#b8486f;border:1.5px solid #efb7cb';tb.appendChild(bA);
-var tabsOpen=g('tabs',false),sortOpen=g('sort',false),tbOpen=g('tb',false);
-function lab(){var a=(typeof currentGenre!=='undefined'?currentGenre:'すべて'),b=(typeof currentSubgenre!=='undefined'?currentSubgenre:'すべて');return 'ジャンル：'+a+(b&&b!=='すべて'?' / '+b:'');}
-function apply(){
-tabsWrap.classList.toggle('fold-closed',!tabsOpen);subWrap.classList.toggle('fold-closed',!tabsOpen);
-sortRow.classList.toggle('fold-closed',!sortOpen);
-tb.classList.toggle('tb-closed',!tbOpen);
-bT.textContent=lab()+(tabsOpen?' ▴':' ▾');
-bS.textContent='並び替え・絞り込み'+(sortOpen?' ▴':' ▾');
-bA.textContent='管理'+(tbOpen?' ▴':' ▾');
-}
-bT.onclick=function(){tabsOpen=!tabsOpen;s('tabs',tabsOpen);apply();};
-bS.onclick=function(){sortOpen=!sortOpen;s('sort',sortOpen);apply();};
-bA.onclick=function(){tbOpen=!tbOpen;s('tb',tbOpen);apply();};
-var mo=new MutationObserver(function(){bT.textContent=lab()+(tabsOpen?' ▴':' ▾');});
-mo.observe(document.getElementById('tabs'),{childList:true,subtree:true,attributes:true});
-mo.observe(document.getElementById('subtabs'),{childList:true,subtree:true,attributes:true});
-function closeTabs(){tabsOpen=false;s('tabs',false);apply();}
-document.getElementById('subtabs').addEventListener('click',function(){setTimeout(closeTabs,250);});
-document.getElementById('tabs').addEventListener('click',function(){setTimeout(function(){var st=document.getElementById('subtabs');if(!st.children.length||subWrap.classList.contains('hidden')||getComputedStyle(subWrap).display==='none')closeTabs();},350);});
-apply();
-})();
 </script>
 </body>
 </html>
