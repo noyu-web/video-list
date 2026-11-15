@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -206,6 +206,7 @@ header{border-bottom:2px solid var(--pink-light);padding:10px 16px;}
 <div class="page">
   <div class="admin-bar hidden" id="adminBar"><button id="selectBtn">選択</button> <button id="tabEditBtn">タブの編集</button></div>
   <div class="active-bar" id="activeBar"></div>
+  <div id="memoBox" style="margin:0 0 10px"><div style="font-size:11px;color:#b8486f;margin-bottom:4px">メモ</div><textarea id="memoText" rows="3" placeholder="メモ" style="width:100%;box-sizing:border-box;border:1px solid #efb7cb;border-radius:10px;background:#fff;color:#444;font-size:13px;line-height:1.6;padding:8px 10px;resize:vertical;font-family:inherit"></textarea></div>
   <div class="list-count" id="listCount"></div>
   <div id="cardList"></div>
 </div>
@@ -1184,6 +1185,9 @@ btn.addEventListener('click',open);
 document.getElementById('cmClose').addEventListener('click',close);
 bg.addEventListener('click',function(e){if(e.target===bg)close();});
 })();
+(function(){var t=document.getElementById('memoText');if(!t)return;try{t.value=localStorage.getItem('wish_memo_v1')||'';}catch(e){}
+function fit(){t.style.height='auto';t.style.height=Math.max(70,t.scrollHeight+2)+'px';}
+t.addEventListener('input',function(){try{localStorage.setItem('wish_memo_v1',t.value);}catch(e){}fit();});fit();})();
 </script>
 </body>
 </html>
