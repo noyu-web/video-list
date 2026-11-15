@@ -206,7 +206,7 @@ header{border-bottom:2px solid var(--pink-light);padding:10px 16px;}
 <div class="page">
   <div class="admin-bar hidden" id="adminBar"><button id="selectBtn">選択</button> <button id="tabEditBtn">タブの編集</button></div>
   <div class="active-bar" id="activeBar"></div>
-  <div id="memoBox" style="margin:0 0 10px"><div style="font-size:11px;color:#b8486f;margin-bottom:4px">メモ</div><textarea id="memoText" rows="3" placeholder="メモ" style="width:100%;box-sizing:border-box;border:1px solid #efb7cb;border-radius:10px;background:#fff;color:#444;font-size:13px;line-height:1.6;padding:8px 10px;resize:vertical;font-family:inherit"></textarea></div>
+  <div id="memoBox" style="margin:0 0 10px"><div style="font-size:11px;color:#b8486f;margin-bottom:4px">メモ</div><textarea id="memoText" rows="3" placeholder="メモ" style="width:100%;box-sizing:border-box;border:1px solid #efb7cb;border-radius:10px;background:#fff;color:#444;font-size:13px;line-height:1.6;padding:8px 10px;resize:vertical;font-family:inherit"></textarea><div style="text-align:right;margin-top:6px"><button type="button" id="memoSave" style="background:#ec8fae;color:#fff;border:none;border-radius:999px;padding:7px 18px;font-size:12px;font-family:inherit;cursor:pointer">メモを保存</button></div></div>
   <div class="list-count" id="listCount"></div>
   <div id="cardList"></div>
 </div>
@@ -1185,9 +1185,17 @@ btn.addEventListener('click',open);
 document.getElementById('cmClose').addEventListener('click',close);
 bg.addEventListener('click',function(e){if(e.target===bg)close();});
 })();
-(function(){var t=document.getElementById('memoText');if(!t)return;try{t.value=localStorage.getItem('wish_memo_v1')||'';}catch(e){}
+(function(){var t=document.getElementById('memoText'),sv=document.getElementById('memoSave'),box=document.getElementById('memoBox');if(!t)return;
 function fit(){t.style.height='auto';t.style.height=Math.max(70,t.scrollHeight+2)+'px';}
-t.addEventListener('input',function(){try{localStorage.setItem('wish_memo_v1',t.value);}catch(e){}fit();});fit();})();
+function ui(){t.readOnly=!isAdmin;sv.style.display=isAdmin?'':'none';box.style.display=(isAdmin||t.value.trim())?'':'none';fit();}
+function show(txt){t.value=txt;ui();}
+try{var c=localStorage.getItem('wish_memo_srv');if(c!==null)show(c);}catch(e){}
+jsonp({action:'getWishMemo'}).then(function(d){if(d&&typeof d.text==='string'&&document.activeElement!==t){show(d.text);try{localStorage.setItem('wish_memo_srv',d.text);}catch(e){}}}).catch(function(){});
+t.addEventListener('input',fit);
+sv.addEventListener('click',async function(){sv.disabled=true;sv.textContent='保存中';var ok=false;try{var d=await gasPost({action:'saveWishMemo'},{text:t.value});ok=!!(d&&d.ok);}catch(e){}
+sv.disabled=false;sv.textContent=ok?'保存しました':'保存に失敗しました';if(ok){try{localStorage.setItem('wish_memo_srv',t.value);}catch(e){}}setTimeout(function(){sv.textContent='メモを保存';},1500);});
+var _a=applyAdminUI;applyAdminUI=function(){_a.apply(this,arguments);ui();};ui();
+})();
 </script>
 </body>
 </html>
