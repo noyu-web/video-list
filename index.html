@@ -61,6 +61,8 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tag-sixtones{background:#e0e0e0;color:#555}
 .tag-all{background:#fce7f3;color:#9d174d}
 #detailModal .tag-all{background:#fff;color:#b8486f;border:1px solid #efb7cb}
+.tag-none{background:#eceff3;color:#4b5563}
+#detailModal .tag-none{background:#eceff3;color:#4b5563;border:1px solid #d3d9e1}
 #detailModal .trk-row .tag{font-size:12px!important;padding:2px 10px!important}
 #detailModal .trk-row,#detailSchedules>div>div{border-bottom-color:#f1dfe6!important}
 .tag-date{background:#fde9f1;color:#b8486f;font-size:12px;padding:3px 10px}
@@ -892,7 +894,7 @@ if(m==='田中樹')return'tag-juri';
 if(m==='SixTONES')return'tag-sixtones tag-grp';
 const c=MC_KEYS.m[MC_KEYS.f(m)];
 if(c&&c.length)return mcClass(c);
-return(isGrpName(m)?'tag-all tag-grp':'tag-all');
+return(isGrpName(m)?'tag-all tag-grp':'tag-none');
 }
 function fmtDJ(v){v=String(v==null?'':v);const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v);if(!m)return esc(v);const d=new Date(+m[1],+m[2]-1,+m[3]);return m[1]+'年'+(+m[2])+'月'+(+m[3])+'日('+'日月火水木金土'[d.getDay()]+')';}
 function exchangeClass(e){return e==='ok'?'exchange-ok':e==='partial'?'exchange-partial':e==='consult'?'exchange-consult':'exchange-ng';}
@@ -2294,12 +2296,14 @@ const metaObj={};
 {const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;else if(!tracks.length&&Array.isArray(om.tr)&&om.tr.some(o=>o&&Object.keys(o).some(k=>k==='more'?(o.more||[]).length:o[k])))metaObj.tr=om.tr;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
-document.getElementById('cardList').innerHTML=loadingHTML('保存中');
-const savedOk=await writeVideo(video,!editingId);
-cachedVideos=null;
-await loadVideos(true);
+{const _isNew=!editingId;const _l=Array.isArray(cachedVideos)?cachedVideos:[];
+if(_isNew)_l.push(video);else{const _i=_l.findIndex(x=>String(x.id)===String(video.id));if(_i>=0)_l[_i]={..._l[_i],...video};else _l.push(video);}
+cachedVideos=_l;try{localStorage.setItem('videos_ls_cache',JSON.stringify(_l));}catch{}
 renderList();
-if(!savedOk&&isAdmin)failMsg('保存');
+writeVideo(video,_isNew).then(ok=>{
+if(!ok&&isAdmin)failMsg('保存');
+return gasGet({action:'getVideos',token}).then(data=>{if(Array.isArray(data)){cachedVideos=fixObjTitles(data);try{localStorage.setItem('videos_ls_cache',JSON.stringify(data));}catch{}renderList();}});
+}).catch(()=>{});}
 });
 async function deleteItem(id){
 if(!confirm('削除しますか？\nごみ箱に30日間残ります。'))return;
