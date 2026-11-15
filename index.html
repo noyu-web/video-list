@@ -98,6 +98,7 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .trk-tg{display:flex;align-items:center;gap:8px;width:100%;background:#fff;border:1px solid var(--pink-light);border-radius:8px;padding:7px 10px;margin-bottom:6px;font:inherit;font-size:12px;color:var(--pink-dark);cursor:pointer;text-align:left}
 .trk-sum{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .trk-closed .trk-body{display:none}
+.tf-wrap.tf-hide{display:none}
 .trk-closed .trk-tg{margin-bottom:0}
 .modal{background:var(--white);border-radius:16px;width:100%;max-width:480px;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto}
 .modal-header{display:flex;justify-content:space-between;align-items:center}
@@ -238,6 +239,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 .sr-h{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--pink-pale);border:1px solid var(--pink-light);border-radius:12px;padding:12px 14px;margin-bottom:8px;font-size:14px;font-weight:700;color:var(--pink-dark);cursor:pointer}.sr-h .sr-n{flex-shrink:0;font-size:12px;font-weight:700}.sr-in{margin-left:10px}
 #sortSelect,#gapSel{font-size:11px!important;padding:4px 6px!important;min-width:0;max-width:44vw}
 .tl-h{padding:12px 16px 4px;font-size:13px;font-weight:700;color:var(--pink);position:sticky;top:0;background:var(--white);z-index:2}
+
+.fold-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#b8486f;background:#fff;border:1px solid #efb7cb;border-radius:999px;padding:5px 12px;cursor:pointer;font-family:inherit}
+.fold-row{padding:8px 16px 0;display:flex;gap:8px;flex-wrap:wrap}
+.fold-closed{display:none!important}
+#adminToolbar.tb-closed .btn:not(#addBtn):not(#tbFold){display:none!important}
 </style>
 </head>
 <body>
@@ -2021,6 +2027,8 @@ row.innerHTML=`
 <option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
 </select>
 </div>
+<div style="margin-bottom:6px" class="tf-open-wrap"><button type="button" class="btn-add-small tf-open">＋ ファイル情報（解像度・容量・長さなど）を記入する</button></div>
+<div class="tf-wrap">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
 <input class="form-input tf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(file.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
 <input class="form-input tf-res" placeholder="解像度（例 1920×1080）" value="${esc(file.res||'')}" style="font-size:12px;padding:6px 8px">
@@ -2031,12 +2039,17 @@ row.innerHTML=`
 </div>
 <div class="tf-more"></div>
 <div style="margin-bottom:6px"><button type="button" class="btn-add-small tf-add">＋ファイル情報を追加（同じ日で時間違いなど）</button></div>
+</div>
 <div style="text-align:right;margin-bottom:4px"><button type="button" class="btn-add-small tm-all" style="padding:3px 10px;font-size:11px">全員を表示</button></div>
 <div class="track-members-wrap" style="display:flex;flex-wrap:wrap;gap:4px">${memberOptions}</div>`;
 const addMore=(o={})=>{const b=document.createElement('div');b.className='tf-blk';b.style.cssText='border-top:1px dashed var(--pink-light);padding-top:6px;margin-bottom:6px';
 b.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:5px"><input class="form-input tm-label" placeholder="ラベル（例 15:00 / 2本目）" value="${esc(o.label||'')}" style="flex:1;font-size:12px;padding:6px 8px"><button class="btn-remove" type="button">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="form-input tm-res" placeholder="解像度" value="${esc(o.res||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-mp" placeholder="画素数（例 0.9MP）" value="${esc(o.mp||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-size" placeholder="容量（例 5GB）" value="${esc(o.size||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-dur" placeholder="長さ（例 01:23:45）" value="${esc(o.dur||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input tm-loc" placeholder="保存場所" value="${esc(o.loc||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px"></div>`;
 b.querySelector('.btn-remove').onclick=()=>b.remove();row.querySelector('.tf-more').appendChild(b);};
 (file.more||[]).forEach(addMore);
+{const has=['label','res','mp','size','dur','loc'].some(k=>String(file[k]||'').trim())||(file.more||[]).length>0;
+const w=row.querySelector('.tf-wrap'),ow=row.querySelector('.tf-open-wrap');
+if(!has){w.classList.add('tf-hide');}else ow.style.display='none';
+row.querySelector('.tf-open').onclick=()=>{w.classList.remove('tf-hide');ow.style.display='none';};}
 row.querySelector('.tf-add').onclick=()=>addMore();
 row.querySelector('.tm-all').onclick=function(){row.dataset.all=row.dataset.all==='1'?'':'1';this.textContent=row.dataset.all==='1'?'絞り込む':'全員を表示';filterTrackChips(row);};
 filterTrackChips(row);
@@ -3429,6 +3442,37 @@ document.addEventListener('click',function(e){
 document.addEventListener('input',function(e){if(e.target.closest&&e.target.closest('#editModal'))setTimeout(sums,0);});
 const _o=window.openEditModal;
 if(typeof _o==='function'){window.openEditModal=async function(){const r=await _o.apply(this,arguments);apply();return r;};}
+})();
+
+(function(){
+function g(k,d){try{var v=localStorage.getItem('fold_'+k);return v===null?d:v==='1';}catch(e){return d;}}
+function s(k,v){try{localStorage.setItem('fold_'+k,v?'1':'0');}catch(e){}}
+var tabsWrap=document.querySelector('.tabs-wrap'),subWrap=document.getElementById('subtabsWrap'),tb=document.getElementById('adminToolbar'),sortRow=document.getElementById('sortSelect').parentNode;
+var row=document.createElement('div');row.className='fold-row';
+var bT=document.createElement('button');bT.type='button';bT.className='fold-btn';
+var bS=document.createElement('button');bS.type='button';bS.className='fold-btn';
+row.appendChild(bT);row.appendChild(bS);tabsWrap.parentNode.insertBefore(row,tabsWrap);
+var bA=document.createElement('button');bA.type='button';bA.id='tbFold';bA.className='btn';bA.style.cssText='background:#fff;color:#b8486f;border:1.5px solid #efb7cb';tb.appendChild(bA);
+var tabsOpen=g('tabs',false),sortOpen=g('sort',false),tbOpen=g('tb',false);
+function lab(){var a=(typeof currentGenre!=='undefined'?currentGenre:'すべて'),b=(typeof currentSubgenre!=='undefined'?currentSubgenre:'すべて');return 'ジャンル：'+a+(b&&b!=='すべて'?' / '+b:'');}
+function apply(){
+tabsWrap.classList.toggle('fold-closed',!tabsOpen);subWrap.classList.toggle('fold-closed',!tabsOpen);
+sortRow.classList.toggle('fold-closed',!sortOpen);
+tb.classList.toggle('tb-closed',!tbOpen);
+bT.textContent=lab()+(tabsOpen?' ▴':' ▾');
+bS.textContent='並び替え・絞り込み'+(sortOpen?' ▴':' ▾');
+bA.textContent='管理'+(tbOpen?' ▴':' ▾');
+}
+bT.onclick=function(){tabsOpen=!tabsOpen;s('tabs',tabsOpen);apply();};
+bS.onclick=function(){sortOpen=!sortOpen;s('sort',sortOpen);apply();};
+bA.onclick=function(){tbOpen=!tbOpen;s('tb',tbOpen);apply();};
+var mo=new MutationObserver(function(){bT.textContent=lab()+(tabsOpen?' ▴':' ▾');});
+mo.observe(document.getElementById('tabs'),{childList:true,subtree:true,attributes:true});
+mo.observe(document.getElementById('subtabs'),{childList:true,subtree:true,attributes:true});
+function closeTabs(){tabsOpen=false;s('tabs',false);apply();}
+document.getElementById('subtabs').addEventListener('click',function(){setTimeout(closeTabs,250);});
+document.getElementById('tabs').addEventListener('click',function(){setTimeout(function(){var st=document.getElementById('subtabs');if(!st.children.length||subWrap.classList.contains('hidden')||getComputedStyle(subWrap).display==='none')closeTabs();},350);});
+apply();
 })();
 </script>
 </body>
