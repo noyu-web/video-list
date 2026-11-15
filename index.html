@@ -84,6 +84,19 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .btn-edit{background:var(--pink-pale);color:var(--pink-dark)}
 .btn-delete{background:#fee2e2;color:#991b1b}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.sec{margin:12px 0}
+.sec-h{display:flex;align-items:center;gap:8px;width:100%;background:var(--pink-pale);border:1.5px solid var(--pink-light);border-radius:12px;padding:10px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--pink-dark);cursor:pointer;text-align:left}
+.sec-t{flex:0 0 auto}
+.sec-s{flex:1;min-width:0;font-size:11px;font-weight:500;color:#b08a9b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sec-c,.trk-tg .sec-c{flex:0 0 auto;width:8px;height:8px;border-right:2px solid var(--pink);border-bottom:2px solid var(--pink);transform:rotate(45deg);margin:-3px 4px 0 0;transition:transform .15s}
+.sec.closed .sec-c,.trk-closed .sec-c{transform:rotate(-45deg);margin:0 4px 0 0}
+.sec-b{padding-top:10px}
+.sec.closed .sec-b{display:none}
+.sec:not(.closed) .sec-s{display:none}
+.trk-tg{display:flex;align-items:center;gap:8px;width:100%;background:#fff;border:1px solid var(--pink-light);border-radius:8px;padding:7px 10px;margin-bottom:6px;font:inherit;font-size:12px;color:var(--pink-dark);cursor:pointer;text-align:left}
+.trk-sum{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.trk-closed .trk-body{display:none}
+.trk-closed .trk-tg{margin-bottom:0}
 .modal{background:var(--white);border-radius:16px;width:100%;max-width:480px;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto}
 .modal-header{display:flex;justify-content:space-between;align-items:center}
 .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray)}
@@ -638,12 +651,14 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="modal-overlay hidden" id="editModal">
 <div class="modal">
 <div class="modal-title" id="editModalTitle">動画を追加</div>
+<div style="display:flex;gap:6px;justify-content:flex-end;margin:-6px 0 10px"><button type="button" class="btn-add-small" id="secCloseAll" style="margin:0">すべて閉じる</button><button type="button" class="btn-add-small" id="secOpenAll" style="margin:0">すべて開く</button></div>
 <div class="form-group">
 <label class="form-label">タイトル</label>
 <input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力" list="titleSug" autocomplete="off">
 <datalist id="titleSug"></datalist>
 </div>
 <div style="border-top:2px solid var(--pink-light);margin:16px 0"></div>
+<div class="sec" data-sec="members"><button type="button" class="sec-h"><span class="sec-t">出演者</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
 <label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700">出演者（SixTONES）</label>
 <div class="chips-grid" id="memberChips"></div>
@@ -657,6 +672,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button type="button" class="btn btn-primary" id="otherAddBtn" style="border-radius:8px;padding:8px 14px">追加</button>
 </div>
 </div>
+</div></div>
 <div class="form-group">
 <label class="form-label">交換</label>
 <select class="form-select" id="editExchange">
@@ -666,20 +682,23 @@ body.selecting .list-wrap{padding-bottom:90px}
 <option value="ng">不可</option>
 </select>
 </div>
+<div class="sec" data-sec="genre"><button type="button" class="sec-h"><span class="sec-t">ジャンル・小ジャンル</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
-<label class="form-label">ジャンル・小ジャンル（複数選択可）</label>
 <div id="genreSections"></div>
 </div>
+</div></div>
+
+<div class="sec" data-sec="dates"><button type="button" class="sec-h"><span class="sec-t">配信,放送日</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
-<label class="form-label" style="font-size:13px;color:var(--pink-dark);font-weight:700;border-top:1.5px solid var(--pink-light);padding-top:12px;display:block">配信,放送日</label>
 <div class="dates-section" style="margin-top:6px">
 <div id="dateGroupsWrap"></div>
 <button class="btn-add-small" id="addDateGroupBtn">＋ 日付を追加</button>
 <button class="btn-add-small" id="moveAllDatesBtn" type="button">放送日をすべて収録内容へ移す</button>
 </div>
 </div>
+</div></div>
+<div class="sec" data-sec="tracks"><button type="button" class="sec-h"><span class="sec-t">収録内容,詳細</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
-<label class="form-label">収録内容,詳細</label>
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
 <button class="btn-add-small" id="moveDateOnlyBtn" type="button">日付だけの収録内容を放送日へ移す</button>
@@ -687,10 +706,13 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">まとめて貼り付け</button>
 <button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
 </div>
+</div></div>
+<div class="sec" data-sec="note"><button type="button" class="sec-h"><span class="sec-t">メモ</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
-<label class="form-label">メモ</label>
 <textarea class="form-textarea" id="editNote" placeholder="任意"></textarea>
 </div>
+</div></div>
+
 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
 <button class="btn-add-small" id="editHistBtn" type="button">変更履歴</button>
 <button class="btn-add-small" id="editDupBtn" type="button">複製して新規追加</button>
@@ -1939,7 +1961,7 @@ const schedules=item?schedUnion(item):[];
 window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}
+window._trkInit=true;{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -2025,6 +2047,16 @@ const next=row.nextElementSibling;
 if(next)row.parentNode.insertBefore(next,row);
 });
 row.querySelectorAll('.track-member-chip').forEach(c=>c.addEventListener('click',()=>{const on=!c.classList.contains('selected');row.querySelectorAll('.track-member-chip').forEach(x=>{if(x.dataset.member===c.dataset.member)x.classList.toggle('selected',on);});}));
+{const hd=row.firstElementChild;const body=document.createElement('div');body.className='trk-body';while(hd.nextSibling)body.appendChild(hd.nextSibling);
+const tg=document.createElement('button');tg.type='button';tg.className='trk-tg';tg.innerHTML='<span class="trk-sum"></span><span class="sec-c"></span>';
+row.appendChild(tg);row.appendChild(body);
+const sum=()=>{const q=c=>{const e=row.querySelector(c);return e?String(e.value||'').trim():'';};
+const mem=[...row.querySelectorAll('.track-member-chip.selected')].map(x=>x.dataset.member);
+const parts=[q('.track-date'),q('.track-time'),mem.length?mem.slice(0,3).join('・')+(mem.length>3?' 他'+(mem.length-3):''):'',q('.tf-res'),q('.tf-size')].filter(Boolean);
+row.querySelector('.trk-sum').textContent=parts.length?parts.join('　'):'日付・ファイル情報・出演者';};
+tg.addEventListener('click',()=>{row.classList.toggle('trk-closed');sum();});
+['input','click','change'].forEach(ev=>row.addEventListener(ev,()=>setTimeout(sum,0)));
+if(window._trkInit)row.classList.add('trk-closed');sum();}
 wrap.appendChild(row);
 }
 document.getElementById('addTrackBtn').addEventListener('click',()=>addTrackRow());
@@ -3355,6 +3387,34 @@ document.addEventListener('input',function(e){
   if(mp.dataset.man==='1'&&mp.value)return;
   mp.value=mpOf(t.value);mp.dataset.man='';
 });
+})();
+</script>
+<script>
+(function(){
+const K='edit_sec_v1';
+const ld=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')||{};}catch{return{};}};
+const sv=o=>{try{localStorage.setItem(K,JSON.stringify(o));}catch{}};
+const $$=(s)=>[...document.querySelectorAll(s)];
+function sums(){
+  const t=(q)=>$$(q).map(e=>e.textContent.trim());
+  const set=(n,v)=>{const e=document.querySelector('.sec[data-sec="'+n+'"] .sec-s');if(e)e.textContent=v;};
+  const mem=[...t('#memberChips .chip.selected'),...t('#otherMemberChips .chip.selected')];
+  set('members',mem.length?mem.length+'名　'+mem.slice(0,4).join('・')+(mem.length>4?' 他':''):'未選択');
+  const gs=t('#genreSections .chip.selected');set('genre',gs.length?gs.slice(0,3).join('・')+(gs.length>3?' 他'+(gs.length-3):''):'未選択');
+  const dn=$$('#dateGroupsWrap .date-group').length;set('dates',dn?dn+'件':'なし');
+  const tn=document.getElementById('tracksWrap')?document.getElementById('tracksWrap').children.length:0;set('tracks',tn?tn+'件':'なし');
+  const nv=(document.getElementById('editNote')||{}).value||'';set('note',nv?nv.replace(/\s+/g,' ').slice(0,24):'なし');
+}
+function apply(){const st=ld();$$('#editModal .sec').forEach(e=>{e.classList.toggle('closed',st[e.dataset.sec]===1);});sums();}
+document.addEventListener('click',function(e){
+  const h=e.target.closest&&e.target.closest('.sec-h');
+  if(h){const s=h.parentNode;s.classList.toggle('closed');const st=ld();st[s.dataset.sec]=s.classList.contains('closed')?1:0;sv(st);sums();return;}
+  if(e.target.id==='secCloseAll'||e.target.id==='secOpenAll'){const c=e.target.id==='secCloseAll';const st={};$$('#editModal .sec').forEach(x=>{x.classList.toggle('closed',c);st[x.dataset.sec]=c?1:0;});sv(st);sums();return;}
+  if(e.target.closest&&e.target.closest('#editModal'))setTimeout(sums,60);
+});
+document.addEventListener('input',function(e){if(e.target.closest&&e.target.closest('#editModal'))setTimeout(sums,0);});
+const _o=window.openEditModal;
+if(typeof _o==='function'){window.openEditModal=async function(){const r=await _o.apply(this,arguments);apply();return r;};}
 })();
 </script>
 </body>
