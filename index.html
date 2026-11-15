@@ -270,12 +270,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="display:flex;align-items:center;gap:6px;row-gap:6px;flex-wrap:wrap;padding:10px 16px 6px">
 <span style="font-size:11px;color:var(--gray);white-space:nowrap">並び替え</span>
 <select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
-<option value="default">標準</option>
+<option value="title">標準（50音順）</option>
+<option value="default">手動の並び順</option>
 <option value="reg_new">登録（新しい順）</option>
 <option value="reg_old">登録（古い順）</option>
 <option value="date_new">公演日（新しい順）</option>
 <option value="date_old">公演日（古い順）</option>
-<option value="title">タイトル（50音順）</option>
 <option value="exchange">交換可優先</option>
 <option value="timeline">収録日タイムライン</option>
 <option value="series">シリーズでまとめる</option>
@@ -311,6 +311,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <!-- Reorder Bar -->
 <div class="bulk-bar hidden" id="reorderBar">
 <span class="bulk-count" style="font-size:12px;line-height:1.5">並び替え中：↑↓で順番を変えます（表示中の範囲の中で入れ替わります）</span>
+<button id="reorderAutoBtn" style="background:var(--pink-pale);color:var(--pink-dark)">50音で自動並び替え</button>
 <button id="reorderDoneBtn" style="background:var(--pink);color:#fff">完了</button>
 </div>
 
@@ -804,7 +805,7 @@ if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');
 });
 }
 let qMode='or';
-let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
+let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='title';
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set(),fav:new Set()};
 const CHECK_LIST='1';
 const checkedSet=new Set();let checksLoaded=false;
@@ -829,7 +830,7 @@ function stateObj(){
 const o={};
 if(currentGenre!=='すべて')o.t=currentGenre;
 if(currentSubgenre!=='すべて')o.u=currentSubgenre;
-if(sortOrder!=='default')o.o=sortOrder;
+if(sortOrder!=='title')o.o=sortOrder;
 if(F.q)o.q=F.q;
 if(qMode==='and')o.a=1;
 [['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
@@ -2503,10 +2504,19 @@ updateReorderBar();renderList();
 function exitReorder(){
 reorderMode=false;
 document.getElementById('sortSelect').disabled=false;
+sortOrder='title';document.getElementById('sortSelect').value='title';
 updateReorderBar();renderList();
 }
 document.getElementById('reorderBtn').addEventListener('click',()=>{reorderMode?exitReorder():enterReorder();});
 document.getElementById('reorderDoneBtn').addEventListener('click',exitReorder);
+document.getElementById('reorderAutoBtn').addEventListener('click',async()=>{
+if(!isAdmin||!cachedVideos)return;
+const shown=new Set(lastShown);const arr=cachedVideos.filter(v=>shown.has(v.id));
+if(!arr.length)return;
+const ids=arr.sort((x,y)=>String(x.title).localeCompare(String(y.title),'ja')).map(v=>v.id);
+if(!applyOrderLocally(ids))return;
+renderList();await sendOrder(ids);
+});
 function applyOrderLocally(ids){
 const set=new Set(ids);const slots=[];
 cachedVideos.forEach((v,k)=>{if(set.has(v.id))slots.push(k);});
