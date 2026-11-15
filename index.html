@@ -258,6 +258,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 </header>
 
 <div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
+<div class="subtabs-wrap" id="kindWrap" style="display:none"><div class="subtabs" id="kindTabs"></div></div>
 <div class="subtabs-wrap" id="subtabsWrap"><div class="subtabs" id="subtabs"></div></div>
 
 <div id="adminToolbar" class="toolbar hidden">
@@ -1015,7 +1016,21 @@ const t=document.getElementById('tabs');
 t.innerHTML=cfg.genres.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
 t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
-function renderSubtabs(){
+var currentKind='すべて',_kindFor='';
+function renderKind(){
+const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs');if(!w)return;
+if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
+if(currentGenre==='すべて'||!isOG(currentGenre)||currentSubgenre==='すべて'){w.style.display='none';currentKind='すべて';return;}
+const ks=cfg.genres.filter(g=>g!=='すべて'&&!isOG(g));
+const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&g.subgenre===currentSubgenre))return;const seen={};gs.forEach(g=>{if(ks.includes(g.genre)&&!seen[g.genre]){seen[g.genre]=1;cnt[g.genre]=(cnt[g.genre]||0)+1;}});});
+const use=ks.filter(k=>cnt[k]);
+if(!use.length){w.style.display='none';return;}
+w.style.display='';w.classList.add('visible');
+t.innerHTML='<span style="font-size:11px;color:var(--gray);align-self:center;white-space:nowrap;margin-right:2px">'+esc(currentSubgenre)+'の中</span><button class="subtab '+(currentKind==='すべて'?'active':'')+'" data-k="すべて">すべて</button>'+use.map(k=>'<button class="subtab '+(currentKind===k?'active':'')+'" data-k="'+esc(k)+'">'+esc(k)+' '+cnt[k]+'</button>').join('');
+t.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{currentKind=b.dataset.k;renderKind();renderList();}));
+}
+function renderSubtabs(){try{renderKind();}catch(e){}return renderSubtabs0();}
+function renderSubtabs0(){
 cfg=loadConfig();
 const wrap=document.getElementById('subtabsWrap');
 if(currentGenre==='すべて'){wrap.classList.remove('visible');return;}
@@ -1053,6 +1068,7 @@ function matchItem0(item){
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
+if(currentKind!=='すべて'&&isOG(currentGenre)&&!gs.some(g=>g.genre===currentKind))return false;
 }
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
 if(F.genres.size){
@@ -1865,6 +1881,8 @@ div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" 
 <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
 <button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>
 <button class="btn-add-small dg-to-track" type="button">この日付を収録内容へ移す</button>
+<button class="btn-add-small dgf-open" type="button" style="margin:8px 0 6px">＋ ファイル情報（解像度・容量・長さなど）を記入する</button>
+<div class="dgf-wrap">
 <div class="dg-finfo" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 6px">
 <input class="form-input dgf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(info.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
 <input class="form-input dgf-res" placeholder="解像度（例 1920×1080）" value="${esc(info.res||'')}" style="font-size:12px;padding:6px 8px">
@@ -1874,11 +1892,16 @@ div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" 
 <input class="form-input dgf-loc" placeholder="保存場所（例 HDD-A）" value="${esc(info.loc||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
 </div>
 <div class="dg-more"></div>
-<button class="btn-add-small dg-add-more" type="button">＋ファイル情報を追加（同じ日で時間違いなど）</button>`;
+<button class="btn-add-small dg-add-more" type="button">＋ファイル情報を追加（同じ日で時間違いなど）</button>
+</div>`;
 const _addDgMore=(o={})=>{const b=document.createElement('div');b.className='dg-blk';b.style.cssText='border-top:1px dashed var(--pink-light);padding-top:6px;margin:6px 0';
 b.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:5px"><input class="form-input dgf-label" placeholder="ラベル（例 15:00 / 2本目）" value="${esc(o.label||'')}" style="flex:1;font-size:12px;padding:6px 8px"><button class="btn-remove" type="button">✕</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:5px"><input class="form-input dgf-res" placeholder="解像度" value="${esc(o.res||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-mp" placeholder="画素数（例 0.9MP）" value="${esc(o.mp||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-size" placeholder="容量" value="${esc(o.size||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-dur" placeholder="長さ" value="${esc(o.dur||'')}" style="font-size:12px;padding:6px 8px"><input class="form-input dgf-loc" placeholder="保存場所" value="${esc(o.loc||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px"></div>`;
 b.querySelector('.btn-remove').onclick=()=>b.remove();div.querySelector('.dg-more').appendChild(b);};
 (info.more||[]).forEach(_addDgMore);
+{const has=['label','res','mp','size','dur','loc'].some(k=>String(info[k]||'').trim())||(info.more||[]).length>0;
+const w=div.querySelector('.dgf-wrap'),ob=div.querySelector('.dgf-open');
+if(has)ob.style.display='none';else w.classList.add('tf-hide');
+ob.onclick=()=>{w.classList.remove('tf-hide');ob.style.display='none';};}
 div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
 div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':n===0?'同じ日付の収録内容がすでにあるので、放送日からだけ外しました':'収録内容の一番下に追加しました（ピンクの枠）');});
@@ -1970,7 +1993,7 @@ const schedules=item?schedUnion(item):[];
 window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-window._trkInit=true;{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;
+window._trkInit=true;{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();if(!document.querySelector('#dateGroupsWrap .date-group'))addDateGroup();
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -2313,8 +2336,9 @@ document.getElementById('editModal').classList.add('hidden');
 {const _isNew=!editingId;const _l=Array.isArray(cachedVideos)?cachedVideos:[];
 if(_isNew)_l.push(video);else{const _i=_l.findIndex(x=>String(x.id)===String(video.id));if(_i>=0)_l[_i]={..._l[_i],...video};else _l.push(video);}
 cachedVideos=_l;try{localStorage.setItem('videos_ls_cache',JSON.stringify(_l));}catch{}
-renderList();
+document.getElementById('cardList').innerHTML=loadingHTML('保存中');
 writeVideo(video,_isNew).then(ok=>{
+renderList();
 if(!ok&&isAdmin)failMsg('保存');
 return gasGet({action:'getVideos',token}).then(data=>{if(Array.isArray(data)){cachedVideos=fixObjTitles(data);try{localStorage.setItem('videos_ls_cache',JSON.stringify(data));}catch{}renderList();}});
 }).catch(()=>{});}
@@ -3456,7 +3480,7 @@ var bA=document.createElement('button');bA.type='button';bA.id='tbFold';bA.class
 var tabsOpen=g('tabs',false),sortOpen=g('sort',false),tbOpen=g('tb',false);
 function lab(){var a=(typeof currentGenre!=='undefined'?currentGenre:'すべて'),b=(typeof currentSubgenre!=='undefined'?currentSubgenre:'すべて');return 'ジャンル：'+a+(b&&b!=='すべて'?' / '+b:'');}
 function apply(){
-tabsWrap.classList.toggle('fold-closed',!tabsOpen);subWrap.classList.toggle('fold-closed',!tabsOpen);
+tabsWrap.classList.toggle('fold-closed',!tabsOpen);subWrap.classList.toggle('fold-closed',!tabsOpen);var kw=document.getElementById('kindWrap');if(kw)kw.classList.toggle('fold-closed',!tabsOpen);
 sortRow.classList.toggle('fold-closed',!sortOpen);
 tb.classList.toggle('tb-closed',!tbOpen);
 bT.textContent=lab()+(tabsOpen?' ▴':' ▾');
