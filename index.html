@@ -256,8 +256,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 </header>
 
 <div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
-<div class="subtabs-wrap" id="kindWrap" style="display:none"><div class="subtabs" id="kindTabs"></div></div>
 <div class="subtabs-wrap" id="subtabsWrap"><div class="subtabs" id="subtabs"></div></div>
+<div id="kindWrap" style="display:none;padding:8px 16px 4px;background:#fff7fa"><div id="kindHead" style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px"></div><div style="display:flex;gap:6px;flex-wrap:wrap" id="kindTabs"></div></div>
 
 <div id="adminToolbar" class="toolbar hidden">
 <button class="btn btn-primary" id="addBtn">＋ 追加</button>
@@ -1016,17 +1016,17 @@ t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGen
 }
 var currentKind='すべて',_kindFor='';
 function renderKind(){
-const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs');if(!w)return;
+const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs'),hd=document.getElementById('kindHead');if(!w)return;
 if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
 if(currentGenre==='すべて'||!isOG(currentGenre)||currentSubgenre==='すべて'){w.style.display='none';currentKind='すべて';return;}
 const ks=cfg.genres.filter(g=>g!=='すべて'&&!isOG(g));
 const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&g.subgenre===currentSubgenre))return;const seen={};gs.forEach(g=>{if(ks.includes(g.genre)&&!seen[g.genre]){seen[g.genre]=1;cnt[g.genre]=(cnt[g.genre]||0)+1;}});});
-const use=ks.filter(k=>cnt[k]);
-w.style.display='';w.classList.add('visible');
-const lab='<span style="font-size:11px;color:var(--gray);align-self:center;white-space:nowrap;margin-right:2px">'+esc(currentSubgenre)+'の中</span>';
-if(!use.length){t.innerHTML=lab+'<span style="font-size:11px;color:var(--gray);align-self:center">種別（配信関連・円盤など）が付いた動画がありません。編集のジャンルで追加すると、ここで分けられます。</span>';return;}
-t.innerHTML=lab+'<button class="subtab '+(currentKind==='すべて'?'active':'')+'" data-k="すべて">すべて</button>'+use.map(k=>'<button class="subtab '+(currentKind===k?'active':'')+'" data-k="'+esc(k)+'">'+esc(k)+' '+cnt[k]+'</button>').join('');
+w.style.display='';
+hd.textContent=currentSubgenre+' を種別で分ける';
+const chip=(k,label,on,dim)=>'<button class="subtab'+(on?' active':'')+'" data-k="'+esc(k)+'" style="'+(dim?'opacity:.45;':'')+'">'+esc(label)+'</button>';
+t.innerHTML=chip('すべて','すべて',currentKind==='すべて')+ks.map(k=>chip(k,k+(cnt[k]?' '+cnt[k]:' 0'),currentKind===k,!cnt[k])).join('')+(isAdmin?'<button class="subtab" id="kindAssign" style="border-style:dashed;color:var(--pink-dark)">＋ 種別を付ける</button>':'');
 t.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{currentKind=b.dataset.k;renderKind();renderList();}));
+const ab=document.getElementById('kindAssign');if(ab)ab.addEventListener('click',()=>{if(!selectMode)document.getElementById('selectBtn').click();toastMsg('動画を選んで「操作」→ジャンルで種別を追加できます');});
 }
 function renderSubtabs(){try{renderKind();}catch(e){}return renderSubtabs0();}
 function renderSubtabs0(){
