@@ -99,6 +99,8 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .trk-sum{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .trk-closed .trk-body{display:none}
 .tf-wrap.tf-hide{display:none}
+.tf-open,.dgf-open{white-space:nowrap}
+.track-dist{flex:0 0 auto}
 .trk-closed .trk-tg{margin-bottom:0}
 .modal{background:var(--white);border-radius:16px;width:100%;max-width:480px;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto}
 .modal-header{display:flex;justify-content:space-between;align-items:center}
@@ -1861,7 +1863,7 @@ div.innerHTML=`<div class="date-group-header"><input class="form-input dg-date" 
 <div class="times-wrap dg-times">${times.map(t=>`<div class="time-row"><input class="form-input" type="text" placeholder="例: 12:00" value="${esc(t)}" style="width:90px"><button class="btn-remove tr-remove" type="button">✕</button></div>`).join('')}</div>
 <button class="btn-add-small dg-add-time" type="button">＋ 時間追加</button>
 <button class="btn-add-small dg-to-track" type="button">この日付を収録内容へ移す</button>
-<button class="btn-add-small dgf-open" type="button" style="margin:8px 0 6px">＋ ファイル情報（解像度・容量・長さなど）を記入する</button>
+<button class="btn-add-small dgf-open" type="button" style="margin:8px 0 6px">＋ ファイル情報を記入</button>
 <div class="dgf-wrap">
 <div class="dg-finfo" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:8px 0 6px">
 <input class="form-input dgf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(info.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
@@ -2021,8 +2023,8 @@ row.innerHTML=`
 <input class="form-input track-input" list="titleSug" autocomplete="off" type="text" placeholder="タイトル（例: 第1話）" value="${esc(val)}" style="flex:1;font-size:13px">
 <button class="btn-remove tr-rm" type="button">✕</button>
 </div>
-<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-<input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1;font-size:13px"><button type="button" class="btn-add-small" onclick="this.previousElementSibling.value='';this.closest('div[style*=pink-pale]').dataset.rawdate=''" style="flex:none;padding:6px 10px">日付削除</button>
+<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+<input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1 1 130px;min-width:0;font-size:13px"><button type="button" class="btn-add-small" onclick="this.previousElementSibling.value='';this.closest('div[style*=pink-pale]').dataset.rawdate=''" style="flex:none;padding:6px 10px">日付削除</button>
 <input class="form-input track-time" type="text" placeholder="時間 例 14:00" value="${esc(time)}" style="width:110px;font-size:13px">
 <select class="track-dist form-select" style="width:100px;padding:7px 6px;font-size:12px">
 <option value="none" ${dist==='none'?'selected':''}>配布なし</option>
@@ -2030,7 +2032,7 @@ row.innerHTML=`
 <option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
 </select>
 </div>
-<div style="margin-bottom:6px" class="tf-open-wrap"><button type="button" class="btn-add-small tf-open">＋ ファイル情報（解像度・容量・長さなど）を記入する</button></div>
+<div style="margin-bottom:6px" class="tf-open-wrap"><button type="button" class="btn-add-small tf-open">＋ ファイル情報を記入</button></div>
 <div class="tf-wrap">
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
 <input class="form-input tf-label" placeholder="ラベル（例 12:00 / 1本目）" value="${esc(file.label||'')}" style="grid-column:1/3;font-size:12px;padding:6px 8px">
@@ -3370,7 +3372,7 @@ gasGet({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();updateAd
 <script>
 (function(){
 var B='https://noyu-web.github.io/video-list/';
-var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/'],['自動取り込み',B+'folderimport/','/video-list/folderimport/',1]];
+var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/'],['自動取り込み',B+'folderimport/','/video-list/folderimport/']];
 function adm(){try{var t=JSON.parse(localStorage.getItem('top_admin_token')||'null');return !!(t&&t.token&&(!t.expires||t.expires>Date.now()));}catch(e){return false;}}
 function here(){var p=location.pathname.replace(/index\.html$/,'');if(p.slice(-1)!=='/')p+='/';return p;}
 var bg=document.getElementById('cmBg');
