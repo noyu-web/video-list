@@ -1014,19 +1014,23 @@ const t=document.getElementById('tabs');
 t.innerHTML=cfg.genres.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
 t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
+const OGK='OG種別';
+function ogKinds(c){c=c||cfg;if(!c.subgenres)c.subgenres={};if(!Array.isArray(c.subgenres[OGK]))c.subgenres[OGK]=['配信','円盤','テレビ','ドラマ・映画','ラジオ','雑誌・その他'];return c.subgenres[OGK];}
 var currentKind='すべて',_kindFor='';
 function renderKind(){
 const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs'),hd=document.getElementById('kindHead');if(!w)return;
 if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
 if(currentGenre==='すべて'||!isOG(currentGenre)||currentSubgenre==='すべて'){w.style.display='none';currentKind='すべて';return;}
-const ks=cfg.genres.filter(g=>g!=='すべて'&&!isOG(g));
-const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&g.subgenre===currentSubgenre))return;const seen={};gs.forEach(g=>{if(ks.includes(g.genre)&&!seen[g.genre]){seen[g.genre]=1;cnt[g.genre]=(cnt[g.genre]||0)+1;}});});
+const ks=ogKinds();
+const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&g.subgenre===currentSubgenre))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
 w.style.display='';
-hd.textContent=currentSubgenre+' を種別で分ける';
+hd.textContent=currentSubgenre+' の種別（SixTONESのジャンルとは別）';
 const chip=(k,label,on,dim)=>'<button class="subtab'+(on?' active':'')+'" data-k="'+esc(k)+'" style="'+(dim?'opacity:.45;':'')+'">'+esc(label)+'</button>';
-t.innerHTML=chip('すべて','すべて',currentKind==='すべて')+ks.map(k=>chip(k,k+(cnt[k]?' '+cnt[k]:' 0'),currentKind===k,!cnt[k])).join('')+(isAdmin?'<button class="subtab" id="kindAssign" style="border-style:dashed;color:var(--pink-dark)">＋ 種別を付ける</button>':'');
+t.innerHTML=chip('すべて','すべて',currentKind==='すべて')+ks.map(k=>chip(k,k+(cnt[k]?' '+cnt[k]:' 0'),currentKind===k,!cnt[k])).join('')+(isAdmin?'<button class="subtab" id="kindAssign" style="border-style:dashed;color:var(--pink-dark)">＋ 種別を付ける</button><button class="subtab" id="kindAdd" style="border-style:dashed;color:var(--pink-dark)">種別を追加</button><button class="subtab" id="kindDel" style="border-style:dashed;color:var(--gray)">種別を削除</button>':'');
 t.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{currentKind=b.dataset.k;renderKind();renderList();}));
-const ab=document.getElementById('kindAssign');if(ab)ab.addEventListener('click',()=>{if(!selectMode)document.getElementById('selectBtn').click();toastMsg('動画を選んで「操作」→ジャンルで種別を追加できます');});
+const ab=document.getElementById('kindAssign');if(ab)ab.addEventListener('click',()=>{if(!selectMode)document.getElementById('selectBtn').click();toastMsg('動画を選んで「操作」→ジャンルで「SixTONES以外の種別」を選んで追加できます');});
+const ad=document.getElementById('kindAdd');if(ad)ad.addEventListener('click',()=>{const v=(prompt('追加する種別名','')||'').trim();if(!v)return;const l=ogKinds();if(l.includes(v)){toastMsg('すでにあります');return;}l.push(v);saveConfig(cfg);renderKind();});
+const dl=document.getElementById('kindDel');if(dl)dl.addEventListener('click',()=>{const v=(prompt('削除する種別名\n'+ogKinds().join(' / '),'')||'').trim();const l=ogKinds();if(!v||!l.includes(v))return;if(!confirm('種別「'+v+'」を削除しますか？（動画からは外れません）'))return;cfg.subgenres[OGK]=l.filter(x=>x!==v);saveConfig(cfg);if(currentKind===v)currentKind='すべて';renderKind();renderList();});
 }
 function renderSubtabs(){try{renderKind();}catch(e){}return renderSubtabs0();}
 function renderSubtabs0(){
@@ -1067,7 +1071,7 @@ function matchItem0(item){
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
-if(currentKind!=='すべて'&&isOG(currentGenre)&&!gs.some(g=>g.genre===currentKind))return false;
+if(currentKind!=='すべて'&&isOG(currentGenre)&&!gs.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;
 }
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
 if(F.genres.size){
@@ -1835,6 +1839,9 @@ sec.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><input type=
 sec.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));
 wrap.appendChild(sec);
 });
+{const ks=ogKinds(cfg);const sel=selectedGenres.filter(g=>g.genre===OGK).map(g=>g.subgenre);const sec=document.createElement('div');sec.className='genre-section';
+sec.innerHTML='<div class="genre-section-title">SixTONES以外の種別</div><div class="chips-grid" data-genre="'+OGK+'">'+ks.map(k=>'<button type="button" class="chip'+(sel.includes(k)?' selected':'')+'" data-subgenre="'+esc(k)+'">'+esc(k)+'</button>').join('')+'</div>';
+sec.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));wrap.appendChild(sec);}
 }
 function getSelectedGenres(){
 const result=[];
@@ -2382,7 +2389,7 @@ function fillBulkGenre(){
 cfg=loadConfig();
 const gs=cfg.genres.filter(g=>g!=='すべて');
 const gSel=document.getElementById('bulkGenre');
-gSel.innerHTML=gs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+gSel.innerHTML=gs.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('')+`<option value="${OGK}">SixTONES以外の種別</option>`;ogKinds(cfg);
 fillBulkSub();
 }
 function fillBulkSub(){
