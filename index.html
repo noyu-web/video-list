@@ -256,6 +256,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 </header>
 
 <div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
+<div class="subtabs-wrap" id="kindWrap" style="display:none"><div class="subtabs" id="kindTabs"></div></div>
 <div class="subtabs-wrap" id="subtabsWrap"><div class="subtabs" id="subtabs"></div></div>
 
 <div id="adminToolbar" class="toolbar hidden">
@@ -1013,7 +1014,22 @@ const t=document.getElementById('tabs');
 t.innerHTML=cfg.genres.map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
 t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
-function renderSubtabs(){
+var currentKind='すべて',_kindFor='';
+function renderKind(){
+const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs');if(!w)return;
+if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
+if(currentGenre==='すべて'||!isOG(currentGenre)||currentSubgenre==='すべて'){w.style.display='none';currentKind='すべて';return;}
+const ks=cfg.genres.filter(g=>g!=='すべて'&&!isOG(g));
+const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&g.subgenre===currentSubgenre))return;const seen={};gs.forEach(g=>{if(ks.includes(g.genre)&&!seen[g.genre]){seen[g.genre]=1;cnt[g.genre]=(cnt[g.genre]||0)+1;}});});
+const use=ks.filter(k=>cnt[k]);
+w.style.display='';w.classList.add('visible');
+const lab='<span style="font-size:11px;color:var(--gray);align-self:center;white-space:nowrap;margin-right:2px">'+esc(currentSubgenre)+'の中</span>';
+if(!use.length){t.innerHTML=lab+'<span style="font-size:11px;color:var(--gray);align-self:center">種別（配信関連・円盤など）が付いた動画がありません。編集のジャンルで追加すると、ここで分けられます。</span>';return;}
+t.innerHTML=lab+'<button class="subtab '+(currentKind==='すべて'?'active':'')+'" data-k="すべて">すべて</button>'+use.map(k=>'<button class="subtab '+(currentKind===k?'active':'')+'" data-k="'+esc(k)+'">'+esc(k)+' '+cnt[k]+'</button>').join('');
+t.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{currentKind=b.dataset.k;renderKind();renderList();}));
+}
+function renderSubtabs(){try{renderKind();}catch(e){}return renderSubtabs0();}
+function renderSubtabs0(){
 cfg=loadConfig();
 const wrap=document.getElementById('subtabsWrap');
 if(currentGenre==='すべて'){wrap.classList.remove('visible');return;}
@@ -1051,6 +1067,7 @@ function matchItem0(item){
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
+if(currentKind!=='すべて'&&isOG(currentGenre)&&!gs.some(g=>g.genre===currentKind))return false;
 }
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
 if(F.genres.size){
