@@ -276,6 +276,7 @@ footer{padding-top:24px;}
 .prof{background:#fff;border:1.5px solid #f0cfdc;border-radius:18px;padding:16px 18px;margin:0 0 16px}
 .prof-lb{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#b8486f;background:#fff0f5;border-radius:20px;padding:3px 11px;display:inline-block;margin-bottom:10px}
 .prof-name{font-size:18px;font-weight:800;color:#5a4852;margin:0 0 6px}
+.prof-text{font-size:14px;line-height:1.85;color:#5a4852;word-break:break-word}
 .prof-bio{font-size:13.5px;line-height:1.8;color:#5a4852;white-space:pre-wrap;word-break:break-word}
 .prof-rows{margin-top:10px;display:flex;flex-direction:column;gap:6px}
 .prof-row{display:flex;gap:10px;font-size:12.5px;line-height:1.6;color:#5a4852}
@@ -341,18 +342,11 @@ body.admin .prof-edit{display:block}
   </div>
 
   <div class="prof hidden" id="profBox">
-    <span class="prof-lb">PROFILE</span>
-    <div class="prof-name" id="profName"></div>
-    <div class="prof-bio" id="profBio"></div>
-    <div class="prof-rows" id="profRows"></div>
+    <div class="prof-text" id="profText"></div>
   </div>
   <div class="prof-edit" id="profEdit">
-    <div class="lbl">プロフィールの編集（全部空にして保存すると非表示）</div>
-    <div class="lbl">名前</div><input id="pfName" placeholder="名前・アカウント名">
-    <div class="lbl">自己紹介</div><textarea id="pfBio" rows="4" placeholder="自己紹介"></textarea>
-    <div class="lbl">X / Instagram など</div><input id="pfSns" placeholder="@アカウント名">
-    <div class="lbl">活動時間・返信の目安</div><input id="pfTime" placeholder="例：夜に返信します">
-    <div class="lbl">ひとこと</div><input id="pfNote" placeholder="例：交換の前に必読をご確認ください">
+    <div class="lbl">フリースペースの編集（空にして保存すると非表示）</div>
+    <textarea id="pfText" rows="6" placeholder="自由に書けます"></textarea>
     <div class="row"><button class="btn-save" data-act="save-profile">保存</button></div>
   </div>
 
@@ -741,14 +735,10 @@ function renderLinks(){
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function renderProfile(){
-  const p=contents.profile||{};
-  const rows=[['SNS',p.sns],['返信の目安',p.time],['ひとこと',p.note]].filter(x=>x[1]&&String(x[1]).trim());
-  const has=!!((p.name||'').trim()||(p.bio||'').trim()||rows.length);
-  $('#profBox').classList.toggle('hidden',!has);
-  $('#profName').textContent=p.name||'';$('#profName').style.display=(p.name||'').trim()?'':'none';
-  $('#profBio').textContent=p.bio||'';$('#profBio').style.display=(p.bio||'').trim()?'':'none';
-  $('#profRows').innerHTML=rows.map(x=>'<div class="prof-row"><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>').join('');
-  [['pfName','name'],['pfBio','bio'],['pfSns','sns'],['pfTime','time'],['pfNote','note']].forEach(a=>{const el=$('#'+a[0]);if(el&&document.activeElement!==el)el.value=p[a[1]]||'';});
+  const t=String((contents.profile||{}).text||'');
+  $('#profBox').classList.toggle('hidden',!t.trim());
+  $('#profText').innerHTML=fmt(t);
+  const el=$('#pfText');if(el&&document.activeElement!==el)el.value=t;
 }
 function renderNotice(){
   const n=contents.notice||{text:'',date:''};
@@ -893,7 +883,7 @@ function applyData(data){
     }
     if(Array.isArray(M)&&M.length)contents.mustread=M;
     if(Array.isArray(R)&&R.length)contents.rules=R;
-    const PF=parseVal(data.profile);if(PF&&typeof PF==='object')contents.profile={name:String(PF.name||''),bio:String(PF.bio||''),sns:String(PF.sns||''),time:String(PF.time||''),note:String(PF.note||'')};
+    const PF=parseVal(data.profile);if(PF&&typeof PF==='object'){const old=[PF.name,PF.bio].filter(x=>x&&String(x).trim()).join('\n');contents.profile={text:String(PF.text!=null?PF.text:old)};}
     const N=parseVal(data.notice);
     if(N&&typeof N==='object')contents.notice={text:String(N.text||''),date:String(N.date||'')};
     const G=parseVal(data.noticeLog);
@@ -1125,7 +1115,7 @@ document.addEventListener('click',async e=>{
     [a[i],a[j]]=[a[j],a[i]];openSet.clear();render();await saveContents();return;
   }
   if(act==='save-profile'){
-    contents.profile={name:$('#pfName').value.trim(),bio:$('#pfBio').value.trim(),sns:$('#pfSns').value.trim(),time:$('#pfTime').value.trim(),note:$('#pfNote').value.trim()};
+    contents.profile={text:$('#pfText').value.trim()};
     renderProfile();await saveContents();return;
   }
   if(act==='save-notice'){
