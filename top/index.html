@@ -21,6 +21,17 @@ body:not(.ready) .top-loading{display:block}
 #ngModal textarea{min-height:64px;resize:vertical}
 #ngModal .ng-row{display:flex;gap:8px;margin-bottom:12px}
 #ngModal .ng-row button{flex:1;background:var(--pink-light);color:var(--pink-dark);border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+#fbModal .fb-note,#fbInModal .fb-note{font-size:11px;color:#a08a96;line-height:1.7;margin-bottom:12px}
+#fbInModal textarea{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--white);color:var(--text);min-height:130px;resize:vertical;line-height:1.7}
+#fbInModal .fb-cnt{text-align:right;font-size:11px;color:#b5a2ad;margin:4px 0 12px}
+#fbInModal .fb-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.fb-item{padding:12px 0;border-bottom:1px solid var(--border)}
+.fb-item .fb-text{font-size:14px;color:var(--text);white-space:pre-wrap;word-break:break-all;line-height:1.7}
+.fb-item.unread .fb-text{font-weight:700;color:var(--pink-dark)}
+.fb-item .fb-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:#b5a2ad}
+.fb-item .fb-meta button{background:none;border:none;color:#c0728f;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:2px 0 2px 12px}
+.fb-env{font-size:10.5px;color:#b5a2ad;word-break:break-all;line-height:1.6;margin-top:4px}
+.fb-dot{display:inline-block;min-width:18px;padding:1px 6px;border-radius:9px;background:var(--pink);color:#fff;font-size:11px;font-weight:800;text-align:center}
 #ngList{margin-top:8px}
 .ng-item{padding:12px 0;border-bottom:1px solid var(--border)}
 .ng-item .ng-name{font-size:15px;font-weight:700;color:var(--pink-dark);word-break:break-all}
@@ -261,6 +272,28 @@ footer{padding-top:24px;}
 .read-btn{display:block;width:100%;margin:4px 0 4px;padding:13px;border:none;border-radius:999px;background:linear-gradient(135deg,#f4a7c0,#e8749a);color:#fff;font-size:14px;font-weight:800;letter-spacing:.04em;font-family:inherit;cursor:pointer;}
 .read-banner{background:#fde9f1;color:#b8486f;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;}
 .read-note{font-size:12px;font-weight:700;color:#b8486f;text-align:center;line-height:1.6;margin:6px 0 4px;}
+
+.prof{background:#fff;border:1.5px solid #f0cfdc;border-radius:18px;padding:16px 18px;margin:0 0 16px}
+.prof-lb{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#b8486f;background:#fff0f5;border-radius:20px;padding:3px 11px;display:inline-block;margin-bottom:10px}
+.prof-name{font-size:18px;font-weight:800;color:#5a4852;margin:0 0 6px}
+.prof-bio{font-size:13.5px;line-height:1.8;color:#5a4852;white-space:pre-wrap;word-break:break-word}
+.prof-rows{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.prof-row{display:flex;gap:10px;font-size:12.5px;line-height:1.6;color:#5a4852}
+.prof-row b{flex:0 0 76px;color:#b8486f;font-weight:700}
+.prof-row span{flex:1;word-break:break-word;white-space:pre-wrap}
+.prof-edit{display:none;margin-top:12px;padding:12px;border:1.5px dashed var(--pink);border-radius:12px;background:#fff}
+body.admin .prof-edit{display:block}
+.prof-edit .lbl{font-size:11px;font-weight:700;color:var(--pink-dark);margin:8px 0 4px}
+.prof-edit .lbl:first-child{margin-top:0}
+.prof-edit input,.prof-edit textarea{width:100%;border:1.5px solid #f0cfdc;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#444;background:#fff;box-sizing:border-box}
+.prof-edit .row{margin-top:10px}
+/* LINK buttons */
+#linkList .slim{height:auto;min-height:54px;padding:10px 14px;border-radius:16px;border:none;background:#fff0f5;justify-content:flex-start;gap:12px;margin-bottom:8px}
+#linkList .slim-name{flex:1;text-align:left;font-size:14.5px;letter-spacing:.03em}
+#linkList .slim-tag{display:none}
+#linkList .slim::after{content:none}
+#linkList .slim::before{content:"›";order:2;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#ec8fae;color:#fff;font-size:18px;line-height:1;padding-bottom:2px}
+#linkList .slim .slim-name{order:1}
 </style>
 </head>
 <body>
@@ -280,6 +313,10 @@ footer{padding-top:24px;}
   <button class="drawer-item" data-act="go" data-target="#secMust"><span>必読</span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="go" data-target="#secLink"><span>LINK</span><span class="chev">›</span></button>
   <button class="drawer-item admin-only" data-act="menu-ng"><span>取引NGリスト</span><span class="chev">›</span></button>
+  <button class="drawer-item" data-act="menu-nlog"><span>お知らせ履歴</span><span class="chev">›</span></button>
+  <button class="drawer-item" data-act="menu-fb"><span>ご意見・ご要望</span><span class="chev">›</span></button>
+  <button class="drawer-item admin-only" data-act="menu-import"><span>自動取り込み</span><span class="chev">›</span></button>
+  <button class="drawer-item admin-only" data-act="menu-fbview"><span>届いたご意見<span id="fbBadge" class="fb-dot" style="display:none;margin-left:8px"></span></span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="menu-rules"><span>免責事項</span><span class="chev">›</span></button>
 </nav>
 
@@ -301,6 +338,22 @@ footer{padding-top:24px;}
       <button class="btn-save" data-act="save-notice">保存</button>
       <button class="btn-del" data-act="clear-notice">削除</button>
     </div>
+  </div>
+
+  <div class="prof hidden" id="profBox">
+    <span class="prof-lb">PROFILE</span>
+    <div class="prof-name" id="profName"></div>
+    <div class="prof-bio" id="profBio"></div>
+    <div class="prof-rows" id="profRows"></div>
+  </div>
+  <div class="prof-edit" id="profEdit">
+    <div class="lbl">プロフィールの編集（全部空にして保存すると非表示）</div>
+    <div class="lbl">名前</div><input id="pfName" placeholder="名前・アカウント名">
+    <div class="lbl">自己紹介</div><textarea id="pfBio" rows="4" placeholder="自己紹介"></textarea>
+    <div class="lbl">X / Instagram など</div><input id="pfSns" placeholder="@アカウント名">
+    <div class="lbl">活動時間・返信の目安</div><input id="pfTime" placeholder="例：夜に返信します">
+    <div class="lbl">ひとこと</div><input id="pfNote" placeholder="例：交換の前に必読をご確認ください">
+    <div class="row"><button class="btn-save" data-act="save-profile">保存</button></div>
   </div>
 
   <div class="guide-toggle" id="guideToggle">
@@ -394,7 +447,7 @@ footer{padding-top:24px;}
     <div class="vg-m-lbl">ジャンル名</div><span class="vg-m-chip vg-on">円盤</span><span class="vg-m-chip">配信関連</span>
     <div class="vg-m-lbl">出演者</div><span class="vg-m-chip vg-on">田中樹</span><span class="vg-m-chip">ジェシー</span>
     <div class="vg-m-lbl">年代</div><span class="vg-m-chip vg-on">2020年</span><span class="vg-m-chip">2021年</span>
-    <div class="vg-m-lbl">配布の可否</div><span class="vg-m-chip vg-on">交換可</span><span class="vg-m-chip">交換不可</span>
+    <div class="vg-m-lbl">交換の可否</div><span class="vg-m-chip vg-on">交換可</span><span class="vg-m-chip">交換不可</span>
   </div>
 </section>
 
@@ -434,7 +487,7 @@ footer{padding-top:24px;}
     </div>
   </div>
 
-  <form class="xs-bar" id="xsForm" autocomplete="off">
+  <form class="xs-bar" id="xsForm" autocomplete="off" style="display:none" hidden>
     <input id="xsInput" type="search" placeholder="所持リスト・求めリストをまとめて検索" enterkeyhint="search">
     <button type="submit">検索</button>
   </form>
@@ -471,6 +524,32 @@ footer{padding-top:24px;}
     </div>
     <div id="rulesList"></div>
     <button class="add-btn" style="width:100%;margin-top:4px;padding:8px;" data-act="add-item" data-kind="rules">＋ 追加</button>
+  </div>
+</div>
+
+<!-- ご意見ボックス（送信） -->
+<div class="modal" id="fbInModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title">ご意見・ご要望</div>
+      <button class="x-btn" data-act="close">✕</button>
+    </div>
+    <div class="fb-note">お名前や連絡先は不要で、内容は管理者以外には公開されません。誹謗中傷・迷惑行為への対応のため、送信時にIPアドレスと端末情報を記録します。返信はできませんので、お返事が必要なご連絡はX（DM）からお願いします。</div>
+    <textarea id="fbText" maxlength="500" placeholder="ご意見・ご要望をご記入ください（500文字まで）"></textarea>
+    <input class="fb-hp" id="fbHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <div class="fb-cnt"><span id="fbCnt">0</span> / 500</div>
+    <button class="big-btn" id="fbSendBtn" data-act="fb-send">送信する</button>
+  </div>
+</div>
+
+<!-- 届いたご意見（管理者のみ） -->
+<div class="modal" id="fbModal" data-act="close-bg">
+  <div class="sheet">
+    <div class="sheet-head">
+      <div class="sheet-title">届いたご意見</div>
+      <button class="x-btn" data-act="close">✕</button>
+    </div>
+    <div id="fbList"></div>
   </div>
 </div>
 
@@ -660,6 +739,17 @@ function renderLinks(){
     </div>`).join('');
 }
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+function renderProfile(){
+  const p=contents.profile||{};
+  const rows=[['SNS',p.sns],['返信の目安',p.time],['ひとこと',p.note]].filter(x=>x[1]&&String(x[1]).trim());
+  const has=!!((p.name||'').trim()||(p.bio||'').trim()||rows.length);
+  $('#profBox').classList.toggle('hidden',!has);
+  $('#profName').textContent=p.name||'';$('#profName').style.display=(p.name||'').trim()?'':'none';
+  $('#profBio').textContent=p.bio||'';$('#profBio').style.display=(p.bio||'').trim()?'':'none';
+  $('#profRows').innerHTML=rows.map(x=>'<div class="prof-row"><b>'+esc(x[0])+'</b><span>'+esc(x[1])+'</span></div>').join('');
+  [['pfName','name'],['pfBio','bio'],['pfSns','sns'],['pfTime','time'],['pfNote','note']].forEach(a=>{const el=$('#'+a[0]);if(el&&document.activeElement!==el)el.value=p[a[1]]||'';});
+}
 function renderNotice(){
   const n=contents.notice||{text:'',date:''};
   const has=!!n.text.trim();
@@ -742,6 +832,41 @@ document.addEventListener('submit',e=>{
 const NG_KEY='top_ng_list_v1';
 function ngLoad(){try{const a=JSON.parse(localStorage.getItem(NG_KEY)||'[]');return Array.isArray(a)?a:[];}catch{return[];}}
 function ngSave(a){try{localStorage.setItem(NG_KEY,JSON.stringify(a));}catch{toast('保存できませんでした');}}
+/* ---------- ご意見ボックス ---------- */
+let fbItems=[];
+function fbRenderList(){
+  const box=$('#fbList');if(!box)return;
+  if(!isAdmin){box.innerHTML='';return;}
+  box.innerHTML=fbItems.length?fbItems.map(x=>{const d=new Date(x.ts);const ds=isNaN(d)?'':d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    return '<div class="fb-item'+(x.read?'':' unread')+'"><div class="fb-text">'+esc(x.text)+'</div><div class="fb-meta"><span>'+esc(ds)+'</span></div>'+(x.ip||x.did||x.ua?'<div class="fb-env">IP '+esc(x.ip||'不明')+(x.did?' ／ 端末 '+esc(x.did):'')+(x.ua?'<br>'+esc(x.ua):'')+'</div>':'')+'<div class="fb-meta"><span></span><span>'+(x.read?'':'<button data-act="fb-read" data-id="'+esc(x.id)+'">既読にする</button>')+'<button data-act="fb-del" data-id="'+esc(x.id)+'">削除</button></span></div></div>';}).join(''):'<div class="ng-empty">まだ届いていません</div>';
+}
+function fbBadge(){const n=fbItems.filter(x=>!x.read).length;const b=$('#fbBadge');if(b){b.style.display=n?'inline-block':'none';b.textContent=n;}}
+async function fbLoad(){
+  if(!isAdmin)return;
+  try{const d=await jsonp({action:'getFeedback',token});
+    if(d&&d.error==='unauthorized'){return;}
+    if(d&&d.ok){fbItems=d.items||[];fbRenderList();fbBadge();}}catch{}
+}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='fbText')$('#fbCnt').textContent=e.target.value.length;});
+function fbDid(){let v='';try{v=localStorage.getItem('fb_did')||'';if(!/^[A-Za-z0-9]{6,40}$/.test(v)){v=Array.from(crypto.getRandomValues(new Uint8Array(10))).map(x=>x.toString(36).padStart(2,'0')).join('').slice(0,16);localStorage.setItem('fb_did',v);}}catch{v='';}return v;}
+async function fbIp(){try{const c=new AbortController();const t=setTimeout(()=>c.abort(),4000);const r=await fetch('https://api.ipify.org?format=json',{signal:c.signal});clearTimeout(t);const d=await r.json();return String(d&&d.ip||'');}catch{return '';}}
+async function fbSend(){
+  const t=($('#fbText').value||'').trim();
+  if(!t){toast('内容を入力してください');return;}
+  let last=0;try{last=parseInt(localStorage.getItem('fb_last')||'0',10)||0;}catch{}
+  if(Date.now()-last<60000){toast('少し時間をおいてから送ってください');return;}
+  const btn=$('#fbSendBtn');btn.disabled=true;btn.textContent='送信中';
+  try{
+    const r=await fetch(GAS_URL+'?action=postFeedback',{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({text:t,hp:$('#fbHp').value,ip:await fbIp(),did:fbDid(),ua:navigator.userAgent})});
+    const d=await r.json();
+    if(d&&d.ok){try{localStorage.setItem('fb_last',String(Date.now()));}catch{}$('#fbText').value='';$('#fbCnt').textContent='0';closeModals();toast('送信しました。ありがとうございます');}
+    else if(d&&(d.error==='too_fast'||d.error==='busy'))toast('混み合っています。少し時間をおいて送ってください');
+    else if(d&&d.error==='too_long')toast('500文字以内にしてください');
+    else toast('送信できませんでした');
+  }catch{toast('送信できませんでした。通信状況を確認してください');}
+  btn.disabled=false;btn.textContent='送信する';
+}
+
 function ngRender(){
   const box=$('#ngList');if(!box)return;
   if(!isAdmin){box.innerHTML='';return;}
@@ -754,7 +879,7 @@ function render(){
   document.body.classList.toggle('admin',isAdmin);
   $('#adminBadge').classList.toggle('on',isAdmin);
   $('#loginBtn').classList.toggle('hidden',isAdmin);
-  renderMustread();renderLinks();renderRules();renderNotice();
+  renderMustread();renderLinks();renderRules();renderNotice();renderProfile();
 }
 
 /* ---------- データ読み込み・保存 ---------- */
@@ -768,12 +893,13 @@ function applyData(data){
     }
     if(Array.isArray(M)&&M.length)contents.mustread=M;
     if(Array.isArray(R)&&R.length)contents.rules=R;
+    const PF=parseVal(data.profile);if(PF&&typeof PF==='object')contents.profile={name:String(PF.name||''),bio:String(PF.bio||''),sns:String(PF.sns||''),time:String(PF.time||''),note:String(PF.note||'')};
     const N=parseVal(data.notice);
     if(N&&typeof N==='object')contents.notice={text:String(N.text||''),date:String(N.date||'')};
     const G=parseVal(data.noticeLog);
     if(Array.isArray(G))contents.noticeLog=G.filter(x=>x&&x.text).map(x=>({text:String(x.text),date:String(x.date||'')}));
 }
-function cacheContents(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({links:contents.links,mustread:contents.mustread,rules:contents.rules,notice:contents.notice,noticeLog:contents.noticeLog||[]}));}catch{}}
+function cacheContents(){try{localStorage.setItem(CACHE_KEY,JSON.stringify({links:contents.links,mustread:contents.mustread,rules:contents.rules,notice:contents.notice,noticeLog:contents.noticeLog||[],profile:contents.profile||{}}));}catch{}}
 function showLists(){document.body.classList.add('ready');}
 async function loadContents(){
   try{
@@ -791,7 +917,8 @@ async function saveContents(){
     mustread:JSON.stringify(contents.mustread),
     rules:JSON.stringify(contents.rules),
     notice:JSON.stringify(contents.notice),
-    noticeLog:JSON.stringify(contents.noticeLog||[])};
+    noticeLog:JSON.stringify(contents.noticeLog||[]),
+    profile:JSON.stringify(contents.profile||{})};
   try{
     const r=await fetch(GAS_URL+'?action=saveTopContents&token='+encodeURIComponent(token),{
       method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
@@ -865,7 +992,7 @@ async function verifyCode(){
     if(d&&d.ok){
       token=d.token;isAdmin=true;
       try{localStorage.setItem(TOKEN_KEY,JSON.stringify({token:d.token,expires:d.expires}));}catch{}
-      closeModals();render();toast('ログインしました');
+      closeModals();render();toast('ログインしました');fbLoad();
     }else{
       setMsg(ERR[d&&d.error]||('ログインに失敗しました（'+((d&&d.error)||'応答なし')+'）'));
       if(d&&(d.error==='expired'||d.error==='locked')){$('#loginStep1').style.display='block';$('#loginStep2').style.display='none';$('#sendCodeBtn').disabled=false;setStep(1);}
@@ -926,6 +1053,7 @@ document.addEventListener('click',async e=>{
   }
   if(act==='open-rules'){openModal('rulesModal');return;}
   if(act==='open-nlog'){openModal('nlogModal');return;}
+  if(act==='menu-nlog'){closeMenu&&closeMenu();openModal('nlogModal');return;}
   if(act==='send-code'){sendCode();return;}
   if(act==='have-code'){
     $('#loginStep1').style.display='none';$('#loginStep2').style.display='block';setStep(2);
@@ -934,11 +1062,17 @@ document.addEventListener('click',async e=>{
   }
   if(act==='verify'){verifyCode();return;}
   if(act==='logout'){logout();return;}
+  if(act==='menu-fb'){closeMenu();openModal('fbInModal');return;}
+  if(act==='fb-send'){fbSend();return;}
   if(!isAdmin)return;
   if(act==='del-nlog'){
     if(!confirm('この過去のお知らせを削除しますか？'))return;
     (contents.noticeLog||[]).splice(parseInt(el.dataset.i),1);render();await saveContents();return;
   }
+  if(act==='menu-import'){location.href='https://noyu-web.github.io/video-list/folderimport/';return;}
+  if(act==='menu-fbview'){closeMenu();fbRenderList();openModal('fbModal');fbLoad();return;}
+  if(act==='fb-read'){const id=el.dataset.id;const it=fbItems.find(x=>x.id===id);if(it)it.read=true;fbRenderList();fbBadge();try{await jsonp({action:'markFeedbackRead',id,token});}catch{}return;}
+  if(act==='fb-del'){if(!confirm('このご意見を削除しますか？'))return;const id=el.dataset.id;fbItems=fbItems.filter(x=>x.id!==id);fbRenderList();fbBadge();try{await jsonp({action:'deleteFeedback',id,token});}catch{}return;}
   if(act==='menu-ng'){closeMenu();ngRender();openModal('ngModal');return;}
   if(act==='ng-add'){
     const n=$('#ngName').value.trim(),r=$('#ngReason').value.trim();
@@ -989,6 +1123,10 @@ document.addEventListener('click',async e=>{
     const j=i+parseInt(el.dataset.d);const a=contents[kind];
     if(j<0||j>=a.length)return;
     [a[i],a[j]]=[a[j],a[i]];openSet.clear();render();await saveContents();return;
+  }
+  if(act==='save-profile'){
+    contents.profile={name:$('#pfName').value.trim(),bio:$('#pfBio').value.trim(),sns:$('#pfSns').value.trim(),time:$('#pfTime').value.trim(),note:$('#pfNote').value.trim()};
+    renderProfile();await saveContents();return;
   }
   if(act==='save-notice'){
     const t=$('#noticeInput').value.trim();
@@ -1066,12 +1204,12 @@ document.addEventListener('keydown',e=>{
 
 /* ---------- 起動 ---------- */
 loadToken();
-{let hit=false;try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&typeof c==='object'){if(Array.isArray(c.links)&&c.links.length)contents.links=c.links;if(Array.isArray(c.mustread)&&c.mustread.length)contents.mustread=c.mustread;if(Array.isArray(c.rules)&&c.rules.length)contents.rules=c.rules;if(c.notice&&typeof c.notice==='object')contents.notice=c.notice;if(Array.isArray(c.noticeLog))contents.noticeLog=c.noticeLog;hit=true;}}catch{}
+{let hit=false;try{const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');if(c&&typeof c==='object'){if(Array.isArray(c.links)&&c.links.length)contents.links=c.links;if(c.profile&&typeof c.profile==='object')contents.profile=c.profile;if(Array.isArray(c.mustread)&&c.mustread.length)contents.mustread=c.mustread;if(Array.isArray(c.rules)&&c.rules.length)contents.rules=c.rules;if(c.notice&&typeof c.notice==='object')contents.notice=c.notice;if(Array.isArray(c.noticeLog))contents.noticeLog=c.noticeLog;hit=true;}}catch{}
 if(hit)showLists();}
 render();
 loadContents();
 if(isAdmin){
-  jsonp({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();render();}}).catch(()=>{});
+  jsonp({action:'checkToken',token}).then(d=>{if(!d||!d.ok){clearToken();render();}else fbLoad();}).catch(()=>{});
 }
 </script>
 </body>
