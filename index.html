@@ -380,6 +380,11 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="form-group">
 <button id="bulkDelete" style="width:100%;background:#fee2e2;color:#991b1b;padding:10px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer">選んだ項目を削除</button>
 </div>
+<div class="form-group" id="bulkKindBox" style="background:#fff0f5;border:1.5px solid #f3cfdc;border-radius:12px;padding:10px 12px">
+<label class="form-label">SixTONES以外の種別</label>
+<div class="chips-grid" id="bulkKindChips" style="margin-bottom:8px"></div>
+<div style="display:flex;gap:6px"><button class="btn-save" id="bulkKindAdd" style="flex:1">付ける</button><button class="btn-cancel" id="bulkKindRm" style="flex:1">外す</button></div>
+</div>
 </div>
 <div id="bulkProgress" class="hidden" style="text-align:center;font-size:14px;padding:24px 0;color:var(--pink-dark);font-weight:700"></div>
 </div>
@@ -2404,9 +2409,19 @@ document.getElementById('bulkTitle').textContent=selected.size+'件をまとめ�
 document.getElementById('bulkForm').classList.remove('hidden');
 document.getElementById('bulkProgress').classList.add('hidden');
 fillBulkGenre();
+renderBulkKinds();
 {const ns=new Set(cfg.members||[]);Object.values(cfg.otherMembers||{}).forEach(a=>(a||[]).forEach(n=>ns.add(n)));(cachedVideos||[]).forEach(v=>[].concat(v.members||[]).forEach(n=>{if(n)ns.add(n);}));document.getElementById('bulkMemberSug').innerHTML=[...ns].map(n=>`<option value="${esc(n)}"></option>`).join('');document.getElementById('bulkMember').value='';}
 document.getElementById('bulkModal').classList.remove('hidden');
 });
+function renderBulkKinds(){const w=document.getElementById('bulkKindChips');w.innerHTML=ogKinds(cfg).map(k=>'<button type="button" class="chip" data-subgenre="'+esc(k)+'">'+esc(k)+'</button>').join('');w.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>c.classList.toggle('selected')));}
+function bulkKindApply(add){const ks=[...document.querySelectorAll('#bulkKindChips .chip.selected')].map(c=>c.dataset.subgenre);if(!ks.length){alert('種別を選んでください');return;}
+if(!confirm(selected.size+'件に種別「'+ks.join('・')+'」を'+(add?'付けます':'外します')+'。よろしいですか？'))return;
+bulkRun(it=>{let cur=parseGenres(it.genres||it.genre||'');
+if(add){ks.forEach(k=>{if(!cur.some(x=>x.genre===OGK&&x.subgenre===k))cur=[...cur,{genre:OGK,subgenre:k}];});}
+else cur=cur.filter(x=>!(x.genre===OGK&&ks.includes(x.subgenre)));
+return{...it,genres:JSON.stringify(cur)};});}
+document.getElementById('bulkKindAdd').addEventListener('click',()=>bulkKindApply(true));
+document.getElementById('bulkKindRm').addEventListener('click',()=>bulkKindApply(false));
 function closeBulk(){if(bulkBusy)return;document.getElementById('bulkModal').classList.add('hidden');}
 document.getElementById('bulkCloseBtn').addEventListener('click',closeBulk);
 document.getElementById('bulkModal').addEventListener('click',function(e){if(e.target===this)closeBulk();});
