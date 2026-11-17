@@ -239,9 +239,9 @@ const out=new Set();const ns=nzN(str);
 reg.forEach(n=>{if(ns.includes(nzN(n)))out.add(n);});
 String(str).split(/[&＆、,，・\/／\s【】\[\]()（）「」『』×x+＋]+/).map(nzN).filter(t=>t.length>=2).forEach(t=>{
 const pick=cc=>{if(cc.length===1)out.add(cc[0]);else if(cc.length>1){const sx=cc.filter(n=>six.includes(n));if(sx.length===1)out.add(sx[0]);}};
-let cc=reg.filter(n=>nzN(n).startsWith(t)||nzN(n)===t);
-if(!cc.length)cc=reg.filter(n=>t.length>=2&&nzN(n).endsWith(t));
-if(!cc.length&&t.length>=3)cc=reg.filter(n=>{const a=nzN(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nzN(n).length>=t.length;});
+let cc=reg.filter(n=>nzN(n)===t||(six.includes(n)&&nzN(n).startsWith(t)));
+if(!cc.length)cc=reg.filter(n=>six.includes(n)&&t.length>=2&&nzN(n).endsWith(t));
+if(!cc.length&&t.length>=3)cc=reg.filter(n=>{if(!six.includes(n))return false;const a=nzN(n).slice(0,t.length);let d=0;for(let i=0;i<t.length;i++)if(a[i]!==t[i])d++;return d<=1&&nzN(n).length>=t.length;});
 pick(cc);
 if(t.length>=4){const keys=[...new Set(six.flatMap(m=>[nzN(m),nzN(m).slice(0,2)]))].sort((x,y)=>y.length-x.length);
 const tl=st=>{if(!st)return[];for(const k of keys){if(k&&st.startsWith(k)){const r=tl(st.slice(k.length));if(r)return[k,...r];}}return null;};
@@ -473,7 +473,7 @@ initAuth();
 <script>
 (function(){
 var B='https://noyu-web.github.io/video-list/';
-var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/'],['自動取り込み',B+'folderimport/','/video-list/folderimport/',1]];
+var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/'],['自動取り込み',B+'folderimport/','/video-list/folderimport/']];
 function adm(){try{var t=JSON.parse(localStorage.getItem('top_admin_token')||'null');return !!(t&&t.token&&(!t.expires||t.expires>Date.now()));}catch(e){return false;}}
 function here(){var p=location.pathname.replace(/index\.html$/,'');if(p.slice(-1)!=='/')p+='/';return p;}
 var bg=document.getElementById('cmBg');
