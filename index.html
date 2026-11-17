@@ -521,7 +521,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <textarea class="form-textarea" id="pasteText" style="min-height:140px" placeholder="例：&#10;音源&#10;1. こっから&#10;2. 雨&#10;特典映像&#10;3. こっから -Music Video-"></textarea>
 <div style="display:flex;gap:6px;margin-top:8px">
 <select class="form-select" id="pasteSection"><option value="">区分なし</option><option value="音源">音源</option><option value="映像">映像</option><option value="特典映像">特典映像</option><option value="ドキュメント">ドキュメント</option><option value="メイキング">メイキング</option><option value="その他">その他</option></select>
-<select class="form-select" id="pasteDist"><option value="none">配布なし</option><option value="ok">配布可</option><option value="ng">配布不可</option></select>
+<select class="form-select" id="pasteDist"><option value="none">指定なし</option><option value="ok">交換可</option><option value="ng">交換不可</option></select>
 </div>
 <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-top:8px"><input type="checkbox" id="pasteStrip" checked> 行頭の番号（1. や 01 など）を取り除く</label>
 <div class="paste-prev" id="pastePrev">貼り付けると、ここに内容が表示されます</div>
@@ -1187,7 +1187,7 @@ secInl('文字検索','<input class="form-input" id="fsText" type="search" place
 secHTML('ジャンル名','複数選択可','<div class="chips-grid">'+genres.map(g=>chipHTML('genres',g)).join('')+'</div>')+
 secHTML('出演者','複数選択可'+(isAdmin?'・管理者は名前の追加/削除ができます':''),'<details class="fs-others fs-l1" data-g="__six"'+((openG.has('__six')||(!body.querySelector('details[data-g]')&&sixt.some(m=>F.members.has(m))))?' open':'')+'><summary>SixTONES</summary><div class="chips-grid">'+sixt.map(m=>chipHTML('members',m)).join('')+'</div></details>'+(groupHTML?'<details class="fs-others fs-l1" data-g="__og"'+((openG.has('__og')||[...F.members].some(n=>!sixt.includes(n)))?' open':'')+'><summary>SixTONES以外</summary>'+groupHTML+'</details>':''))+
 secHTML('年代','複数選択可',years.length?'<div class="chips-grid">'+years.map(y=>chipHTML('years',y,y+'年')).join('')+'</div>':'<div style="font-size:12px;color:var(--gray)">日付データがありません</div>')+
-secInl('配布の可否','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
+secInl('交換の可否','<div class="chips-grid">'+['ok','partial','consult','ng'].map(v=>chipHTML('ex',v,exchangeLabel(v))).join('')+'</div>')+
 secInl('絞り込み','<div class="chips-grid">'+chipHTML('fresh','new','新着のみ')+chipHTML('fav','yes','お気に入りのみ')+'</div>')+
 (isAdmin?secInl('未設定','<div class="chips-grid">'+chipHTML('gaps','nogenre','ジャンル未設定')+chipHTML('gaps','nosub','小ジャンル未設定')+chipHTML('gaps','nometa','ファイル情報なし')+chipHTML('gaps','nomember','出演者なし')+'</div>'):'')+
 (isAdmin?secInl('確認状況','<div class="chips-grid">'+chipHTML('chk','yes','確認済み')+chipHTML('chk','no','未確認')+'</div>'):'');
@@ -1547,7 +1547,7 @@ const tracksDiv=document.getElementById('detailTracks')||document.createElement(
 tracksDiv.id='detailTracks';
 const tracks=item.tracks?JSON.parse(item.tracks||'[]'):[];
 if(tracks.length){
-const distLabel={ok:'配布可',ng:'配布不可',none:''};
+const distLabel={ok:'交換可',ng:'交換不可',none:''};
 const distBg={ok:'background:var(--pink);color:#fff',ng:'background:#f3eef0;color:#9b8a91',none:''};
 let sectionsHtml = '';
 let currentSec = null;
@@ -2056,9 +2056,9 @@ row.innerHTML=`
 <input class="form-input track-date" type="date" value="${esc(date)}" style="flex:1 1 130px;min-width:0;font-size:13px"><button type="button" class="btn-add-small" onclick="this.previousElementSibling.value='';this.closest('div[style*=pink-pale]').dataset.rawdate=''" style="flex:none;padding:6px 10px">日付削除</button>
 <input class="form-input track-time" type="text" placeholder="時間 例 14:00" value="${esc(time)}" style="width:110px;font-size:13px">
 <select class="track-dist form-select" style="width:100px;padding:7px 6px;font-size:12px">
-<option value="none" ${dist==='none'?'selected':''}>配布なし</option>
-<option value="ok" ${dist==='ok'?'selected':''}>配布可</option>
-<option value="ng" ${dist==='ng'?'selected':''}>配布不可</option>
+<option value="none" ${dist==='none'?'selected':''}>指定なし</option>
+<option value="ok" ${dist==='ok'?'selected':''}>交換可</option>
+<option value="ng" ${dist==='ng'?'selected':''}>交換不可</option>
 </select>
 </div>
 <div style="margin-bottom:6px" class="tf-open-wrap"><button type="button" class="btn-add-small tf-open">＋ ファイル情報を記入</button></div>
