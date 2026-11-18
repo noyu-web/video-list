@@ -53,6 +53,16 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 #detailModal .dt-bar .btn-icon{font-size:13px!important;font-weight:700;color:var(--pink-dark);padding:4px 8px 4px 0;white-space:nowrap}
 #detailModal .dt-bar .modal-title{flex:1;min-width:0;font-size:15px;line-height:1.35;word-break:break-all}
 #detailExchange{margin-bottom:10px!important}
+#detailSchedules>div:nth-child(2){border:none!important;background:none!important;border-radius:0!important;padding:0!important;margin-bottom:10px!important}
+#detailSchedules>div:nth-child(2)>div{padding:7px 0!important}
+#detailSchedules>div:nth-child(2)>div:last-child{border-bottom:none!important}
+#detailSchedules>div:nth-child(2)>div>div:first-child>span:first-child{font-size:13px!important;font-weight:700!important;color:#c97a98!important}
+#detailSchedules>div:nth-child(2)>div>div:first-child>span:nth-child(2){font-size:12px!important;color:#d89ab2!important}
+#trkBox .trk-row>div:first-child>span:first-child{font-size:12px!important;font-weight:700!important;color:#c97a98!important;letter-spacing:.02em!important}
+#trkBox .trk-row>div:first-child>span:nth-child(2){font-size:12px!important;color:#d89ab2!important}
+#trkBox .trk-row.trk-dateonly{padding:7px 0!important}
+#trkBox .trk-row>div+div{margin-top:1px!important}
+#detailModal #trkBox .trk-sec,#trkBox .trk-sec{display:block!important;background:none!important;border:none!important;border-bottom:1px solid var(--pink-light)!important;border-radius:0!important;padding:0 0 4px!important;margin:16px 0 0!important;font-size:12px!important;color:var(--pink-dark)!important}
 
 .side-seg{border-radius:0!important;background:#fff!important;border:none!important;border-bottom:1px solid var(--pink-light)!important;padding:0!important;gap:0!important;margin:0!important}
 .side-seg button{border-radius:0!important;border:none!important;background:none!important;box-shadow:none!important;padding:9px 0!important;color:#9aa0aa!important;font-weight:700!important;font-size:13px!important}
@@ -1591,7 +1601,7 @@ if(!hasSec&&rows.length>=12){
 const runs=[];rows.forEach(r=>{const y=r.dataset.y||'';if(!runs.length||runs[runs.length-1].y!==y)runs.push({y,rows:[r]});else runs[runs.length-1].rows.push(r);});
 const ys=new Set(runs.map(x=>x.y));
 if(ys.size>=2&&ys.size===runs.length){
-runs.forEach((g,i)=>{const d=document.createElement('details');d.className='trk-year';d.open=rows.length<=30||i===0;
+runs.forEach((g,i)=>{const d=document.createElement('details');d.className='trk-year';d.open=false;
 const sm=document.createElement('summary');sm.textContent=(g.y?g.y+'年':'日付なし')+'（'+g.rows.length+'件）';d.appendChild(sm);
 box.insertBefore(d,g.rows[0]);g.rows.forEach(r=>d.appendChild(r));});
 }
@@ -1664,7 +1674,7 @@ const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||
 const dateBadge='';
 const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" data-xs="${esc(m)}" style="font-size:10px;padding:1px 6px;cursor:pointer">${esc(m)}</span>`).join('');
 const memberSpan=memberBadges?`<span style="display:inline-flex;flex-wrap:wrap;gap:3px">${memberBadges}</span>`:'';
-secItems.push(`<div class="trk-row" data-d="${esc(dp)}" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:12px 0;border-bottom:1px solid #f3e1ea">
+secItems.push(`<div class="trk-row${(dp&&!title&&!memberBadges)?' trk-dateonly':''}" data-d="${esc(dp)}" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:12px 0;border-bottom:1px solid #f3e1ea">
 ${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(dp)}</span>${tp?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${esc(tp)}</span>`:''}${title?'':(badge||memberSpan?`<div style="flex:0 0 100%;display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px">${badge}${memberSpan}</div>`:'')}</div>`:''}
 ${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
 ${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
