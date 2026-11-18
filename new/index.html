@@ -115,7 +115,7 @@ textarea.inp{min-height:80px;resize:vertical}
 <header>
   <div class="hrow">
     <h1 id="title">所持リスト</h1>
-    <button class="abtn" id="adminBtn" style="display:none">管理者</button>
+    <button class="abtn" id="adminBtn">ログイン</button>
   </div>
   <div class="seg" id="groupSeg">
     <button data-g="SixTONES" class="on">SixTONESメイン</button>
@@ -614,11 +614,12 @@ $('verify').addEventListener('click', async ()=>{
 $('code').addEventListener('keydown', e=>{ if(e.key==='Enter') $('verify').click(); });
 function setAdmin(v){
   isAdmin = v;
-  $('adminBtn').style.display = v ? '' : 'none';
+  $('adminBtn').textContent = v ? '管理者' : 'ログイン';
+  $('adminBtn').classList.toggle('fill', v);
   $('addBtn').classList.toggle('show', v);
 }
 function logoutLocal(){ token=''; lsSet('token',''); setAdmin(false); }
-$('adminBtn').addEventListener('click', ()=>openOv('ovAdmin'));
+$('adminBtn').addEventListener('click', ()=> isAdmin ? openOv('ovAdmin') : openLogin());
 $('addBtn').addEventListener('click', ()=>openEdit(null));
 $('mAdd').addEventListener('click', ()=>{ closeOv('ovAdmin'); openEdit(null); });
 $('mReload').addEventListener('click', ()=>{ closeOv('ovAdmin'); load(); });
