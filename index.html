@@ -1352,7 +1352,7 @@ let hd='';const _g=_sr.get(item.id);if(_g&&_g.first)hd='<div class="sr-h" data-s
 return hd+`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}${_g?' sr-in':''}"${_g?` data-srk="${esc(_g.k)}"${_srOpen.has(_g.k)?'':' style="display:none"'}`:''} data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
-${(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch(this.dataset.m)" data-m="${esc(m)}" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
+${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch(this.dataset.m)" data-m="${esc(m)}" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
 </div>
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
