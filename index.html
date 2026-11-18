@@ -47,6 +47,15 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .list-count{padding:2px 0 6px!important}
 .card{margin-bottom:6px!important}
 
+.side-seg{border-radius:0!important;background:#fff!important;border:none!important;border-bottom:1px solid var(--pink-light)!important;padding:0!important;gap:0!important;margin:0!important}
+.side-seg button{border-radius:0!important;border:none!important;background:none!important;box-shadow:none!important;padding:9px 0!important;color:#9aa0aa!important;font-weight:700!important;font-size:13px!important}
+.side-seg button+button{border-left:1px solid #e3c9d4!important;margin:7px 0!important;padding:2px 0!important}
+.side-seg button.on{color:var(--pink)!important;background:none!important;box-shadow:none!important;border:none!important}
+.side-seg button.on+button,.side-seg button+button.on{border-left:1px solid #e3c9d4!important}
+.subtab,.chip,.btn,.btn-sm,.login-btn,.mode-badge,.search-btn,.fav-only,.exchange-badge,.cm-btn,.btn-add-small,.af-chip,.tag,.new-badge,#opsBtn,.tool-row select,.tool-row .fav-only,#adminToolbar .btn,.card-admin .btn-sm,#trkBox .trk-sec{border-radius:6px!important}
+.subtab,.af-chip{border-width:1px!important}
+.cm-btn{border-radius:8px!important}
+
 .card{border-radius:14px!important;border-color:#f3dbe5!important}
 .card:hover{box-shadow:none!important}
 .card-main{padding:11px 12px!important}
@@ -1580,8 +1589,8 @@ const sm=document.createElement('summary');sm.textContent=(g.y?g.y+'年':'日付
 box.insertBefore(d,g.rows[0]);g.rows.forEach(r=>d.appendChild(r));});
 }
 }
-// 詳細内の検索
-if(rows.length>=8){
+// 詳細内の検索（廃止）
+if(false){
 const inp=document.createElement('input');inp.className='form-input';inp.id='trkSearch';inp.placeholder='収録内容を検索';inp.autocomplete='off';inp.style.cssText='margin-bottom:8px;font-size:13px';
 const cnt=document.createElement('div');cnt.style.cssText='font-size:11px;color:var(--gray);margin:-2px 0 8px;display:none';
 box.before(inp);box.before(cnt);
