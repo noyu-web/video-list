@@ -275,8 +275,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div style="display:flex;align-items:center;gap:6px;row-gap:6px;flex-wrap:wrap;padding:10px 16px 6px">
 <span style="font-size:11px;color:var(--gray);white-space:nowrap">並び替え</span>
 <select id="sortSelect" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:8px;background:var(--white)">
-<option value="title">標準（50音順）</option>
-<option value="default">手動の並び順</option>
+<option value="default">デフォルト</option>
+<option value="title">50音順</option>
 <option value="reg_new">登録（新しい順）</option>
 <option value="reg_old">登録（古い順）</option>
 <option value="date_new">公演日（新しい順）</option>
@@ -295,6 +295,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="list-count" id="listCount"></div>
 <div class="check-progress hidden" id="checkProgress"></div>
 <div id="cardList"></div>
+<div id="otherHit"></div>
 </div>
 
 <!-- Filter Modal -->
@@ -816,7 +817,7 @@ if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');
 });
 }
 let qMode='or';
-let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='title';
+let isAdmin=false,token='',currentGenre='すべて',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set(),fav:new Set()};
 const CHECK_LIST='1';
 const checkedSet=new Set();let checksLoaded=false;
@@ -841,7 +842,7 @@ function stateObj(){
 const o={};
 if(currentGenre!=='すべて')o.t=currentGenre;
 if(currentSubgenre!=='すべて')o.u=currentSubgenre;
-if(sortOrder!=='title')o.o=sortOrder;
+if(sortOrder!=='default')o.o=sortOrder;
 if(F.q)o.q=F.q;
 if(qMode==='and')o.a=1;
 [['g','genres'],['m','members'],['y','years'],['e','ex'],['n','fresh'],['k','gaps'],['c','chk']].forEach(([a,k])=>{if(F[k].size)o[a]=[...F[k]];});
@@ -1265,35 +1266,47 @@ F.q='';F.genres.clear();F.members.clear();F.years.clear();F.ex.clear();F.fresh.c
 renderFilterSheet();renderList();
 });
 
-function crossSearch(member){
-const modal=document.getElementById('crossModal');
-const title=document.getElementById('crossModalTitle');
-const list=document.getElementById('crossModalList');
-title.textContent=member+' の出演作品';
-loadVideos().then(videos=>{
-const matched=videos.filter(v=>(v.members||[]).includes(member));
-if(!matched.length){list.innerHTML='<p style="color:var(--gray);font-size:13px">該当なし</p>';modal.classList.remove('hidden');return;}
-const grouped={};
-matched.forEach(v=>{
-const genres=parseGenres(v.genres||v.genre||'');
-const g=genres.length?(genres[0].genre+(genres[0].subgenre?' / '+genres[0].subgenre:'')):'その他';
-if(!grouped[g])grouped[g]=[];
-grouped[g].push(v);
-});
-list.innerHTML=Object.entries(grouped).map(([g,items])=>`
-<div style="margin-bottom:12px">
-<div style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px;border-bottom:1px solid var(--pink-light);padding-bottom:4px">${esc(g)}</div>
-${items.map(v=>`<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">${esc(v.title)}</div>`).join('')}
-</div>`).join('');
-modal.classList.remove('hidden');
+let _otherP=null,_otherSeq=0;
+function otherHits(){
+const box=document.getElementById('otherHit');if(!box)return;
+const q=(F.q||'').trim(),mem=[...F.members];
+if(!q&&!mem.length){box.innerHTML='';return;}
+const seq=++_otherSeq;
+if(!_otherP)_otherP=jsonp({action:OTHER_ACTION},45000).catch(()=>{_otherP=null;return null;});
+box.innerHTML='<div style="font-size:12px;color:var(--gray);padding:10px 4px">'+esc(OTHER_LABEL)+'を検索中…</div>';
+_otherP.then(other=>{
+if(seq!==_otherSeq)return;
+if(!Array.isArray(other)){box.innerHTML='';return;}
+const segs=q?fold(q).split(/[|｜]/).map(x=>x.split(/\s+/).filter(Boolean)).filter(a=>a.length):[];
+const hit=other.filter(it=>{
+let ms=[];try{ms=[].concat(typeof it.members==='string'?JSON.parse(it.members||'[]'):(it.members||[]));}catch{}
+if(mem.length&&!mem.every(m=>ms.includes(m)))return false;
+if(segs.length){let tt='',mt='';try{tt=trackTitles(it);}catch{}try{mt=metaText(it);}catch{}
+const hayF=fold([it.title,ms.join(' '),it.note||'',tt,mt].join(' '));
+if(!segs.some(terms=>terms.every(t=>hayF.includes(t))))return false;}
+return true;});
+if(!hit.length){box.innerHTML='';return;}
+box.innerHTML='<div style="margin:14px 0 6px;padding:10px 12px;background:#fff0f5;border:1px solid var(--pink-light);border-radius:10px"><div style="font-size:12px;font-weight:700;color:var(--pink-dark);margin-bottom:6px">'+esc(OTHER_LABEL)+'にもあります（'+hit.length+'件）</div><div style="font-size:12px;line-height:1.9;max-height:260px;overflow-y:auto">'+hit.map(it=>esc(it.title)+' <span style="color:var(--gray)">'+esc(exchangeLabel(it.exchange))+'</span>').join('<br>')+'</div></div>';
 });
 }
 
+function crossSearch(member){
+F.members.clear();F.members.add(member);
+document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.add('hidden'));
+try{saveConfig(cfg);}catch{}
+renderFilterSheet();renderList();
+try{window.scrollTo({top:0,behavior:'smooth'});}catch{}
+}
+
+const MANK='__manual';
+function manualOrder(){const l=cfg&&cfg.subgenres&&cfg.subgenres[MANK];return Array.isArray(l)?l:null;}
+function setManualOrder(ids){if(!cfg.subgenres)cfg.subgenres={};const seen=new Set(ids.map(String));cfg.subgenres[MANK]=[...ids.map(String),...(manualOrder()||[]).filter(x=>!seen.has(String(x)))];try{saveConfig(cfg);}catch{}}
 async function renderList(){
 const list=document.getElementById('cardList');
 if(!cachedVideos){list.innerHTML=loadingHTML('読み込み中');}
 let data=cachedVideos||await loadVideos();
-renderActiveBar();
+if(isAdmin&&cachedVideos&&!manualOrder()){if(!cfg.subgenres)cfg.subgenres={};cfg.subgenres[MANK]=cachedVideos.map(v=>String(v.id));try{saveConfig(cfg);}catch{}}
+renderActiveBar();otherHits();
 syncHash();
 data=data.filter(matchItem);
 {const gp=document.getElementById('gapSel').value;if(gp)data=data.filter(it=>{if(gp==='date')return !formatSchedules(it.dates).some(x=>x.date);if(gp==='mem')return !(it.members||[]).length;if(gp==='track')return !parseTracks(it).length;if(gp==='file')return !((parseMeta(it).tr||[]).some(x=>x&&(x.res||x.size||x.dur||x.loc)));return true;});}
@@ -1304,6 +1317,12 @@ data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)
 data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return da.localeCompare(db);});
 }else if(sortOrder==='reg_new'||sortOrder==='reg_old'){
 const sg=sortOrder==='reg_new'?-1:1;data=[...data].sort((a,b)=>sg*((Number(a.id)||0)-(Number(b.id)||0)));
+}else if(sortOrder==='default'){
+const _m=manualOrder();
+if(_m){const ix=new Map(_m.map((id,i)=>[String(id),i]));
+const un=data.filter(v=>!ix.has(String(v.id))).sort((x,y)=>(Number(y.id)||0)-(Number(x.id)||0));
+const mn=data.filter(v=>ix.has(String(v.id))).sort((x,y)=>ix.get(String(x.id))-ix.get(String(y.id)));
+data=[...un,...mn];}
 }else if(sortOrder==='title'){
 data=[...data].sort((a,b)=>String(a.title).localeCompare(String(b.title),'ja'));
 }else if(sortOrder==='tracks_many'){
@@ -1540,7 +1559,7 @@ schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margi
 '<div style="background:#fffafc;border:1.5px solid #f3d3df;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
 schedules.map((s,si)=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
 <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
-${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label,o.res,o.mp||mpOf(o.res),o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=s.info||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="margin-top:5px"><span style="display:inline-block;font-size:12px;font-weight:500;color:#7b8089;line-height:1.5">${esc(x)}</span></div>`).join('');})()}
+${(()=>{if(!isAdmin)return'';let trs=[];try{trs=JSON.parse(item.tracks||'[]');}catch{}const trf=parseMeta(item).tr||[];const one=o=>[o.label?'\u0001'+o.label+'\u0002':'',o.res,o.mp||mpOf(o.res),o.size,o.dur,o.loc].filter(Boolean).join('　');const out=[];const sc=s.info||{};[one(sc),...(sc.more||[]).map(one)].filter(Boolean).forEach(x=>out.push(x));if(!out.length)trs.forEach((t,ti)=>{if(!t||typeof t==='string'||t.date!==s.date)return;const fo=trf[ti]||{};[one(fo),...(fo.more||[]).map(one)].filter(Boolean).forEach(x=>out.push((t.time?t.time+'　':'')+x));});return out.map(x=>`<div style="margin-top:5px"><span style="display:inline-block;font-size:12px;font-weight:500;color:#7b8089;line-height:1.5">${esc(x).replace(/\u0001([^\u0002]*)\u0002/,'<b style="font-weight:700;color:#4b5563;font-size:13px">$1</b>')}</span></div>`).join('');})()}
 </div>`).join('')+'</div>';
 }else schDiv.innerHTML='';
 // 収録内容
@@ -1578,7 +1597,7 @@ secItems.push(`<div class="trk-row" data-d="${esc(dp)}" data-y="${esc(String(dp|
 ${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(dp)}</span>${tp?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${esc(tp)}</span>`:''}${title?'':(badge||memberSpan?`<div style="flex:0 0 100%;display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px">${badge}${memberSpan}</div>`:'')}</div>`:''}
 ${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
 ${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
-${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label,o.res,o.mp||mpOf(o.res),o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,mp:fo.mp,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="margin-top:5px"><span style="display:inline-block;font-size:12px;font-weight:500;color:#7b8089;line-height:1.5">${esc(x)}</span></div>`).join(''):'';})()}
+${(()=>{if(!isAdmin)return'';const fo=(parseMeta(item).tr||[])[ti]||{};const one=o=>[o.label?'\u0001'+o.label+'\u0002':'',o.res,o.mp||mpOf(o.res),o.size,o.dur,o.loc].filter(Boolean).join('　');const tx=[one({label:fo.label,res:fo.res,mp:fo.mp,size:fo.size,dur:fo.dur,loc:fo.loc}),...(fo.more||[]).map(one)].filter(Boolean);return tx.length?tx.map(x=>`<div style="margin-top:5px"><span style="display:inline-block;font-size:12px;font-weight:500;color:#7b8089;line-height:1.5">${esc(x).replace(/\u0001([^\u0002]*)\u0002/,'<b style="font-weight:700;color:#4b5563;font-size:13px">$1</b>')}</span></div>`).join(''):'';})()}
 </div>`);
 });
 flushSec();
@@ -2563,7 +2582,7 @@ updateReorderBar();renderList();
 function exitReorder(){
 reorderMode=false;
 document.getElementById('sortSelect').disabled=false;
-sortOrder='title';document.getElementById('sortSelect').value='title';
+sortOrder='default';document.getElementById('sortSelect').value='default';
 updateReorderBar();renderList();
 }
 document.getElementById('reorderBtn').addEventListener('click',()=>{reorderMode?exitReorder():enterReorder();});
@@ -2586,6 +2605,7 @@ try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{
 return true;
 }
 async function sendOrder(ids){
+setManualOrder(ids);
 let okk=false;
 try{const d=await gasPost({action:'reorderVideos'},{ids});okk=!!(d&&d.ok);}catch{}
 if(okk){toastMsg('並び順を保存しました');}
