@@ -1642,7 +1642,7 @@ const secHeader = currentSec ? `<div class="trk-sec" style="font-size:11px;font-
 sectionsHtml += secHeader + secItems.join('');
 secItems = [];
 };
-tracks.forEach((t,ti)=>{
+mergeDateRows(tracks).forEach(({t,ti})=>{
 const fo0=(parseMeta(item).tr||[])[ti]||{};
 if(typeof t!=='string'&&!(t&&(t.title||t.date||(t.members||[]).length||t.section||(t.dist&&t.dist!=='none')||Object.keys(fo0).length)))return;
 if(typeof t==='string'&&!t.trim())return;
@@ -2710,6 +2710,11 @@ orderQueue=orderQueue.then(()=>sendOrder(ids));
 
 /* ===== 出演者名の整理（表記ゆれの統合） ===== */
 let memberFixBusy=false;
+function mergeDateRows(tracks){const out=[];tracks.forEach((t,ti)=>{
+const dateOnly=t&&typeof t==='object'&&!String(t.title||'').trim()&&t.date&&!(t.members||[]).length&&(!t.dist||t.dist==='none');
+const prev=out[out.length-1];
+if(dateOnly&&prev&&prev.t&&typeof prev.t==='object'&&String(prev.t.title||'').trim()&&!prev.t.date&&(prev.t.section||'')===(t.section||'')){prev.t=Object.assign({},prev.t,{date:t.date,time:t.time||prev.t.time||''});return;}
+out.push({t,ti});});return out;}
 function parseTracks(v){try{const a=JSON.parse(v.tracks||'[]');return Array.isArray(a)?a:[];}catch{return [];}}
 function collectMemberCounts(){
 const cnt=new Map();
