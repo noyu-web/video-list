@@ -47,6 +47,13 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .list-count{padding:2px 0 6px!important}
 .card{margin-bottom:6px!important}
 
+#detailModal.modal-overlay{padding:0!important;align-items:stretch!important;justify-content:stretch!important;background:#fff!important}
+#detailModal .modal{max-width:none!important;width:100%!important;max-height:none!important;height:100%!important;border-radius:0!important;box-shadow:none!important;padding:0 16px 40px!important;overflow-y:auto}
+#detailModal .dt-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;background:#fff;margin:0 -16px 14px!important;padding:12px 16px;border-bottom:1px solid var(--pink-light)}
+#detailModal .dt-bar .btn-icon{font-size:13px!important;font-weight:700;color:var(--pink-dark);padding:4px 8px 4px 0;white-space:nowrap}
+#detailModal .dt-bar .modal-title{flex:1;min-width:0;font-size:15px;line-height:1.35;word-break:break-all}
+#detailExchange{margin-bottom:10px!important}
+
 .side-seg{border-radius:0!important;background:#fff!important;border:none!important;border-bottom:1px solid var(--pink-light)!important;padding:0!important;gap:0!important;margin:0!important}
 .side-seg button{border-radius:0!important;border:none!important;background:none!important;box-shadow:none!important;padding:9px 0!important;color:#9aa0aa!important;font-weight:700!important;font-size:13px!important}
 .side-seg button+button{border-left:1px solid var(--pink-light)!important;margin:0!important;padding:9px 0!important}
@@ -585,9 +592,9 @@ body.selecting .list-wrap{padding-bottom:90px}
 <!-- Detail Modal -->
 <div class="modal-overlay hidden" id="detailModal">
 <div class="modal">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+<div class="dt-bar">
+<button class="btn-icon" id="detailCloseBtn">‹ 戻る</button>
 <div class="modal-title" id="detailTitle" style="margin-bottom:0"></div>
-<button class="btn-icon" id="detailCloseBtn" style="font-size:20px">✕</button>
 </div>
 <div id="detailGenres" style="margin-bottom:10px"></div>
 <div id="detailMembers" class="card-meta" style="margin-bottom:12px"></div>
