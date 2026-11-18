@@ -108,6 +108,19 @@ textarea.inp{min-height:80px;resize:vertical}
 .toast.show{opacity:1}
 .row2{display:flex;gap:8px}
 .row2>*{flex:1}
+.sub-l{font-size:12px;color:var(--sub);margin:10px 0 6px}
+.mlist{display:flex;flex-direction:column;gap:7px}
+.mrow{display:flex;gap:6px;align-items:center}
+.mrow .inp{padding:7px 9px;font-size:14px}
+.mrow .nm{flex:2;min-width:0}
+.mrow .sh{flex:1;min-width:0}
+.mrow input[type=color]{width:34px;height:34px;border:1px solid var(--line);border-radius:8px;padding:2px;background:#fff;flex:none}
+.mini{flex:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 8px;font-size:12px;cursor:pointer;color:var(--sub)}
+.mini.del{color:#c96565;border-color:#f0c9c9}
+.addrow{margin-top:10px;border:1px dashed var(--accent);background:#fff;color:var(--accent-d);border-radius:10px;padding:9px;width:100%;cursor:pointer;font-size:14px}
+.seg.small{margin:0 0 12px}
+.seg.small button{font-size:12.5px;padding:6px 0}
+.note{font-size:12px;color:var(--sub);line-height:1.6;margin-top:10px}
 </style>
 </head>
 <body>
@@ -172,7 +185,7 @@ textarea.inp{min-height:80px;resize:vertical}
   <div class="fld"><label class="l">タイトル</label><input class="inp" id="fTitle"></div>
   <div class="row2">
     <div class="fld"><label class="l">日付</label><input class="inp" id="fDate" type="date"></div>
-    <div class="fld"><label class="l">区分</label>
+    <div class="fld"><label class="l">区分（出演者がいないとき）</label>
       <select class="sel" id="fGroup"><option value="SixTONES">SixTONESメイン</option><option value="SixTONES以外">SixTONES以外</option></select>
     </div>
   </div>
@@ -183,8 +196,9 @@ textarea.inp{min-height:80px;resize:vertical}
       <datalist id="genreList"></datalist>
     </div>
   </div>
-  <div class="fld"><label class="l">出演者</label><div class="chips" id="fMem"></div>
-    <input class="inp" id="fMemOther" placeholder="その他の出演者（、区切り）" style="margin-top:8px">
+  <div class="fld"><label class="l">出演者（SixTONES）</label><div class="chips" id="fMem"></div></div>
+  <div class="fld"><label class="l">出演者（SixTONES以外）</label><div class="chips" id="fOth"></div>
+    <input class="inp" id="fMemOther" placeholder="新しい出演者を追加（、区切り）" style="margin-top:8px">
   </div>
   <div class="fld swrow"><span>交換可</span><label class="sw"><input type="checkbox" id="fEx"><span></span></label></div>
   <div class="fld"><label class="l">メモ</label><textarea class="inp" id="fMemo"></textarea></div>
@@ -211,20 +225,37 @@ textarea.inp{min-height:80px;resize:vertical}
   <div class="sh-h"><h2>管理者</h2><button class="x" data-close>閉じる</button></div>
   <div class="btns" style="flex-direction:column">
     <button class="btn p" id="mAdd">新規追加</button>
+    <button class="btn" id="mSet">ジャンル・出演者の編集</button>
     <button class="btn" id="mReload">再読み込み</button>
     <button class="btn d" id="mLogout">ログアウト</button>
   </div>
+</div></div>
+
+<!-- ジャンル・出演者の編集 -->
+<div class="ov" id="ovSet"><div class="sheet">
+  <div class="sh-h"><h2>ジャンル・出演者の編集</h2><button class="x" data-close>閉じる</button></div>
+  <div class="seg small" id="setSeg">
+    <button data-t="big" class="on">大ジャンル</button>
+    <button data-t="small">小ジャンル</button>
+    <button data-t="six">SixTONES</button>
+    <button data-t="other">SixTONES以外</button>
+  </div>
+  <div id="setBody"></div>
+  <div class="msg" id="setMsg"></div>
+  <div class="btns"><button class="btn p" id="setSave">保存</button></div>
+  <div class="btns"><button class="btn" id="setImport">前の所持リストから取り込む</button></div>
+  <div class="note">名前を変えて保存すると、登録済みのデータの表記もまとめて変わります。削除しても登録済みのデータはそのまま残ります。</div>
 </div></div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* ===== 設定 ===== */
-const API = 'https://script.google.com/macros/s/AKfycbxDpBc_XwqCgEYDWqos_7mcnNoI0OiN3dkSBL367grzFY_3EL_B9N2R-OmnhowcTBep/exec';
+const API = 'https://script.google.com/macros/s/AKfycbwSnbNPkYaMmFrRTToQQzFE1DbtkjCcBjin6UukTJwUTbMwDRsvc-WXa_GgCmDx4t14/exec';
 const LS = 'vl1new_';
 
-/* ===== メンバー ===== */
-const MEMBERS = [
+/* ===== 初期値（項目が未登録のとき） ===== */
+const DEF_SIX = [
   {name:'ジェシー',   short:'ジェシー', color:'#e5484d', keys:['ジェシー','jesse']},
   {name:'京本大我',   short:'大我',     color:'#f07fb0', keys:['京本','大我','きょも']},
   {name:'松村北斗',   short:'北斗',     color:'#3f3a3c', keys:['松村','北斗']},
@@ -232,10 +263,8 @@ const MEMBERS = [
   {name:'森本慎太郎', short:'慎太郎',   color:'#3fae5c', keys:['森本','慎太郎']},
   {name:'田中樹',     short:'樹',       color:'#3b82f6', keys:['田中','樹']}
 ];
-
-/* ===== 大ジャンル・小ジャンル ===== */
-const BIG = ['テレビ','配信','ラジオ','DVD・BD特典','CD特典','その他'];
-const SMALL = {
+const DEF_BIG = ['テレビ','配信','ラジオ','DVD・BD特典','CD特典','その他'];
+const DEF_SMALL = {
   'テレビ':['音楽番組','バラエティ','冠番組','ドラマ','情報番組','CM'],
   '配信':['YouTube','ISLAND TV','配信ライブ','配信番組'],
   'ラジオ':['レギュラー','ゲスト','特番'],
@@ -244,6 +273,7 @@ const SMALL = {
   'その他':[]
 };
 const ALL_WORDS = ['全員','6人','SixTONES','ストーンズ'];
+const OTHER_COLOR = '#b9a7ae';
 
 /* ===== 列名の自動対応 ===== */
 const ALIAS = {
@@ -261,6 +291,7 @@ const ALIAS = {
 const DEFAULT_COL = {id:'id',title:'title',date:'date',year:'year',category:'category',genre:'genre',group:'group',members:'members',exchange:'exchange',memo:'memo'};
 
 let headers = [], COL = {}, items = [], token = '', isAdmin = false;
+let master = {big:[], small:[], six:[], other:[]};
 let memSep = '、', exTrue = true, exFalse = false;
 const st = {group:'SixTONES', big:'all', year:'all', genre:'', mem:[], q:'', sort:'new', ex:false, fav:false};
 let favs = new Set();
@@ -271,6 +302,7 @@ function lsSet(k, v){ try{ localStorage.setItem(LS+k, JSON.stringify(v)); }catch
 token = lsGet('token', '');
 favs = new Set(lsGet('favs', []));
 Object.assign(st, lsGet('state', {}), {q:''});
+if(!Array.isArray(st.mem)) st.mem = [];
 
 /* ===== 通信 ===== */
 async function api(action, data){
@@ -284,13 +316,14 @@ async function api(action, data){
 /* ===== ユーティリティ ===== */
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove('show'),1800); }
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove('show'),2200); }
 function waveHTML(text){ return '<div class="loading"><div class="wave">'+[...text].map((c,i)=>'<span style="animation-delay:'+(i*0.09)+'s">'+esc(c)+'</span>').join('')+'</div></div>'; }
 function openOv(id){ $(id).classList.add('open'); }
 function closeOv(id){ $(id).classList.remove('open'); }
 document.querySelectorAll('.ov').forEach(o=>{
   o.addEventListener('click', e=>{ if(e.target===o || e.target.hasAttribute('data-close')) o.classList.remove('open'); });
 });
+const byJa = (a,b)=>a.localeCompare(b,'ja');
 
 function normDate(v){
   if(!v) return '';
@@ -310,18 +343,47 @@ function truthy(v){
   const s = String(v==null?'':v).trim().toLowerCase();
   return ['true','1','可','○','◯','ok','yes','y','交換可','あり','有'].includes(s);
 }
+
+/* ===== 項目 ===== */
+function sixMembers(){
+  return master.six.map(m=>{
+    const d = DEF_SIX.find(x=>x.name===m.name || x.short===m.short);
+    return {name:m.name, short:m.short||m.name, color:m.color||'#999', keys:[m.name, m.short].filter(Boolean).concat(d?d.keys:[])};
+  });
+}
+function otherColor(n){ const o = master.other.find(x=>x.name===n); return o && o.color ? o.color : ''; }
+function smallsOf(big){ return master.small.filter(s=>s.parent===big).map(s=>s.name); }
+
+function buildMaster(rows){
+  master = {big:[], small:[], six:[], other:[], saved:!!(rows&&rows.length)};
+  (rows||[]).forEach(r=>{
+    if(r.type==='big') master.big.push({name:r.name});
+    else if(r.type==='small') master.small.push({name:r.name, parent:r.parent});
+    else if(r.type==='six') master.six.push({name:r.name, short:r.short, color:r.color});
+    else if(r.type==='other') master.other.push({name:r.name, color:r.color});
+  });
+  if(!master.big.length && !master.small.length){
+    master.big = DEF_BIG.map(n=>({name:n}));
+    DEF_BIG.forEach(b=>DEF_SMALL[b].forEach(s=>master.small.push({name:s, parent:b})));
+  }
+  if(!master.six.length) master.six = DEF_SIX.map(m=>({name:m.name, short:m.short, color:m.color}));
+}
+
 function parseMembers(v){
   const s = String(v==null?'':v).trim();
+  const SIX = sixMembers();
   if(!s) return {six:[], other:[]};
-  if(ALL_WORDS.some(w=>s===w)) return {six:MEMBERS.map(m=>m.name), other:[]};
-  const parts = s.split(/[,、，・\/／\n]+|\s{1,}/).map(x=>x.trim()).filter(Boolean);
+  const parts = s.split(/[,、，\/／\n]+/).map(x=>x.trim()).filter(Boolean);
   const six = new Set(), other = [];
   parts.forEach(p=>{
-    if(ALL_WORDS.includes(p)){ MEMBERS.forEach(m=>six.add(m.name)); return; }
-    const m = MEMBERS.find(m=>m.keys.some(k=>p.toLowerCase().includes(k.toLowerCase())));
+    if(ALL_WORDS.includes(p)){ SIX.forEach(m=>six.add(m.name)); return; }
+    let m = SIX.find(m=>m.name===p || m.short===p);
+    if(m){ six.add(m.name); return; }
+    if(master.other.some(o=>o.name===p)){ other.push(p); return; }
+    m = SIX.find(m=>m.keys.some(k=>p.toLowerCase().includes(k.toLowerCase())));
     if(m) six.add(m.name); else other.push(p);
   });
-  return {six:MEMBERS.map(m=>m.name).filter(n=>six.has(n)), other};
+  return {six:SIX.map(m=>m.name).filter(n=>six.has(n)), other};
 }
 
 /* ===== 読み込み ===== */
@@ -335,8 +397,8 @@ async function load(){
       const h = headers.find(h=>ALIAS[k].some(a=>a.toLowerCase()===String(h).trim().toLowerCase()));
       COL[k] = h || DEFAULT_COL[k];
     });
+    buildMaster(j.master);
     const rows = j.rows || [];
-    // 出演者の区切り文字・交換の値の書式を既存データから判定
     const memSample = rows.map(r=>String(r[COL.members]||'')).find(s=>/[,、]/.test(s));
     memSep = memSample && memSample.includes(',') && !memSample.includes('、') ? ',' : '、';
     const exVals = rows.map(r=>r[COL.exchange]).filter(v=>v!==''&&v!=null&&typeof v!=='boolean');
@@ -355,10 +417,12 @@ function toRec(r, i){
   const genre = String(r[COL.genre]||'').trim();
   const big = String(r[COL.category]||'').trim();
   const gRaw = String(r[COL.group]||'').trim();
-  let group;
-  if(gRaw) group = /以外|other/i.test(gRaw) ? 'other' : 'SixTONES';
-  else group = /以外/.test(genre) ? 'other' : 'SixTONES';
   const mem = parseMembers(r[COL.members]);
+  let group;
+  if(mem.six.length) group = 'SixTONES';
+  else if(mem.other.length) group = 'other';
+  else if(gRaw) group = /以外|other/i.test(gRaw) ? 'other' : 'SixTONES';
+  else group = /以外/.test(genre) ? 'other' : 'SixTONES';
   return {
     raw:r, row:r._row, id:r[COL.id], idx:i,
     title:String(r[COL.title]||'').trim(), date, year, big, genre, group,
@@ -373,7 +437,8 @@ function inGroup(){ return items.filter(it=>it.group===st.group); }
 function inBig(){ return inGroup().filter(it=>st.big==='all' || (st.big==='none' ? !it.big : it.big===st.big)); }
 function bigList(){
   const used = [...new Set(inGroup().map(it=>it.big).filter(Boolean))];
-  return BIG.filter(b=>used.includes(b)).concat(used.filter(b=>!BIG.includes(b)).sort((a,b)=>a.localeCompare(b,'ja')));
+  const names = master.big.map(b=>b.name);
+  return names.filter(b=>used.includes(b)).concat(used.filter(b=>!names.includes(b)).sort(byJa));
 }
 function renderBig(){
   const bs = bigList();
@@ -384,7 +449,6 @@ function renderBig(){
   if(hasNone) h += '<button data-b="none" class="'+(st.big==='none'?'on':'')+'">未分類</button>';
   $('bigTabs').innerHTML = h;
 }
-
 function renderYears(){
   const ys = [...new Set(inBig().map(it=>it.year).filter(Boolean))].sort((a,b)=>b-a);
   if(st.year!=='all' && st.year!=='none' && !ys.includes(st.year)) st.year='all';
@@ -395,23 +459,35 @@ function renderYears(){
   $('years').innerHTML = h;
 }
 function renderGenres(){
-  const gs = [...new Set(inBig().map(it=>it.genre).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
+  const used = [...new Set(inBig().map(it=>it.genre).filter(Boolean))];
+  const order = st.big!=='all' && st.big!=='none' ? smallsOf(st.big) : master.small.map(s=>s.name);
+  const gs = order.filter((g,i)=>used.includes(g) && order.indexOf(g)===i).concat(used.filter(g=>!order.includes(g)).sort(byJa));
   if(st.genre && !gs.includes(st.genre)) st.genre='';
   $('genreSel').innerHTML = '<option value="">すべて</option>' + gs.map(g=>'<option'+(g===st.genre?' selected':'')+'>'+esc(g)+'</option>').join('');
 }
 function renderMemChips(){
-  $('memChips').innerHTML = MEMBERS.map(m=>'<button class="chip'+(st.mem.includes(m.name)?' on':'')+'" style="--c:'+m.color+'" data-m="'+m.name+'">'+m.short+'</button>').join('');
+  let list;
+  if(st.group==='SixTONES') list = sixMembers().map(m=>({name:m.name, label:m.short, color:m.color}));
+  else {
+    const used = new Set(); inGroup().forEach(it=>it.other.forEach(o=>used.add(o)));
+    const ord = master.other.map(o=>o.name);
+    const names = ord.filter(n=>used.has(n)).concat([...used].filter(n=>!ord.includes(n)).sort(byJa));
+    list = names.map(n=>({name:n, label:n, color:otherColor(n)||OTHER_COLOR}));
+  }
+  st.mem = st.mem.filter(n=>list.some(l=>l.name===n));
+  $('memChips').innerHTML = list.length ? list.map(m=>'<button class="chip'+(st.mem.includes(m.name)?' on':'')+'" style="--c:'+m.color+'" data-m="'+esc(m.name)+'">'+esc(m.label)+'</button>').join('') : '<span style="font-size:13px;color:var(--sub)">なし</span>';
 }
 function filtered(){
   const q = st.q.trim().toLowerCase();
+  const SIX = sixMembers();
   let a = inBig().filter(it=>{
     if(st.year==='none' ? it.year : (st.year!=='all' && it.year!==st.year)) return false;
     if(st.genre && it.genre!==st.genre) return false;
-    if(st.mem.length && !st.mem.every(m=>it.six.includes(m))) return false;
+    if(st.mem.length && !st.mem.every(m=>it.six.includes(m) || it.other.includes(m))) return false;
     if(st.ex && !it.ex) return false;
     if(st.fav && !favs.has(favKey(it))) return false;
     if(q){
-      const hay = [it.title,it.big,it.genre,it.memo,it.date,...it.six,...it.other,...it.six.map(n=>(MEMBERS.find(m=>m.name===n)||{}).short)].join(' ').toLowerCase();
+      const hay = [it.title,it.big,it.genre,it.memo,it.date,...it.six,...it.other,...it.six.map(n=>(SIX.find(m=>m.name===n)||{}).short)].join(' ').toLowerCase();
       if(!q.split(/\s+/).every(w=>hay.includes(w))) return false;
     }
     return true;
@@ -425,10 +501,11 @@ function filtered(){
 }
 const HEART = '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.2-4.4-9.4-8.9C1 8.3 3 4.5 6.6 4.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.6 3.8 4 7.1-2.2 4.5-9.4 8.9-9.4 8.9z"/></svg>';
 function tagsHTML(it){
+  const SIX = sixMembers();
   let h = '';
-  if(it.six.length===6) h += '<span class="tag" style="--c:var(--accent)">全員</span>';
-  else it.six.forEach(n=>{ const m = MEMBERS.find(x=>x.name===n); h += '<span class="tag" style="--c:'+m.color+'">'+m.short+'</span>'; });
-  it.other.forEach(o=>{ h += '<span class="tag other">'+esc(o)+'</span>'; });
+  if(it.six.length && it.six.length===SIX.length) h += '<span class="tag" style="--c:var(--accent)">全員</span>';
+  else it.six.forEach(n=>{ const m = SIX.find(x=>x.name===n); if(m) h += '<span class="tag" style="--c:'+m.color+'">'+esc(m.short)+'</span>'; });
+  it.other.forEach(o=>{ const c = otherColor(o); h += c ? '<span class="tag" style="--c:'+c+'">'+esc(o)+'</span>' : '<span class="tag other">'+esc(o)+'</span>'; });
   if(it.ex) h += '<span class="ex">交換可</span>';
   return h;
 }
@@ -441,7 +518,6 @@ function render(){
   $('fBtn').textContent = nF ? '絞り込み '+nF : '絞り込み';
   const a = filtered();
   $('count').textContent = a.length + '件 ／ 全' + inGroup().length + '件';
-  $('filterNote').textContent = '';
   if(!a.length){ $('list').innerHTML = '<div class="empty">該当するものがありません</div>'; }
   else{
     $('list').innerHTML = a.map(it=>{
@@ -458,7 +534,7 @@ function render(){
 /* ===== イベント ===== */
 $('groupSeg').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
-  st.group = b.dataset.g; st.big='all'; st.year='all'; st.genre=''; render(); window.scrollTo(0,0);
+  st.group = b.dataset.g; st.big='all'; st.year='all'; st.genre=''; st.mem=[]; render(); window.scrollTo(0,0);
 });
 $('bigTabs').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
@@ -496,7 +572,8 @@ $('toTop').addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smoot
 
 /* ===== 詳細 ===== */
 function showDetail(it){
-  const mem = it.six.length===6 ? '全員' : it.six.map(n=>(MEMBERS.find(m=>m.name===n)||{}).name).join('、');
+  const SIX = sixMembers();
+  const mem = it.six.length && it.six.length===SIX.length ? '全員' : it.six.join('、');
   const rows = [
     ['タイトル', it.title], ['日付', it.date || (it.year?it.year+'年':'')], ['区分', it.group==='other'?'SixTONES以外':'SixTONESメイン'],
     ['大ジャンル', it.big], ['小ジャンル', it.genre], ['出演者', [mem, ...it.other].filter(Boolean).join('、')], ['交換', it.ex?'可':'不可'], ['メモ', it.memo]
@@ -511,65 +588,85 @@ function showDetail(it){
 }
 
 /* ===== 編集 ===== */
-let editing = null, fMemSel = [];
+let editing = null, fMemSel = [], fOthSel = [];
 function renderFMem(){
-  $('fMem').innerHTML = '<button class="chip'+(fMemSel.length===6?' on':'')+'" style="--c:var(--accent)" data-all="1">全員</button>' +
-    MEMBERS.map(m=>'<button class="chip'+(fMemSel.includes(m.name)?' on':'')+'" style="--c:'+m.color+'" data-m="'+m.name+'">'+m.short+'</button>').join('');
+  const SIX = sixMembers();
+  $('fMem').innerHTML = '<button class="chip'+(fMemSel.length===SIX.length?' on':'')+'" style="--c:var(--accent)" data-all="1">全員</button>' +
+    SIX.map(m=>'<button class="chip'+(fMemSel.includes(m.name)?' on':'')+'" style="--c:'+m.color+'" data-m="'+esc(m.name)+'">'+esc(m.short)+'</button>').join('');
+}
+function renderFOth(){
+  const names = master.other.map(o=>o.name);
+  fOthSel.forEach(n=>{ if(!names.includes(n)) names.push(n); });
+  $('fOth').innerHTML = names.length ? names.map(n=>'<button class="chip'+(fOthSel.includes(n)?' on':'')+'" style="--c:'+(otherColor(n)||OTHER_COLOR)+'" data-m="'+esc(n)+'">'+esc(n)+'</button>').join('') : '<span style="font-size:13px;color:var(--sub)">まだありません</span>';
 }
 $('fMem').addEventListener('click', e=>{
   const b = e.target.closest('.chip'); if(!b) return;
-  if(b.dataset.all) fMemSel = fMemSel.length===6 ? [] : MEMBERS.map(m=>m.name);
+  const SIX = sixMembers();
+  if(b.dataset.all) fMemSel = fMemSel.length===SIX.length ? [] : SIX.map(m=>m.name);
   else { const n=b.dataset.m; fMemSel = fMemSel.includes(n) ? fMemSel.filter(x=>x!==n) : fMemSel.concat(n); }
-  fMemSel = MEMBERS.map(m=>m.name).filter(n=>fMemSel.includes(n));
+  fMemSel = SIX.map(m=>m.name).filter(n=>fMemSel.includes(n));
   renderFMem();
+});
+$('fOth').addEventListener('click', e=>{
+  const b = e.target.closest('.chip'); if(!b) return;
+  const n=b.dataset.m; fOthSel = fOthSel.includes(n) ? fOthSel.filter(x=>x!==n) : fOthSel.concat(n);
+  renderFOth();
 });
 function openEdit(it){
   editing = it || null;
   $('editTitle').textContent = it ? '編集' : '追加';
   $('fTitle').value = it ? it.title : '';
-  const d = it && /^\d{4}\/\d{2}\/\d{2}$/.test(it.date) ? it.date.replace(/\//g,'-') : '';
-  $('fDate').value = d;
+  $('fDate').value = it && /^\d{4}\/\d{2}\/\d{2}$/.test(it.date) ? it.date.replace(/\//g,'-') : '';
   $('fGroup').value = (it ? it.group : st.group)==='other' ? 'SixTONES以外' : 'SixTONES';
-  const curBig = it ? it.big : (st.big!=='all' && st.big!=='none' ? st.big : BIG[0]);
-  const bigs = BIG.concat([...new Set(items.map(x=>x.big).filter(b=>b && !BIG.includes(b)))]);
+  const curBig = it ? it.big : (st.big!=='all' && st.big!=='none' ? st.big : (master.big[0]||{}).name||'');
+  const bigs = master.big.map(b=>b.name).concat([...new Set(items.map(x=>x.big).filter(b=>b && !master.big.some(m=>m.name===b)))]);
   if(curBig && !bigs.includes(curBig)) bigs.push(curBig);
   $('fBig').innerHTML = '<option value="">未分類</option>' + bigs.map(b=>'<option'+(b===curBig?' selected':'')+'>'+esc(b)+'</option>').join('');
   $('fGenre').value = it ? it.genre : (st.genre||'');
   fillSmall();
   fMemSel = it ? it.six.slice() : [];
-  $('fMemOther').value = it ? it.other.join('、') : '';
+  fOthSel = it ? it.other.slice() : [];
+  $('fMemOther').value = '';
   $('fEx').checked = it ? it.ex : false;
   $('fMemo').value = it ? it.memo : '';
   $('editMsg').textContent = '';
-  renderFMem();
+  renderFMem(); renderFOth();
   openOv('ovEdit');
 }
 function fillSmall(){
   const b = $('fBig').value;
-  const list = [...new Set((SMALL[b]||[]).concat(items.filter(x=>x.big===b).map(x=>x.genre).filter(Boolean)))];
+  const list = [...new Set(smallsOf(b).concat(items.filter(x=>x.big===b).map(x=>x.genre).filter(Boolean)))];
   $('genreList').innerHTML = list.map(g=>'<option value="'+esc(g)+'">').join('');
 }
 $('fBig').addEventListener('change', fillSmall);
 $('saveBtn').addEventListener('click', async ()=>{
   const title = $('fTitle').value.trim();
   if(!title){ $('editMsg').textContent='タイトルを入力してください'; return; }
+  const SIX = sixMembers();
   const date = $('fDate').value ? $('fDate').value.replace(/-/g,'/') : (editing && !/^\d{4}\/\d{2}\/\d{2}$/.test(editing.date) ? editing.date : '');
-  const others = $('fMemOther').value.split(/[,、，\n]+/).map(s=>s.trim()).filter(Boolean);
-  const six = fMemSel.length===6 ? ['全員'] : fMemSel;
+  const added = $('fMemOther').value.split(/[,、，\n]+/).map(s=>s.trim()).filter(Boolean);
+  const others = [...new Set(fOthSel.concat(added))];
+  const six = fMemSel.length===SIX.length ? ['全員'] : fMemSel;
+  const big = $('fBig').value, small = $('fGenre').value.trim();
   const item = {};
   if(editing && editing.id!=='' && editing.id!=null) item[COL.id] = editing.id;
   item[COL.title] = title;
   item[COL.date] = date;
   if(headers.includes(COL.year) || !editing) item[COL.year] = date ? date.slice(0,4) : (editing ? editing.year : '');
-  item[COL.category] = $('fBig').value;
-  item[COL.genre] = $('fGenre').value.trim();
-  item[COL.group] = $('fGroup').value;
+  item[COL.category] = big;
+  item[COL.genre] = small;
+  item[COL.group] = six.length ? 'SixTONES' : (others.length ? 'SixTONES以外' : $('fGroup').value);
   item[COL.members] = six.concat(others).join(memSep);
   item[COL.exchange] = $('fEx').checked ? exTrue : exFalse;
   item[COL.memo] = $('fMemo').value;
+  const masterAdd = [];
+  if(big && !master.big.some(b=>b.name===big)) masterAdd.push({type:'big', name:big});
+  if(small && !master.small.some(s=>s.name===small && s.parent===big)) masterAdd.push({type:'small', name:small, parent:big});
+  others.forEach(o=>{ if(!master.other.some(x=>x.name===o)) masterAdd.push({type:'other', name:o}); });
+  const mAdd = masterAdd.length && !master.saved ? masterRows().concat(masterAdd) : masterAdd;
   const btn = $('saveBtn'); btn.disabled = true; btn.textContent = '保存中';
   try{
-    await api('save', {item, idKey:COL.id, row: editing ? editing.row : ''});
+    await api('save', {item, idKey:COL.id, row: editing ? editing.row : '', masterAdd:mAdd});
     closeOv('ovEdit'); toast('保存しました'); await load();
   }catch(e){ $('editMsg').textContent = e.message; if(/ログイン/.test(e.message)) logoutLocal(); }
   finally{ btn.disabled=false; btn.textContent='保存'; }
@@ -581,8 +678,123 @@ async function delItem(it){
     closeOv('ovDetail'); toast('削除しました'); await load();
   }catch(e){ toast(e.message); if(/ログイン/.test(e.message)) logoutLocal(); }
 }
+function masterRows(){
+  return master.big.map(b=>({type:'big', name:b.name}))
+    .concat(master.small.map(s=>({type:'small', name:s.name, parent:s.parent})))
+    .concat(master.six.map(m=>({type:'six', name:m.name, short:m.short, color:m.color})))
+    .concat(master.other.map(o=>({type:'other', name:o.name, color:o.color})));
+}
 
-/* ===== ログイン（タイトル5回タップ） ===== */
+/* ===== ジャンル・出演者の編集 ===== */
+let draft = null, setTab = 'big', setParent = null, uidc = 0;
+function openSettings(){
+  draft = {
+    big: master.big.map(b=>({u:++uidc, name:b.name, o:b.name})),
+    six: master.six.map(m=>({u:++uidc, name:m.name, short:m.short||'', color:m.color||'#999999', o:m.name})),
+    other: master.other.map(o=>({u:++uidc, name:o.name, color:o.color||'', o:o.name})),
+    small: []
+  };
+  master.small.forEach(s=>{
+    let b = draft.big.find(x=>x.o===s.parent);
+    if(!b && s.parent){ b = {u:++uidc, name:s.parent, o:s.parent}; draft.big.push(b); }
+    draft.small.push({u:++uidc, name:s.name, o:s.name, pu:b?b.u:null, op:s.parent});
+  });
+  setParent = draft.big[0] ? draft.big[0].u : null;
+  $('setMsg').textContent = '';
+  renderSet(); openOv('ovSet');
+}
+function listOf(t){ return draft[t]; }
+function rowBtns(){ return '<button class="mini" data-act="up">上へ</button><button class="mini" data-act="down">下へ</button><button class="mini del" data-act="del">削除</button>'; }
+function renderSet(){
+  document.querySelectorAll('#setSeg button').forEach(b=>b.classList.toggle('on', b.dataset.t===setTab));
+  let h = '';
+  if(setTab==='big'){
+    h = '<div class="mlist">'+draft.big.map(r=>'<div class="mrow" data-u="'+r.u+'"><input class="inp nm" data-f="name" value="'+esc(r.name)+'">'+rowBtns()+'</div>').join('')+'</div>';
+    h += '<button class="addrow" data-act="add">大ジャンルを追加</button>';
+  }else if(setTab==='small'){
+    if(!draft.big.length){ $('setBody').innerHTML = '<div class="note">先に大ジャンルを追加してください。</div>'; return; }
+    if(!draft.big.some(b=>b.u===setParent)) setParent = draft.big[0].u;
+    h = '<div class="sub-l">大ジャンル</div><select class="sel" id="setParent">'+draft.big.map(b=>'<option value="'+b.u+'"'+(b.u===setParent?' selected':'')+'>'+esc(b.name||'（名前なし）')+'</option>').join('')+'</select>';
+    h += '<div class="sub-l">小ジャンル</div><div class="mlist">'+draft.small.filter(s=>s.pu===setParent).map(r=>'<div class="mrow" data-u="'+r.u+'"><input class="inp nm" data-f="name" value="'+esc(r.name)+'">'+rowBtns()+'</div>').join('')+'</div>';
+    h += '<button class="addrow" data-act="add">小ジャンルを追加</button>';
+    const orphan = draft.small.filter(s=>!s.pu);
+    if(orphan.length) h += '<div class="note">大ジャンルなしの小ジャンル：'+orphan.map(s=>esc(s.name)).join('、')+'</div>';
+  }else if(setTab==='six'){
+    h = '<div class="sub-l">色・名前・短い表示名</div><div class="mlist">'+draft.six.map(r=>'<div class="mrow" data-u="'+r.u+'"><input type="color" data-f="color" value="'+esc(r.color||'#999999')+'"><input class="inp nm" data-f="name" value="'+esc(r.name)+'" placeholder="名前"><input class="inp sh" data-f="short" value="'+esc(r.short)+'" placeholder="表示名">'+rowBtns()+'</div>').join('')+'</div>';
+    h += '<button class="addrow" data-act="add">メンバーを追加</button>';
+  }else{
+    h = '<div class="sub-l">色・名前</div><div class="mlist">'+draft.other.map(r=>'<div class="mrow" data-u="'+r.u+'"><input type="color" data-f="color" value="'+esc(r.color||OTHER_COLOR)+'"><input class="inp nm" data-f="name" value="'+esc(r.name)+'" placeholder="名前">'+rowBtns()+'</div>').join('')+'</div>';
+    h += '<button class="addrow" data-act="add">出演者を追加</button>';
+  }
+  $('setBody').innerHTML = h;
+}
+$('setSeg').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; setTab=b.dataset.t; renderSet(); });
+$('setBody').addEventListener('change', e=>{ if(e.target.id==='setParent'){ setParent = +e.target.value; renderSet(); } });
+$('setBody').addEventListener('input', e=>{
+  const row = e.target.closest('.mrow'); if(!row || !e.target.dataset.f) return;
+  const r = listOf(setTab).find(x=>x.u===+row.dataset.u); if(!r) return;
+  r[e.target.dataset.f] = e.target.value;
+  if(setTab==='other' && e.target.dataset.f==='color') r.colorSet = true;
+});
+$('setBody').addEventListener('click', e=>{
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const act = b.dataset.act, L = listOf(setTab);
+  if(act==='add'){
+    const r = {u:++uidc, name:'', o:null};
+    if(setTab==='six'){ r.short=''; r.color='#999999'; }
+    if(setTab==='other'){ r.color=''; }
+    if(setTab==='small') r.pu = setParent;
+    L.push(r); renderSet();
+    const inps = $('setBody').querySelectorAll('.mrow[data-u="'+r.u+'"] .nm'); if(inps[0]) inps[0].focus();
+    return;
+  }
+  const row = b.closest('.mrow'); const u = +row.dataset.u;
+  const i = L.findIndex(x=>x.u===u); if(i<0) return;
+  if(act==='del'){
+    const r = L[i];
+    if(setTab==='big' && draft.small.some(s=>s.pu===u) && !confirm('「'+r.name+'」の小ジャンルも一緒に削除しますか？')) return;
+    L.splice(i,1);
+    if(setTab==='big') draft.small = draft.small.filter(s=>s.pu!==u);
+  }else{
+    const same = setTab==='small' ? L.filter(x=>x.pu===setParent) : L;
+    const k = same.findIndex(x=>x.u===u), k2 = act==='up' ? k-1 : k+1;
+    if(k2<0 || k2>=same.length) return;
+    const a = L.indexOf(same[k]), c = L.indexOf(same[k2]);
+    [L[a], L[c]] = [L[c], L[a]];
+  }
+  renderSet();
+});
+$('setSave').addEventListener('click', async ()=>{
+  const clean = s=>String(s||'').trim();
+  const rows = [], renames = [], seen = {};
+  const push = (r)=>{ const k=r.type+'\t'+r.name+'\t'+(r.parent||''); if(seen[k]) return false; seen[k]=1; rows.push(r); return true; };
+  draft.big.forEach(b=>{ const n=clean(b.name); if(!n) return; push({type:'big', name:n}); if(b.o && b.o!==n) renames.push({type:'big', from:b.o, to:n}); });
+  draft.big.forEach(b=>{
+    const pn = clean(b.name); if(!pn) return;
+    draft.small.filter(s=>s.pu===b.u).forEach(s=>{ const n=clean(s.name); if(!n) return; push({type:'small', name:n, parent:pn}); if(s.o && s.o!==n) renames.push({type:'small', from:s.o, to:n, parent:pn}); });
+  });
+  draft.six.forEach(m=>{ const n=clean(m.name); if(!n) return; push({type:'six', name:n, short:clean(m.short)||n, color:m.color}); if(m.o && m.o!==n) renames.push({type:'six', from:m.o, to:n}); });
+  draft.other.forEach(o=>{ const n=clean(o.name); if(!n) return; push({type:'other', name:n, color:o.colorSet||o.color ? o.color : ''}); if(o.o && o.o!==n) renames.push({type:'other', from:o.o, to:n}); });
+  const btn = $('setSave'); btn.disabled = true; btn.textContent = '保存中'; $('setMsg').textContent='';
+  try{
+    await api('saveMaster', {rows, renames, cols:{category:COL.category, genre:COL.genre, members:COL.members}});
+    closeOv('ovSet'); toast('保存しました'); await load();
+  }catch(e){ $('setMsg').textContent = e.message; if(/ログイン/.test(e.message)) logoutLocal(); }
+  finally{ btn.disabled=false; btn.textContent='保存'; }
+});
+$('setImport').addEventListener('click', async ()=>{
+  const btn = $('setImport'); btn.disabled = true; btn.textContent = '取り込み中'; $('setMsg').textContent='';
+  try{
+    if(!master.saved) await api('saveMaster', {rows:masterRows(), renames:[]});
+    const j = await api('importOld');
+    await load();
+    openSettings();
+    toast('大ジャンル'+j.added.big+'件・小ジャンル'+j.added.small+'件・出演者'+j.added.other+'件を取り込みました');
+  }catch(e){ $('setMsg').textContent = e.message; if(/ログイン/.test(e.message)) logoutLocal(); }
+  finally{ btn.disabled=false; btn.textContent='前の所持リストから取り込む'; }
+});
+
+/* ===== ログイン ===== */
 let taps = 0, tapT;
 $('title').addEventListener('click', ()=>{
   taps++; clearTimeout(tapT); tapT = setTimeout(()=>taps=0, 1500);
@@ -622,6 +834,7 @@ function logoutLocal(){ token=''; lsSet('token',''); setAdmin(false); }
 $('adminBtn').addEventListener('click', ()=> isAdmin ? openOv('ovAdmin') : openLogin());
 $('addBtn').addEventListener('click', ()=>openEdit(null));
 $('mAdd').addEventListener('click', ()=>{ closeOv('ovAdmin'); openEdit(null); });
+$('mSet').addEventListener('click', ()=>{ closeOv('ovAdmin'); openSettings(); });
 $('mReload').addEventListener('click', ()=>{ closeOv('ovAdmin'); load(); });
 $('mLogout').addEventListener('click', async ()=>{
   try{ await api('logout'); }catch(_){}
