@@ -877,7 +877,7 @@ return out;
 }
 function groupTagsHTML(item){
 if((item.members||[]).some(m=>!isSixTONESMember(m)))return'';
-return itemGroups(item).map(g=>`<span class="tag" style="font-size:11px;padding:2px 9px;background:#f06292;color:#fff;font-weight:600;border-radius:6px">${esc(g)}</span>`).join('');
+return itemGroups(item).map(g=>`<span class="tag" data-xs="${esc(g)}" style="cursor:pointer;font-size:11px;padding:2px 9px;background:#f06292;color:#fff;font-weight:600;border-radius:6px">${esc(g)}</span>`).join('');
 }
 function parseMeta(item){try{const o=JSON.parse((item&&item.meta)||'{}');if(!o||typeof o!=='object')return{};if(o.res||o.size||o.loc){const tr=Array.isArray(o.tr)?o.tr.slice():[];const t0=tr[0]||{};if(!(t0.res||t0.size||t0.loc)){tr[0]={res:o.res||'',size:o.size||'',loc:o.loc||''};}o.tr=tr;delete o.res;delete o.size;delete o.loc;}return o;}catch{return{};}}
 function metaText(item){if(!isAdmin)return'';const m=parseMeta(item);const one=o=>[o.label,o.res,o.mp||mpOf(o.res),o.size,o.dur,o.loc].filter(Boolean).join(' ');return[one(m),...(Array.isArray(m.tr)?m.tr:[]).flatMap(o=>[one(o||{}),...((o&&Array.isArray(o.more)&&o.more)||[]).map(one)])].filter(Boolean).join(' ');}
@@ -1290,10 +1290,10 @@ box.innerHTML='<div style="margin:14px 0 6px;padding:10px 12px;background:#fff0f
 });
 }
 
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-xs]');if(t){e.stopPropagation();crossSearch(t.dataset.xs);}});
 function crossSearch(member){
-F.members.clear();F.members.add(member);
+F.members.clear();F.members.add(member);currentGenre='すべて';currentSubgenre='すべて';try{renderTabs();renderSubtabs();}catch{}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.add('hidden'));
-try{saveConfig(cfg);}catch{}
 renderFilterSheet();renderList();
 try{window.scrollTo({top:0,behavior:'smooth'});}catch{}
 }
@@ -1352,7 +1352,7 @@ let hd='';const _g=_sr.get(item.id);if(_g&&_g.first)hd='<div class="sr-h" data-s
 return hd+`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}${_g?' sr-in':''}"${_g?` data-srk="${esc(_g.k)}"${_srOpen.has(_g.k)?'':' style="display:none"'}`:''} data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
 <div class="card-title">${isNew(item)?'<span class="new-badge">NEW</span>':''}${esc(item.title)}</div>
 <div class="card-meta" style="margin-top:3px">
-${(item.members||[]).filter(m=>isSixTONESMember(m)).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch('${esc(m)}')" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
+${(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}" style="font-size:10px;padding:1px 7px;cursor:pointer" onclick="event.stopPropagation();crossSearch(this.dataset.m)" data-m="${esc(m)}" title="${esc(m)}で絞り込む">${esc(m)}</span>`).join('')}
 </div>
 ${isAdmin&&!selectMode&&!reorderMode?`<label class="chk-wrap"><input type="checkbox" class="chk" data-chk="${item.id}" ${checkedSet.has(item.id)?'checked':''}><span>確認済み</span></label>`:''}
 ${isAdmin&&!selectMode&&!reorderMode?`<div class="toggle-wrap"><label class="toggle"><input type="checkbox" ${item.exchange==='ok'?'checked':''} data-toggle="${item.id}"><span class="toggle-slider"></span></label><span class="toggle-label">${exchangeLabel(item.exchange)}</span></div>`:''}
@@ -1548,7 +1548,7 @@ function openDetailModal(item){
 document.getElementById('detailTitle').textContent=item.title;
 const genres=parseGenres(item.genres||item.genre||'');
 document.getElementById('detailGenres').innerHTML='';
-document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}">${esc(m)}</span>`).join('')+groupTagsHTML(item);
+document.getElementById('detailMembers').innerHTML=(item.members||[]).map(m=>`<span class="tag ${memberClass(m)}" data-xs="${esc(m)}" style="cursor:pointer">${esc(m)}</span>`).join('')+groupTagsHTML(item);
 document.getElementById('detailExchange').innerHTML=`<span class="exchange-badge ${exchangeClass(item.exchange)}">${exchangeLabel(item.exchange)}</span>`;
 document.getElementById('detailFileInfo').innerHTML='';
 const schedules=schedUnion(item);
