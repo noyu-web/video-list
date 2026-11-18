@@ -737,6 +737,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 </div>
 
+<script>function R(s,f){try{return new RegExp(s,f);}catch(e){return new RegExp(String(s).replace(/\(\?<[=!](?:[^()\\]|\\.)*\)/g,''),f);}}</script>
 <script>
 const GAS_URL='https://script.google.com/macros/s/AKfycbxjLSyDyNKZXg7O45aK9nzq--Msdy-i-u7aXqqsfJlpxvV6Lj3NXCI4FwDLT_4aj8A8/exec';
 const TOKEN_KEY='top_admin_token';
@@ -2185,15 +2186,15 @@ stage='読み取りプログラムの読み込み';await loadT();
 const zen=l=>l.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 const fixD=l=>/^[0-9OolI|S\s\-\/.:：—–−ー一_年月日．／()（）]+$/.test(l)?l.replace(/[Oo]/g,'0').replace(/[lI|]/g,'1').replace(/S/g,'5'):l;
 const SEP='[-\\/.．／−–—ー一_]';
-const DRE=new RegExp('(?<!\\d)(\\d{4}|\\d{2})(?:\\s*'+SEP+'\\s*|\\s*年\\s*|\\s+)(\\d{1,2})(?:\\s*'+SEP+'\\s*|\\s*月\\s*|\\s+)(\\d{1,2})(?!\\d)');
-const DRE_L=new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})\\s*'+SEP+'\\s*(\\d{2})\\d*');
-const DRE_C=new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})(\\d{2})(?!\\d)');
-const DRE8=/(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/;
-const DRE6=/(?<![\d:])(\d{2})(\d{2})(\d{2})(?![\d:])/;
-const TRE=/(?<!\d)([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?!\d)/g;
+const DRE=R('(?<!\\d)(\\d{4}|\\d{2})(?:\\s*'+SEP+'\\s*|\\s*年\\s*|\\s+)(\\d{1,2})(?:\\s*'+SEP+'\\s*|\\s*月\\s*|\\s+)(\\d{1,2})(?!\\d)');
+const DRE_L=R('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})\\s*'+SEP+'\\s*(\\d{2})\\d*');
+const DRE_C=R('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SEP+'\\s*(\\d{2})(\\d{2})(?!\\d)');
+const DRE8=R('(?<!\\d)(20\\d{2})(\\d{2})(\\d{2})(?!\\d)');
+const DRE6=R('(?<![\\d:])(\\d{2})(\\d{2})(\\d{2})(?![\\d:])');
+const TRE=R('(?<!\\d)([01]?\\d|2[0-3])\\s*:\\s*([0-5]\\d)(?!\\d)','g');
 const timesOf=(l,hasD)=>{let a=[...l.matchAll(TRE)];if(a.length||hasD)return a;
-a=[...l.matchAll(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]\s*([0-5]\d)(?!\d)/g)];if(a.length)return a;
-if(/^[\d\s\/／~〜\-]+$/.test(l))a=[...l.matchAll(/(?<!\d)([01]\d|2[0-3])([0-5]\d)(?!\d)/g)];return a;};
+a=[...l.matchAll(R('(?<!\\d)([01]?\\d|2[0-3])\\s*[:：.;,]\\s*([0-5]\\d)(?!\\d)','g'))];if(a.length)return a;
+if(/^[\d\s\/／~〜\-]+$/.test(l))a=[...l.matchAll(R('(?<!\\d)([01]\\d|2[0-3])([0-5]\\d)(?!\\d)','g'))];return a;};
 const mkD=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
 const dateOf=l=>{for(const [re] of [[DRE],[DRE_L],[DRE_C],[DRE8]]){const m=re.exec(l);if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:m[0]};}}return null;};
 const dateYMD6=l=>{const m=/^[^\d]{0,3}(\d{2})(\d{2})(\d{2})(?!\d)/.exec(l.trim());if(m){const d=mkD(m[1],m[2],m[3]);if(d)return{date:d,raw:m[0].replace(/^[^\d]+/,'')};}return null;};
@@ -2235,7 +2236,7 @@ text.split('\n').forEach(l0=>{const l=squeezeLead(zen(fixD(zen(l0))));let rest=l
 const f=dateOf(l)||dateYMD6(l);if(f){rest=rest.replace(f.raw,' ');curD=addDate(f.date);}
 if(!f&&/^[^\u3040-\u9fff]{0,3}[0-9A-Za-z|\s]{3,9}\s*[【\[]/.test(l)){trackRows.push({title:l.replace(/^[^\u3040-\u9fff【\[]*/,'').trim(),date:'',miss:true});return;}
 const tms=timesOf(rest,!!f);
-if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(/(?<!\d)([01]?\d|2[0-3])\s*[:：.;,]?\s*([0-5]\d)(?!\d)/g,' ');}
+if(tms.length&&curD){tms.forEach(t=>addDate(curD.date,[String(t[1]).padStart(2,'0')+':'+t[2]]));rest=rest.replace(R('(?<!\\d)([01]?\\d|2[0-3])\\s*[:：.;,]?\\s*([0-5]\\d)(?!\\d)','g'),' ');}
 const empty=!rest.replace(/[\s\/／・,、~〜\-()（）日月火水木金土祝曜]+/g,'');
 if((f||tms.length)&&empty)return;
 if(f){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:f.date});return;}
@@ -3105,11 +3106,11 @@ function lineDateInfo(l0){
 const z=s=>s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248)).replace(/：/g,':');
 let l=squeezeLead(z(l0));const SP='[-\\/.．／−–—ー一_]';
 const mk=(y,m,d)=>{y=String(y);if(y.length===2){if(+y>40)return null;y='20'+y;}if(+y<1990||+y>2099||+m<1||+m>12||+d<1||+d>31)return null;return y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');};
-const tries=[new RegExp('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SP+'\\s*(\\d{1,2})\\s*'+SP+'\\s*(\\d{1,2})(?!\\d)'),/(?<!\d)(\d{4}|\d{2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日?/,/(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/,/^[^\d]{0,3}(\d{2})(\d{2})(\d{2})(?!\d)/];
+const tries=[R('(?<!\\d)(\\d{4}|\\d{2})\\s*'+SP+'\\s*(\\d{1,2})\\s*'+SP+'\\s*(\\d{1,2})(?!\\d)'),R('(?<!\\d)(\\d{4}|\\d{2})\\s*年\\s*(\\d{1,2})\\s*月\\s*(\\d{1,2})\\s*日?'),R('(?<!\\d)(20\\d{2})(\\d{2})(\\d{2})(?!\\d)'),/^[^\d]{0,3}(\d{2})(\d{2})(\d{2})(?!\d)/];
 let hit=null;for(const re of tries){const m=re.exec(l);if(m){const d=mk(m[1],m[2],m[3]);if(d){hit={date:d,raw:m[0]};break;}}}
 if(!hit)return null;
 let rest=l.replace(hit.raw,' ');const tm=[];
-rest=rest.replace(/(?<!\d)([01]?\d|2[0-3])\s*:\s*([0-5]\d)(?!\d)/g,(a,h,mi)=>{tm.push(String(h).padStart(2,'0')+':'+mi);return ' ';});
+rest=rest.replace(R('(?<!\\d)([01]?\\d|2[0-3])\\s*:\\s*([0-5]\\d)(?!\\d)','g'),(a,h,mi)=>{tm.push(String(h).padStart(2,'0')+':'+mi);return ' ';});
 const members=matchNamesG(rest);
 return{date:hit.date,time:tm.join(' / '),members,title:cleanRowTitle(rest)};}
 function parseTrackLines(text,defSection,strip){
@@ -3492,4 +3493,3 @@ if(typeof _o==='function'){window.openEditModal=async function(){const r=await _
 </script>
 </body>
 </html>
-
