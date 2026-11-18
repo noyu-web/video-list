@@ -31,7 +31,7 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 .tab.active{color:var(--pink);border-bottom-color:var(--pink)}
 .side-seg{display:flex;gap:0;margin:10px 12px 2px;background:var(--pink-light);border-radius:999px;padding:3px}
 .side-seg button{flex:1;border:none;background:none;padding:8px 0;font-size:13px;font-weight:700;color:var(--pink-dark);border-radius:999px;cursor:pointer}
-.side-seg button.on{background:var(--white);color:var(--pink);box-shadow:none;border:1px solid var(--pink)}
+.side-seg button.on{background:var(--white);color:var(--pink);border:1px solid var(--pink)}
 .subtabs-wrap{background:var(--pink-pale);border-bottom:1px solid var(--pink-light);overflow-x:auto;scrollbar-width:none;display:none}
 .subtabs-wrap.visible{display:block}
 .subtabs{display:flex;padding:6px 12px;gap:6px;min-width:max-content;flex-wrap:wrap}
@@ -640,12 +640,6 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 
 <!-- Cross Search Modal -->
-<div class="modal-overlay hidden" id="catModal">
-<div class="modal" style="max-height:80vh;overflow-y:auto">
-<div class="modal-header"><h2 class="modal-title">SixTONES以外の区分設定</h2><button class="modal-close" onclick="document.getElementById('catModal').classList.add('hidden')">×</button></div>
-<div id="catModalList" style="padding:8px 0"></div>
-</div>
-</div>
 <div class="modal-overlay hidden" id="crossModal">
 <div class="modal" style="max-height:80vh;overflow-y:auto">
 <div class="modal-header">
@@ -1025,28 +1019,12 @@ return Array.isArray(parsed)?parsed.filter(s=>s&&s.date&&s.date.trim()):[];
 return str?str.split(',').filter(d=>d&&d.trim()&&d!=='ok'&&d!=='ng').map(d=>({date:d,times:[]})):[];
 }
 }
-const OGCAT='__ogcat',CATS=['デビュー組','ジュニア','他界隈'];
-let currentCat='すべて';
-function catOf(g){const m=(cfg&&cfg.subgenres&&cfg.subgenres[OGCAT])||{};if(m[g])return m[g];
-const n=String(g);
-if(/Lil|美 ?少年|HiHi|少年忍者|ONE N|7 ?MEN|原因は自分|Boys ?be|IMPACTors|Go!Go|ジュニア|Jr/i.test(n))return'ジュニア';
-if(/DOMOTO|KinKi|V6|嵐|KAT-TUN|Snow ?Man|SMAP|TOKIO|関ジャニ|SUPER EIGHT|Hey! ?Say! ?JUMP|Sexy Zone|timelesz|King ?& ?Prince|Number_i|なにわ男子|Travis|Aぇ|Kis-My-Ft2|NEWS|A\.B\.C-Z|WEST|少年隊|光GENJI|SixTONES/i.test(n))return'デビュー組';
-return'他界隈';}
-function openCatModal(){
-const box=document.getElementById('catModalList');
-const draw=()=>{box.innerHTML=ogGroups(loadConfig()).map(g=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;font-weight:700;margin-bottom:6px">${esc(g)}</div><div style="display:flex;gap:6px">${CATS.map(c=>`<button type="button" data-g="${esc(g)}" data-c="${esc(c)}" class="subtab${catOf(g)===c?' active':''}">${esc(c)}</button>`).join('')}</div></div>`).join('')+'<div style="padding-top:12px"><button type="button" class="btn-save" id="catEditBtn" style="width:100%">名前・グループを追加／編集</button></div>';
-box.querySelectorAll('[data-g]').forEach(b=>b.addEventListener('click',()=>{setCat(b.dataset.g,b.dataset.c);draw();renderSubtabs();renderList();}));
-document.getElementById('catEditBtn').addEventListener('click',()=>{document.getElementById('catModal').classList.add('hidden');openSubgenreModal();});};
-draw();document.getElementById('catModal').classList.remove('hidden');}
-function setCat(g,c){if(!cfg.subgenres)cfg.subgenres={};const m=Object.assign({},cfg.subgenres[OGCAT]||{});m[g]=c;cfg.subgenres[OGCAT]=m;try{saveConfig(cfg);}catch{}}
-function ogGenreOf(grp){const c=loadConfig();return ogGenres(c).find(k=>((c.subgenres&&c.subgenres[k])||[]).includes(grp))||'すべて';}
 function renderTabs(){
 cfg=loadConfig();
 const t=document.getElementById('tabs');
 if(currentGenre!=='すべて')currentSide=isOG(currentGenre)?'og':'st';
 document.querySelectorAll('#sideSeg button').forEach(b=>b.classList.toggle('on',b.dataset.side===currentSide));
-if(currentSide==='og'){t.innerHTML=['すべて',...CATS].map(c=>`<button class="tab ${currentCat===c?'active':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentCat=b.dataset.c;currentGenre='すべて';currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));document.querySelectorAll('#sideSeg button').forEach(b=>{b.onclick=()=>{currentSide=b.dataset.side;currentCat='すべて';currentGenre='すべて';currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();};});return;}
-t.innerHTML=cfg.genres.filter(g=>g==='すべて'||!isOG(g)).map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
+t.innerHTML=cfg.genres.filter(g=>g==='すべて'||(currentSide==='og')===!!isOG(g)).map(g=>{const pr=progressFor(g);return `<button class="tab ${currentGenre===g?'active':''}" data-g="${esc(g)}">${esc(g)}${pr?`<span class="tab-prog${pr.done===pr.total?' full':''}">${pr.done===pr.total?'✓':pr.done+'/'+pr.total}</span>`:''}</button>`;}).join('');
 document.querySelectorAll('#sideSeg button').forEach(b=>{b.onclick=()=>{currentSide=b.dataset.side;currentGenre='すべて';currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();};});
 t.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{currentGenre=b.dataset.g;currentSubgenre='すべて';renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 }
@@ -1072,16 +1050,13 @@ function renderSubtabs(){try{renderKind();}catch(e){}return renderSubtabs0();}
 function renderSubtabs0(){
 cfg=loadConfig();
 const wrap=document.getElementById('subtabsWrap');
-if(currentSide==='og'){
-const all=ogGroups(cfg).filter(g=>currentCat==='すべて'||catOf(g)===currentCat);
+if(currentGenre==='すべて'&&currentSide==='og'){
+const all=ogGroups(cfg);
+if(!all.length){wrap.classList.remove('visible');return;}
 wrap.classList.add('visible');
-let html=`<button class="subtab ${currentSubgenre==='すべて'?'active':''}" data-s="すべて">すべて</button>`+all.map(s=>`<button class="subtab ${currentSubgenre===s?'active':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('');
-if(isAdmin)html+='<button class="subtab" id="catMgrBtn" style="background:var(--pink-pale);color:var(--pink-dark);border-color:var(--pink-light)">管理・設定</button>';
-if(isAdmin&&currentSubgenre!=='すべて')html+=CATS.map(c=>`<button class="subtab" data-cat="${esc(c)}" style="background:${catOf(currentSubgenre)===c?'var(--pink)':'var(--pink-pale)'};color:${catOf(currentSubgenre)===c?'#fff':'var(--pink-dark)'};border-color:var(--pink-light)">区分:${esc(c)}</button>`).join('');
-const st=document.getElementById('subtabs');st.innerHTML=html;
-st.querySelectorAll('.subtab[data-s]').forEach(b=>b.addEventListener('click',()=>{currentSubgenre=b.dataset.s;currentGenre=currentSubgenre==='すべて'?'すべて':ogGenreOf(currentSubgenre);renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
-const cm=document.getElementById('catMgrBtn');if(cm)cm.addEventListener('click',()=>openCatModal());
-st.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{setCat(currentSubgenre,b.dataset.cat);renderSubtabs();renderList();}));
+const st=document.getElementById('subtabs');
+st.innerHTML=`<button class="subtab active" data-s="すべて">すべて</button>`+all.map(x=>`<button class="subtab" data-s="${esc(x)}">${esc(x)}</button>`).join('');
+st.querySelectorAll('.subtab[data-s]').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.s;if(g==='すべて')return;const og=ogGenres(cfg).find(k=>((cfg.subgenres&&cfg.subgenres[k])||[]).includes(g));if(!og)return;currentGenre=og;currentSubgenre=g;renderTabs();renderSubtabs();renderList();syncFilterSheet();}));
 return;}
 if(currentGenre==='すべて'){wrap.classList.remove('visible');return;}
 const subs=cfg.subgenres[currentGenre]||[];
@@ -1115,7 +1090,7 @@ try{const _a=JSON.parse(item.tracks||'[]');return(Array.isArray(_a)?_a:[]).map(t
 }
 function matchItem(item){try{return matchItem0(item);}catch(e){return false;}}
 function matchItem0(item){
-if(currentGenre==='すべて'){const gs=parseGenres(item.genres||item.genre||'');const og=gs.some(g=>isOG(g.genre)&&(currentCat==='すべて'||catOf(g.subgenre)===currentCat)||(g.genre===OGK&&false));const st=gs.some(g=>!isOG(g.genre)&&g.genre!==OGK);const anyog=gs.some(g=>isOG(g.genre));if(currentSide==='og'?!og:(anyog&&!st))return false;}
+if(currentGenre==='すべて'){const gs=parseGenres(item.genres||item.genre||'');const og=gs.some(g=>isOG(g.genre));const st=gs.some(g=>!isOG(g.genre)&&g.genre!==OGK);if(currentSide==='og'?!og:(og&&!st))return false;}
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
