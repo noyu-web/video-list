@@ -53,6 +53,8 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 #detailModal .dt-bar .btn-icon{font-size:13px!important;font-weight:700;color:var(--pink-dark);padding:4px 8px 4px 0;white-space:nowrap}
 #detailModal .dt-bar .modal-title{flex:1;min-width:0;font-size:15px;line-height:1.35;word-break:break-all}
 #detailExchange{margin-bottom:10px!important}
+#trkBox .trk-row.trk-hit{background:#ffe8f1!important;border-left:3px solid #e0558f;padding-left:9px!important;margin-left:-12px;padding-right:12px!important;margin-right:-12px}
+#trkBox .tag.tag-hit{background:#e0558f!important;color:#fff!important;border-color:#e0558f!important}
 #detailSchedules>div:nth-child(2){border:none!important;background:none!important;border-radius:0!important;padding:0!important;margin-bottom:10px!important}
 #detailSchedules>div:nth-child(2)>div{padding:7px 0!important}
 #detailSchedules>div:nth-child(2)>div:last-child{border-bottom:none!important}
@@ -1672,9 +1674,9 @@ if(sec !== currentSec) { flushSec(); currentSec=sec; }
 const badge=dist&&dist!=='none'?`<span style="font-size:11px;padding:2px 8px;border-radius:9px;${distBg[dist]};font-weight:700">${distLabel[dist]}</span>`:'';
 const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||'');
 const dateBadge='';
-const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}" data-xs="${esc(m)}" style="font-size:10px;padding:1px 6px;cursor:pointer">${esc(m)}</span>`).join('');
+const _hit=tmembers.some(m=>F.members.has(m));const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}${F.members.has(m)?' tag-hit':''}" data-xs="${esc(m)}" style="font-size:10px;padding:1px 6px;cursor:pointer">${esc(m)}</span>`).join('');
 const memberSpan=memberBadges?`<span style="display:inline-flex;flex-wrap:wrap;gap:3px">${memberBadges}</span>`:'';
-secItems.push(`<div class="trk-row${(dp&&!title&&!memberBadges)?' trk-dateonly':''}" data-d="${esc(dp)}" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:12px 0;border-bottom:1px solid #f3e1ea">
+secItems.push(`<div class="trk-row${_hit?' trk-hit':''}${(dp&&!title&&!memberBadges)?' trk-dateonly':''}" data-d="${esc(dp)}" data-y="${esc(String(dp||'').slice(0,4))}" style="padding:12px 0;border-bottom:1px solid #f3e1ea">
 ${dp?`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(dp)}</span>${tp?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${esc(tp)}</span>`:''}${title?'':(badge||memberSpan?`<div style="flex:0 0 100%;display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:2px">${badge}${memberSpan}</div>`:'')}</div>`:''}
 ${title?`<div style="font-size:14px;line-height:1.5;color:#4b5563;margin-top:${dp?3:0}px;display:flex;align-items:center;flex-wrap:wrap;gap:6px">${esc(title)}${badge}${memberSpan}</div>`:''}
 ${(!dp&&!title&&memberBadges)?`<div style="display:flex;flex-wrap:wrap;gap:3px">${memberBadges}</div>`:''}
