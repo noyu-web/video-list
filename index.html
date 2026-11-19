@@ -53,7 +53,55 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 #detailModal .dt-bar .btn-icon{font-size:13px!important;font-weight:700;color:var(--pink-dark);padding:4px 8px 4px 0;white-space:nowrap}
 #detailModal .dt-bar .modal-title{flex:1;min-width:0;font-size:15px;line-height:1.35;word-break:break-all}
 #detailExchange{margin-bottom:10px!important}
-#trkBox .trk-row.trk-hit{background:#ffe8f1!important;border-left:3px solid #e0558f;padding-left:9px!important;margin-left:-12px;padding-right:12px!important;margin-right:-12px}
+.list-count:empty{display:none!important}
+.tool-row #sortSelect,.tool-row #sortSelect~select{flex:0 0 20%!important;font-size:9.5px!important;padding-right:0!important;background-position:right 2px center!important}
+.tool-row select#kindSel{flex:0 0 25%!important;font-size:13px!important}
+.tool-row select#sortSelect,.tool-row select#sortSelect~select{flex:0 0 22%!important}
+.tool-row #favOnlyBtn.fav-only{flex:0 0 auto!important;margin-left:0!important;padding-left:8px!important;padding-right:10px!important;min-width:0!important;font-size:12px!important}
+.tool-row .fav-only svg{width:15px!important;height:15px!important;margin-right:2px!important}
+.tool-row #sortSelect,.tool-row #sortSelect~select{flex:0 0 19%!important}
+.tool-row #kindSel,.tool-row .fav-only{padding:3px 6px!important;height:auto!important;min-height:0!important;line-height:1.2!important}
+.tool-row .fav-only svg{width:16px!important;height:16px!important}
+.list-count{padding:0 0 2px!important;margin:0!important}
+.tool-row{padding:0 12px!important;margin:0!important}
+.tool-row select,.tool-row .fav-only{margin-top:0!important;margin-bottom:0!important}
+.check-progress{margin:0 0 3px!important;line-height:1.2!important}
+.list-wrap{padding-top:0!important}
+.subtabs-wrap{margin-bottom:0!important}
+.tab{padding:5px 10px!important}
+.tab-prog{margin-top:0!important;line-height:1.1!important}
+.subtabs{padding:2px 10px!important}
+.subtab{padding:2px 9px!important}
+.tool-row{padding:2px 12px 0!important}
+.tool-row #kindSel,.tool-row .fav-only{padding:5px 6px!important}
+.check-progress{margin:2px 0 4px!important}
+.card-main{padding:7px 12px!important}
+.card-meta{margin-top:3px!important}
+.card-side{gap:0!important}
+.fav-btn{padding:0 4px!important}
+.fav-btn svg{width:22px!important;height:22px!important}
+.card-main{align-items:center!important}
+.card-side{flex-direction:row!important;align-items:center!important;gap:6px!important}
+.list-count{padding:0 0 3px!important}
+.card-admin{padding:3px 12px 5px!important}
+.card{margin-bottom:5px!important}
+.tool-row{padding:4px 12px 2px!important}
+.tool-row #kindSel,.tool-row .fav-only{padding:3px 6px!important}
+#trkBox .trk-row{padding-top:7px!important;padding-bottom:7px!important}
+#trkBox .trk-sec{margin-top:8px!important}
+#detailModal #detailMembers{margin-bottom:6px!important}
+#detailModal #detailExchange{margin-bottom:6px!important}
+#detailTracks>div:first-child{margin:2px 0 4px!important}
+#detailModal .detail-dates,#detailModal #detailDates{margin-bottom:6px!important}
+#detailModal #trkBox .trk-row>div>span.trk-ex{font-size:11px!important;font-weight:700!important;letter-spacing:0!important;padding:2px 8px!important}
+#detailModal #trkBox .trk-row>div>span.trk-ex.exchange-ok{background:#ee8bab!important;color:#fff!important}
+#detailModal #trkBox .trk-row>div>span.trk-ex.exchange-ng{background:#f3eef0!important;color:#9b8a91!important}
+.tool-row #sortSelect{order:1}.tool-row #sortSelect~select{order:2}.tool-row #kindSel{order:3}.tool-row .fav-only{order:4}
+.tool-row #kindSel{flex:0 0 27%!important;font-size:14px!important;font-weight:700;padding:3px 6px!important;color:#b8486f}
+.tool-row #sortSelect,.tool-row #sortSelect~select{flex:0 0 22%!important;font-size:10px!important;padding:4px 0 4px 2px!important;color:#9a8a92}
+.tool-row .fav-only{flex:1 1 0!important;font-size:14px!important;font-weight:700;padding:3px 6px!important;justify-content:center}
+.tool-row .fav-only svg{width:18px!important;height:18px!important}
+#trkBox .trk-row.trk-hit{background:#ffe8f1!important;padding-left:12px!important;margin-left:-12px;padding-right:12px!important;margin-right:-12px}
 #trkBox .tag.tag-hit{background:#e0558f!important;color:#fff!important;border-color:#e0558f!important}
 #detailSchedules>div:nth-child(2){border:none!important;background:none!important;border-radius:0!important;padding:0!important;margin-bottom:10px!important}
 #detailSchedules>div:nth-child(2)>div{padding:7px 0!important}
@@ -1098,12 +1146,13 @@ var currentKind='すべて',_kindFor='';
 function renderKind(){
 const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs'),hd=document.getElementById('kindHead');if(!w)return;
 if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
-if(currentGenre==='すべて'||!isOG(currentGenre)||currentSubgenre==='すべて'){w.style.display='none';currentKind='すべて';const k0=document.getElementById('kindSel');if(k0)k0.style.display='none';return;}
+if(currentGenre==='すべて'||!isOG(currentGenre)){w.style.display='none';const k0=document.getElementById('kindSel');if(currentSide!=='og'){currentKind='すべて';if(k0)k0.style.display='none';return;}
+if(k0){const ks=ogKinds();k0.innerHTML='<option value="すべて">ジャンル</option>'+ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('');k0.value=ks.includes(currentKind)?currentKind:'すべて';k0.style.display='';k0.onchange=()=>{currentKind=k0.value;renderList();};}return;}
 const ks=ogKinds();
-const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&g.subgenre===currentSubgenre))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
+const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
 w.style.display='none';
 const ksel=document.getElementById('kindSel');
-const opts=['<option value="すべて">種別</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+(cnt[k]?' '+cnt[k]:'')+'</option>'));
+const opts=['<option value="すべて">ジャンル</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+(cnt[k]?' '+cnt[k]:'')+'</option>'));
 if(isAdmin)opts.push('<option value="__assign">＋ 種別を付ける</option><option value="__add">＋ 種別を追加</option><option value="__del">－ 種別を削除</option>');
 ksel.innerHTML=opts.join('');ksel.value=currentKind;ksel.style.display='';
 ksel.onchange=()=>{const v=ksel.value;
@@ -1160,7 +1209,7 @@ if(currentGenre==='すべて'){const gs=parseGenres(item.genres||item.genre||'')
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
-if(currentKind!=='すべて'&&isOG(currentGenre)&&!gs.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;
+if(currentKind!=='すべて'&&(isOG(currentGenre)||currentSide==='og')&&!gs.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;
 }
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
 if(F.genres.size){
@@ -1671,7 +1720,7 @@ const tdate=(typeof t==='string'?'':t.date||'')+(typeof t==='string'||!t.time?''
 const tmembers=typeof t==='string'?[]:(t.members||[]);
 const sec=typeof t==='string'?'':t.section||'';
 if(sec !== currentSec) { flushSec(); currentSec=sec; }
-const badge=dist&&dist!=='none'?`<span style="font-size:11px;padding:2px 8px;border-radius:9px;${distBg[dist]};font-weight:700">${distLabel[dist]}</span>`:'';
+const badge=dist&&dist!=='none'?`<span class="exchange-badge ${dist==='ok'?'exchange-ok':'exchange-ng'} trk-ex">${distLabel[dist]}</span>`:'';
 const dp=typeof t==='string'?'':(t.date||''),tp=typeof t==='string'?'':(t.time||'');
 const dateBadge='';
 const _hit=tmembers.some(m=>F.members.has(m));const memberBadges0=0;const memberBadges=tmembers.map(m=>`<span class="tag ${memberClass(m)}${F.members.has(m)?' tag-hit':''}" data-xs="${esc(m)}" style="font-size:10px;padding:1px 6px;cursor:pointer">${esc(m)}</span>`).join('');
