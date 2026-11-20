@@ -375,6 +375,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 #cmList>.cm-sec~.cm-act{grid-column:auto;font-size:13.5px!important}
 #cmList>a.cm-link.cur{background:#fff0f5}
 </style>
+<style>#detailModal #detailMembers{margin:16px 0 8px!important;padding-top:12px;border-top:1px solid #f0d9e3}#detailModal #detailMembers:empty{display:none}</style>
 </head>
 <body>
 
@@ -676,12 +677,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="modal-title" id="detailTitle" style="margin-bottom:0"></div>
 </div>
 <div id="detailGenres" style="margin-bottom:10px"></div>
-<div id="detailMembers" class="card-meta" style="margin-bottom:12px"></div>
 <div id="detailExchange" style="margin-bottom:12px"></div>
 <div id="detailFileInfo" style="margin-bottom:12px"></div>
 <div id="detailSchedules" style="margin-bottom:12px"></div>
 <div id="detailTracks"></div>
 <div id="detailNote"></div>
+<div id="detailMembers" class="card-meta" style="margin-bottom:12px"></div>
 
 </div>
 </div>
@@ -3835,7 +3836,7 @@ function lg(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')||d;}catc
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 /* 推しメンバー */
 var OK='vl_oshi';
-function oshi(){try{return localStorage.getItem(OK)||'';}catch(e){return '';}}
+function oshi(){try{var v=localStorage.getItem(OK)||'';if(!v)return '';var ok=(cfg.members||[]).indexOf(v)>=0||Object.keys(cfg.otherMembers||{}).some(function(g){return (cfg.otherMembers[g]||[]).indexOf(v)>=0;});if(!ok){localStorage.removeItem(OK);return '';}return v;}catch(e){return '';}}
 function applyOshi(){var o=oshi();document.querySelectorAll('#cardList .tag,#detailMembers .tag,#trkBox .tag').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');if(!o)return;if(t.closest('.trk-row')&&!t.dataset.xs)return;var x=(t.dataset.xs||t.textContent||'').trim();if(!x||/交換|区分/.test(x)||t.classList.contains('exchange-badge'))return;if(x===o)t.classList.add('tag-oshi');else if((cfg.members||[]).indexOf(x)>=0||x==='SixTONES'||Object.keys(cfg.otherMembers||{}).some(function(g){return (cfg.otherMembers[g]||[]).indexOf(x)>=0;}))t.classList.add('tag-dim');});}
 var _rl2=renderList;renderList=async function(){var r=await _rl2.apply(this,arguments);try{applyOshi();}catch(e){}return r;};
 var _od2=openDetailModal;openDetailModal=function(it){_od2.apply(this,arguments);try{applyOshi();}catch(e){}try{rec(it);}catch(e){}};
