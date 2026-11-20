@@ -363,6 +363,18 @@ body.selecting .list-wrap{padding-bottom:90px}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
 <style>html,body,button,input,select,textarea{font-family:'Hachi Maru Pop','Hiragino Maru Gothic ProN','Kosugi Maru','Hiragino Sans',sans-serif!important}</style>
+<style>
+/* メニュー整理 */
+.cm-sheet{max-height:90vh;overflow-y:auto;padding-top:14px!important}
+.cm-head{margin-bottom:2px!important}
+#cmList{display:grid;grid-template-columns:1fr 1fr;column-gap:14px}
+#cmList>.cm-sec,#cmList>.cm-sec2{grid-column:1/-1;font-size:11px;font-weight:700;color:#b8486f;letter-spacing:.12em;margin:14px 4px 0!important;padding-bottom:4px;border-bottom:1px solid #ecc9d8}
+#cmList>.cm-sec2:first-child{margin-top:8px!important}
+#cmList>.cm-link{padding:12px 4px!important;font-size:14.5px!important;border-bottom:1px solid #f6e6ed!important}
+#cmList>.cm-act{grid-column:1/-1}
+#cmList>.cm-sec~.cm-act{grid-column:auto;font-size:13.5px!important}
+#cmList>a.cm-link.cur{background:#fff0f5}
+</style>
 </head>
 <body>
 
@@ -1725,7 +1737,11 @@ const secHeader = currentSec ? `<div class="trk-sec" style="font-size:11px;font-
 sectionsHtml += secHeader + secItems.join('');
 secItems = [];
 };
-mergeDateRows(tracks).forEach(({t,ti})=>{
+(()=>{const _rows=mergeDateRows(tracks);const _so=[];_rows.forEach(r=>{const x=typeof r.t==='string'?'':(r.t.section||'');if(!_so.includes(x))_so.push(x);});
+const _k=r=>{const t=r.t;if(typeof t==='string')return '99999999';const d=String(t.date||'').replace(/\D/g,'');const tm=String(t.time||'').replace(/\D/g,'');return d?(d+'00000000').slice(0,8)+(tm+'0000').slice(0,4):'99999999';};
+_rows.forEach((r,i)=>{r._i=i;});
+_rows.sort((p,q)=>{const sa=_so.indexOf(typeof p.t==='string'?'':(p.t.section||'')),sb=_so.indexOf(typeof q.t==='string'?'':(q.t.section||''));if(sa!==sb)return sa-sb;const ka=_k(p),kb=_k(q);return ka<kb?-1:ka>kb?1:p._i-q._i;});
+return _rows;})().forEach(({t,ti})=>{
 const fo0=(parseMeta(item).tr||[])[ti]||{};
 if(typeof t!=='string'&&!(t&&(t.title||t.date||(t.members||[]).length||t.section||(t.dist&&t.dist!=='none')||Object.keys(fo0).length)))return;
 if(typeof t==='string'&&!t.trim())return;
@@ -3887,5 +3903,13 @@ box.querySelectorAll('.trk-sec').forEach(function(s){var n=s.nextElementSibling,
 })();
 </script>
 
+<script>
+document.addEventListener('click',function(e){if(!e.target.closest||!e.target.closest('#cmBtn'))return;setTimeout(function(){var l=document.getElementById('cmList');if(!l||l.querySelector('.cm-sec2'))return;
+function h(t){var d=document.createElement('div');d.className='cm-sec2';d.textContent=t;return d;}
+var a=l.querySelector('a.cm-link');if(a)l.insertBefore(h('ページ'),a);
+var sec=l.querySelector('.cm-sec');var f=null;var k=l.children;for(var i=0;i<k.length;i++){if(k[i].classList.contains('cm-act')){f=k[i];break;}if(k[i].classList.contains('cm-sec'))break;}
+if(f){var hd=h('機能');l.insertBefore(hd,f);var fb=document.getElementById('favOnlyBtn');if(fb){var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmFav';var on=false;try{on=F.fav.has('yes');}catch(e){}d.innerHTML='<span>お気に入り</span><span>'+(on?'表示中':'›')+'</span>';d.addEventListener('click',function(){var bg=document.getElementById('cmBg');if(bg)bg.classList.remove('on');setTimeout(function(){fb.click();},60);});l.insertBefore(d,f);}}
+},200);},true);
+</script>
 </body>
 </html>
