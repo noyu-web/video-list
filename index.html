@@ -53,6 +53,10 @@ header{background:var(--white);border-bottom:2px solid var(--pink-light);padding
 #detailModal .dt-bar .btn-icon{font-size:13px!important;font-weight:700;color:var(--pink-dark);padding:4px 8px 4px 0;white-space:nowrap}
 #detailModal .dt-bar .modal-title{flex:1;min-width:0;font-size:15px;line-height:1.35;word-break:break-all}
 #detailExchange{margin-bottom:10px!important}
+#decadeTabs{overflow-x:auto;white-space:nowrap;gap:0;padding:0 12px;background:#fff;border-bottom:1px solid var(--pink-light);-webkit-overflow-scrolling:touch}
+#decadeTabs .dc-t{flex:0 0 auto;border:none;background:none;font:inherit;font-size:13px;font-weight:700;color:#9aa0ab;padding:8px 12px;border-bottom:2px solid transparent;cursor:pointer}
+#decadeTabs .dc-t small{font-size:10px;font-weight:600}
+#decadeTabs .dc-t.on{color:#e0558f;border-bottom-color:#e0558f}
 .list-count:empty{display:none!important}
 .tool-row #sortSelect,.tool-row #sortSelect~select{flex:0 0 20%!important;font-size:9.5px!important;padding-right:0!important;background-position:right 2px center!important}
 .tool-row select#kindSel{flex:0 0 25%!important;font-size:13px!important}
@@ -388,6 +392,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 
 <div class="active-bar" id="activeBar"></div>
 
+<div id="decadeTabs" style="display:none"></div>
 <div class="tool-row" style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap;padding:10px 12px 6px">
 <select id="kindSel" style="display:none"></select>
 <select id="sortSelect" title="並び替え">
@@ -933,7 +938,7 @@ if(!(d&&d.error==='unauthorized'))failMsg('設定の保存');
 });
 }
 let qMode='or';
-let isAdmin=false,token='',currentGenre='すべて',currentSide='st',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
+let currentDecade='すべて';let isAdmin=false,token='',currentGenre='すべて',currentSide='st',currentSubgenre='すべて',editingId=null,cachedVideos=null,cbIdx=0,sortOrder='default';
 const F={q:'',genres:new Set(),members:new Set(),years:new Set(),ex:new Set(),fresh:new Set(),gaps:new Set(),chk:new Set(),fav:new Set()};
 const CHECK_LIST='1';
 const checkedSet=new Set();let checksLoaded=false;
@@ -1445,6 +1450,13 @@ data=data.filter(matchItem);
 {const gp=document.getElementById('gapSel').value;if(gp)data=data.filter(it=>{if(gp==='date')return !allDatesOf(it).length;if(gp==='mem')return !(it.members||[]).length;if(gp==='track')return !parseTracks(it).length;if(gp==='file')return !((parseMeta(it).tr||[]).some(x=>x&&(x.res||x.size||x.dur||x.loc)));return true;});}
 const allDates=item=>{const dd=formatSchedules(item.dates).map(s=>s.date).filter(Boolean);try{parseTracks(item).forEach(t=>{if(t&&/^\d{4}-\d{2}-\d{2}/.test(String(t.date||'')))dd.push(String(t.date).substring(0,10));});}catch{}return dd.sort();};
 const gd=item=>{const dd=allDates(item);return dd.length?dd[0]:'';};
+{const dec=it=>{const g=gd(it);return g?Math.floor(g.slice(0,4)/10)*10+'年代':'日付なし';};
+const cnt={};data.forEach(it=>{const k=dec(it);cnt[k]=(cnt[k]||0)+1;});
+const keys=Object.keys(cnt).filter(k=>k!=='日付なし').sort().reverse();const nd=cnt['日付なし'];if(nd)keys.push('日付なし');
+if(currentDecade!=='すべて'&&!cnt[currentDecade])currentDecade='すべて';
+const el=document.getElementById('decadeTabs');
+if(el){if(keys.filter(k=>k!=='日付なし').length<2){el.style.display='none';currentDecade='すべて';}else{el.style.display='flex';el.innerHTML=['すべて'].concat(keys).map(k=>'<button type="button" class="dc-t'+(k===currentDecade?' on':'')+'" data-dc="'+k+'">'+k+'</button>').join('');}}
+if(currentDecade!=='すべて')data=data.filter(it=>dec(it)===currentDecade);}
 if(sortOrder==='date_new'||sortOrder==='timeline'){
 data=[...data].sort((a,b)=>{const da=gd(a),db=gd(b);if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return db.localeCompare(da);});
 }else if(sortOrder==='date_old'){
@@ -1480,7 +1492,7 @@ data=out;
 lastShown=data.map(d=>d.id);
 updateProgressLine(data);
 {let _n=0;data.forEach(it=>{try{_n+=parseTracks(it).length;}catch{}});document.getElementById('listCount').textContent=data.length+' 件'+(_n?'（収録内容 '+_n+' 行）':'');}
-if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
+window._shown=data;if(!data.length){list.innerHTML='<div class="empty"><div class="empty-icon"></div><div style="font-size:14px">該当する動画がありません</div></div>';return;}
 let _tl='';list.innerHTML=data.map((item,idx)=>{
 let hd='';const _g=_sr.get(item.id);if(_g&&_g.first)hd='<div class="sr-h" data-sr="'+esc(_g.k)+'"><span>'+esc(_g.label)+'</span><span class="sr-n">'+_g.n+'件 '+(_srOpen.has(_g.k)?'－':'＋')+'</span></div>';if(sortOrder==='timeline'){const g=gd(item),m=/^(\d{4})\D+(\d{1,2})/.exec(g);const tk=m?m[1]+'年'+Number(m[2])+'月':'日付なし';if(tk!==_tl){_tl=tk;hd='<div class="tl-h">'+tk+'</div>';}}
 return hd+`<div class="card${selectMode&&selected.has(item.id)?' sel':''}${isAdmin&&checkedSet.has(item.id)?' checked':''}${_g?' sr-in':''}"${_g?` data-srk="${esc(_g.k)}"${_srOpen.has(_g.k)?'':' style="display:none"'}`:''} data-detail="${item.id}"><div class="card-main">${selectMode?`<div class="sel-box">✓</div>`:''}<div class="card-info">
@@ -2502,6 +2514,7 @@ cachedVideos=_l;try{localStorage.setItem('videos_ls_cache',JSON.stringify(_l));}
 document.getElementById('cardList').innerHTML=loadingHTML('保存中');
 writeVideo(video,_isNew).then(ok=>{
 renderList();
+if(ok&&_isNew&&isAdmin){try{window._wishCheck(video);}catch{}}
 if(!ok&&isAdmin)failMsg('保存');
 return gasGet({action:'getVideos',token}).then(data=>{if(Array.isArray(data)){cachedVideos=fixObjTitles(data);try{localStorage.setItem('videos_ls_cache',JSON.stringify(data));}catch{}renderList();}});
 }).catch(()=>{});}
@@ -3687,7 +3700,7 @@ function save(){try{localStorage.setItem(K,JSON.stringify(S));}catch(e){}}
 function apply(){var c=document.body.classList;['d-roomy','d-compact','f-s','f-l','v-list','dim-chk'].forEach(function(x){c.remove(x);});
 if(S.d==='r')c.add('d-roomy');if(S.d==='c')c.add('d-compact');if(S.f==='s')c.add('f-s');if(S.f==='l')c.add('f-l');if(S.v==='l')c.add('v-list');if(S.dim==='1')c.add('dim-chk');}
 var R=[['密度','d',[['r','ゆったり'],['n','標準'],['c','ぎゅっと']]],['文字サイズ','f',[['s','小'],['n','標準'],['l','大']]],['一覧の形','v',[['c','カード'],['l','リスト']]],['確認済みを薄く','dim',[['0','しない'],['1','する']]],['一番上へ戻るボタン','top',[['1','出す'],['0','出さない']]]];
-function draw(){document.getElementById('dsList').innerHTML=R.map(function(r){return '<div class="ds-row"><span>'+r[0]+'</span><div class="ds-seg">'+r[2].map(function(o){return '<button type="button" data-k="'+r[1]+'" data-v="'+o[0]+'"'+(S[r[1]]===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join('')+'</div></div>';}).join('');}
+function draw(){var adm=(typeof isAdmin!=='undefined'&&isAdmin);document.getElementById('dsList').innerHTML=R.filter(function(r){return r[1]!=='dim'||adm;}).map(function(r){return '<div class="ds-row"><span>'+r[0]+'</span><div class="ds-seg">'+r[2].map(function(o){return '<button type="button" data-k="'+r[1]+'" data-v="'+o[0]+'"'+(S[r[1]]===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join('')+'</div></div>';}).join('');}
 document.getElementById('dsList').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;S[b.dataset.k]=b.dataset.v;save();apply();draw();});
 var bg=document.getElementById('dsBg');
 document.getElementById('dsClose').addEventListener('click',function(){bg.classList.remove('on');});
@@ -3697,6 +3710,89 @@ var tb=document.getElementById('topBtn');
 tb.addEventListener('click',function(){try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);}});
 window.addEventListener('scroll',function(){tb.classList.toggle('on',S.top==='1'&&window.scrollY>500);},{passive:true});
 apply();
+})();
+</script>
+
+<script>document.getElementById('decadeTabs').addEventListener('click',function(e){var b=e.target.closest('[data-dc]');if(!b)return;currentDecade=b.dataset.dc;renderList();});</script>
+<style>
+.ov{position:fixed;inset:0;background:#fff7fa;z-index:950;overflow:auto;display:none}
+.ov.on{display:block}
+.ov-h{position:sticky;top:0;background:#fff;border-bottom:1px solid #f4c9d9;padding:14px 16px;display:flex;align-items:center;gap:14px;z-index:2}
+.ov-h button{border:none;background:none;color:#c95a88;font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:0}
+.ov-h b{font-size:15px;color:#c95a88}
+.ov-y{margin:16px 16px 4px;font-weight:800;color:#e0558f;font-size:13px}
+.ov-c{background:#fff;border:1px solid #f4c9d9;border-radius:12px;margin:6px 14px;padding:10px 14px;cursor:pointer}
+.ov-t{font-weight:700;font-size:14px;color:#4b5563}
+.ov-s{font-size:11px;color:#8b8f99;margin-top:2px}
+.st-b{margin:8px 16px}.st-b div:first-child{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#4b5563}
+.st-b i{display:block;height:8px;background:#ee8bab;border-radius:4px;margin-top:4px}
+.st-b>div:last-child{background:#fde8f0;border-radius:4px}
+#tlBar{padding:6px 12px 0}
+#tlBar button{border:1px solid #f4c9d9;background:#fff;color:#c95a88;font:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:6px;cursor:pointer}
+#detailNote{margin-bottom:64px!important}
+#dtNav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #f4c9d9;z-index:60}
+#dtNav button{flex:1;min-width:0;border:none;background:none;color:#c95a88;font:inherit;font-size:12px;font-weight:700;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 0}
+#dtNav button:first-child{text-align:left}#dtNav button:last-child{text-align:right}
+#dtNav button:disabled{color:#d7d9de}
+</style>
+<div class="ov" id="tlOv"><div class="ov-h"><button type="button" id="tlBack">‹ 戻る</button><b id="tlTitle"></b></div><div id="tlBody"></div></div>
+<div class="ov" id="stOv"><div class="ov-h"><button type="button" id="stBack">‹ 戻る</button><b id="stTitle">統計</b></div><div id="stBody"></div></div>
+<script>
+(function(){
+function gl(it){try{var g=typeof it.genres==='string'?JSON.parse(it.genres||'[]'):(it.genres||[]);return g.map(function(x){return x.genre;}).filter(Boolean);}catch(e){return[];}}
+function first(it){var d=allDatesOf(it).sort();return d.length?d[0]:'';}
+function vids(){return Array.isArray(cachedVideos)?cachedVideos:[];}
+/* 詳細の前後移動 */
+var cur=null,detail=document.getElementById('detailModal');
+var nav=document.createElement('div');nav.id='dtNav';nav.innerHTML='<button type="button" id="dtPrev"></button><button type="button" id="dtNext"></button>';detail.appendChild(nav);
+function upd(){var L=window._shown||[],i=cur?L.findIndex(function(x){return String(x.id)===String(cur.id);}):-1;
+if(i<0){nav.style.display='none';return;}nav.style.display='flex';
+var p=L[i-1],n=L[i+1],bp=document.getElementById('dtPrev'),bn=document.getElementById('dtNext');
+bp.disabled=!p;bn.disabled=!n;bp.textContent=p?'‹ '+p.title:'';bn.textContent=n?n.title+' ›':'';bp._it=p;bn._it=n;}
+var _od=openDetailModal;
+openDetailModal=function(it){cur=it;_od.apply(this,arguments);upd();try{detail.scrollTop=0;var b=detail.querySelector('.detail-body,.modal');if(b)b.scrollTop=0;}catch(e){}};
+['dtPrev','dtNext'].forEach(function(id){document.getElementById(id).addEventListener('click',function(){if(this._it)openDetailModal(this._it);});});
+var sx=0,sy=0;
+detail.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
+detail.addEventListener('touchend',function(e){var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.5)return;var b=document.getElementById(dx<0?'dtNext':'dtPrev');if(b&&b._it)openDetailModal(b._it);},{passive:true});
+/* 出演者の年表 */
+var tl=document.getElementById('tlOv');
+function openTl(name){
+var L=vids().filter(function(it){if((it.members||[]).indexOf(name)>=0)return true;try{return parseTracks(it).some(function(t){return (t.members||[]).indexOf(name)>=0;});}catch(e){return false;}});
+var g={};L.forEach(function(it){var d=first(it),y=d?d.slice(0,4)+'年':'日付なし';(g[y]=g[y]||[]).push({it:it,d:d});});
+var ks=Object.keys(g).filter(function(k){return k!=='日付なし';}).sort().reverse();if(g['日付なし'])ks.push('日付なし');
+document.getElementById('tlTitle').textContent=name+' の出演（年表）';
+window._tlItems={};
+document.getElementById('tlBody').innerHTML=ks.map(function(k){return '<div class="ov-y">'+k+'</div>'+g[k].sort(function(a,b){return b.d.localeCompare(a.d);}).map(function(o){window._tlItems[o.it.id]=o.it;return '<div class="ov-c" data-tl="'+esc(String(o.it.id))+'"><div class="ov-t">'+esc(o.it.title)+'</div><div class="ov-s">'+esc(gl(o.it).join('、'))+(o.d?'　'+o.d:'')+'</div></div>';}).join('');}).join('')||'<div class="ov-s" style="padding:24px">該当なし</div>';
+tl.classList.add('on');tl.scrollTop=0;}
+document.getElementById('tlBack').addEventListener('click',function(){tl.classList.remove('on');});
+document.getElementById('tlBody').addEventListener('click',function(e){var c=e.target.closest('[data-tl]');if(!c)return;tl.classList.remove('on');openDetailModal(window._tlItems[c.dataset.tl]);});
+var bar=document.createElement('div');bar.id='tlBar';bar.style.display='none';
+var lw=document.querySelector('.list-wrap');if(lw)lw.parentNode.insertBefore(bar,lw);
+bar.addEventListener('click',function(){var m=Array.from(F.members)[0];if(m)openTl(m);});
+var _rl=renderList;
+renderList=async function(){var r=await _rl.apply(this,arguments);try{if(F.members.size===1){var m=Array.from(F.members)[0];bar.innerHTML='<button type="button">'+esc(m)+' の年表で見る</button>';bar.style.display='';}else bar.style.display='none';}catch(e){}return r;};
+/* 統計 */
+var st=document.getElementById('stOv');
+function bars(t,rows){var mx=Math.max.apply(null,rows.map(function(r){return r[1];}).concat([1]));return '<div class="ov-y">'+t+'</div>'+rows.map(function(r){return '<div class="st-b"><div><span>'+esc(r[0])+'</span><span>'+r[1]+'</span></div><div><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></div></div>';}).join('');}
+function openSt(){var L=vids(),G={},M={},Y={};
+L.forEach(function(it){gl(it).forEach(function(x){G[x]=(G[x]||0)+1;});(it.members||[]).forEach(function(x){M[x]=(M[x]||0)+1;});var d=first(it);var y=d?d.slice(0,4)+'年':'日付なし';Y[y]=(Y[y]||0)+1;});
+var sr=function(o,n){return Object.keys(o).map(function(k){return [k,o[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,n||99);};
+var yr=Object.keys(Y).filter(function(k){return k!=='日付なし';}).sort().reverse().map(function(k){return [k,Y[k]];});if(Y['日付なし'])yr.push(['日付なし',Y['日付なし']]);
+document.getElementById('stTitle').textContent='統計　全体 '+L.length+'本';
+document.getElementById('stBody').innerHTML=bars('ジャンル別',sr(G))+bars('出演者別（上位10）',sr(M,10))+bars('年別',yr)+'<div style="height:30px"></div>';
+st.classList.add('on');st.scrollTop=0;}
+document.getElementById('stBack').addEventListener('click',function(){st.classList.remove('on');});
+var mb=document.getElementById('cmBtn');
+if(mb)mb.addEventListener('click',function(){setTimeout(function(){var l=document.getElementById('cmList');if(!l||document.getElementById('cmStat'))return;var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmStat';d.innerHTML='<span>統計</span><span>›</span>';d.addEventListener('click',function(){document.getElementById('cmBg').classList.remove('on');openSt();});l.insertBefore(d,l.querySelector('.cm-sec')||null);},0);});
+/* 求めリスト連動 */
+var wb=document.createElement('div');wb.className='cm-bg';wb.innerHTML='<div class="cm-sheet"><div class="cm-title" style="margin-bottom:8px">追加しました</div><div id="wlMsg" style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:14px"></div><div style="display:flex;gap:8px"><button type="button" id="wlYes" style="flex:1;border:1px solid #f4c9d9;background:#fff;color:#c95a88;font:inherit;font-weight:700;padding:11px;border-radius:6px">消す</button><button type="button" id="wlNo" style="flex:1;border:1px solid #e8e8ec;background:#fff;color:#8b8f99;font:inherit;font-weight:700;padding:11px;border-radius:6px">残す</button></div></div>';document.body.appendChild(wb);
+var wm=null;
+function nz(s){return String(s||'').normalize('NFKC').replace(/[\s・･\-－~〜!！?？"'“”「」『』]/g,'').toLowerCase();}
+window._wishCheck=async function(v){var d=await jsonp({action:'getWishlist'},12000);if(!Array.isArray(d))return;var t=nz(v.title);wm=d.find(function(x){return nz(x.title)===t;});if(!wm)return;document.getElementById('wlMsg').innerHTML='「'+esc(v.title)+'」は求めリストにもあります。<br>求めリストから消しますか？';wb.classList.add('on');};
+document.getElementById('wlNo').addEventListener('click',function(){wb.classList.remove('on');});
+wb.addEventListener('click',function(e){if(e.target===wb)wb.classList.remove('on');});
+document.getElementById('wlYes').addEventListener('click',async function(){wb.classList.remove('on');var ok=false;try{var d=await gasWrite({action:'deleteWishlistItem',id:wm.id});ok=!!(d&&d.ok);}catch(e){}toastMsg(ok?'求めリストから消しました':'消せませんでした');});
 })();
 </script>
 
