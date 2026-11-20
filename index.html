@@ -3658,5 +3658,47 @@ if(typeof _o==='function'){window.openEditModal=async function(){const r=await _
 })();
 
 </script>
+<style>
+body.d-roomy .card-main{padding-top:14px!important;padding-bottom:14px!important}
+body.d-compact .card-main{padding-top:4px!important;padding-bottom:4px!important}
+body.d-compact .card{margin-bottom:3px!important}
+body.d-roomy .card{margin-bottom:10px!important}
+body.f-s .card-title{font-size:14px!important}
+body.f-l .card-title{font-size:19px!important}
+body.v-list .card{border-radius:0!important;border-left:none!important;border-right:none!important;margin-bottom:0!important}
+body.v-list .card-meta{display:none!important}
+body.v-list .card-main{padding-top:6px!important;padding-bottom:6px!important}
+body.dim-chk .card.checked{opacity:.45}
+#topBtn{position:fixed;right:14px;bottom:18px;width:38px;height:38px;border:1px solid #f4c9d9;background:#fff;color:#c95a88;font-size:16px;font-weight:700;border-radius:6px;display:none;align-items:center;justify-content:center;z-index:800;cursor:pointer;font-family:inherit}
+#topBtn.on{display:flex}
+.ds-row{display:flex;align-items:center;justify-content:space-between;padding:12px 4px;border-bottom:1px solid #f1e3ea;font-size:14px;font-weight:600;color:#4b5563}
+.ds-seg{display:flex;border:1px solid #f4c9d9;border-radius:6px;overflow:hidden}
+.ds-seg button{border:none;background:#fff;color:#8b8f99;font:inherit;font-size:12px;font-weight:700;padding:6px 12px;cursor:pointer;border-left:1px solid #f4c9d9}
+.ds-seg button:first-child{border-left:none}
+.ds-seg button.on{background:#fde8f0;color:#c95a88}
+</style>
+<div class="cm-bg" id="dsBg"><div class="cm-sheet"><div class="cm-head"><div class="cm-title">表示設定</div><button class="cm-x" id="dsClose" type="button">✕</button></div><div id="dsList"></div></div></div>
+<button id="topBtn" type="button" aria-label="一番上へ">▲</button>
+<script>
+(function(){
+var K='vl_disp',S={d:'n',f:'n',v:'c',dim:'0',top:'1'};
+try{Object.assign(S,JSON.parse(localStorage.getItem(K)||'{}'));}catch(e){}
+function save(){try{localStorage.setItem(K,JSON.stringify(S));}catch(e){}}
+function apply(){var c=document.body.classList;['d-roomy','d-compact','f-s','f-l','v-list','dim-chk'].forEach(function(x){c.remove(x);});
+if(S.d==='r')c.add('d-roomy');if(S.d==='c')c.add('d-compact');if(S.f==='s')c.add('f-s');if(S.f==='l')c.add('f-l');if(S.v==='l')c.add('v-list');if(S.dim==='1')c.add('dim-chk');}
+var R=[['密度','d',[['r','ゆったり'],['n','標準'],['c','ぎゅっと']]],['文字サイズ','f',[['s','小'],['n','標準'],['l','大']]],['一覧の形','v',[['c','カード'],['l','リスト']]],['確認済みを薄く','dim',[['0','しない'],['1','する']]],['一番上へ戻るボタン','top',[['1','出す'],['0','出さない']]]];
+function draw(){document.getElementById('dsList').innerHTML=R.map(function(r){return '<div class="ds-row"><span>'+r[0]+'</span><div class="ds-seg">'+r[2].map(function(o){return '<button type="button" data-k="'+r[1]+'" data-v="'+o[0]+'"'+(S[r[1]]===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join('')+'</div></div>';}).join('');}
+document.getElementById('dsList').addEventListener('click',function(e){var b=e.target.closest('button[data-k]');if(!b)return;S[b.dataset.k]=b.dataset.v;save();apply();draw();});
+var bg=document.getElementById('dsBg');
+document.getElementById('dsClose').addEventListener('click',function(){bg.classList.remove('on');});
+bg.addEventListener('click',function(e){if(e.target===bg)bg.classList.remove('on');});
+document.getElementById('cmBtn')&&document.getElementById('cmBtn').addEventListener('click',function(){setTimeout(function(){var l=document.getElementById('cmList');if(!l||document.getElementById('cmDisp'))return;var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmDisp';d.innerHTML='<span>表示設定</span><span>›</span>';d.addEventListener('click',function(){document.getElementById('cmBg').classList.remove('on');draw();bg.classList.add('on');});l.insertBefore(d,l.querySelector('.cm-sec')||null);},0);});
+var tb=document.getElementById('topBtn');
+tb.addEventListener('click',function(){try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);}});
+window.addEventListener('scroll',function(){tb.classList.toggle('on',S.top==='1'&&window.scrollY>500);},{passive:true});
+apply();
+})();
+</script>
+
 </body>
 </html>
