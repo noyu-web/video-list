@@ -1154,7 +1154,7 @@ function renderKind(){
 const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs'),hd=document.getElementById('kindHead');if(!w)return;
 if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
 if(currentGenre==='すべて'||!isOG(currentGenre)){w.style.display='none';const k0=document.getElementById('kindSel');if(currentSide!=='og'){currentKind='すべて';if(k0)k0.style.display='none';return;}
-if(k0){const ks=ogKinds();k0.innerHTML='<option value="すべて">ジャンル</option><option value="__none">未設定</option>'+ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('');k0.value=(ks.includes(currentKind)||currentKind==='__none')?currentKind:'すべて';k0.style.display='';k0.onchange=()=>{currentKind=k0.value;renderList();};}return;}
+}
 const ks=ogKinds();
 const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
 w.style.display='none';
