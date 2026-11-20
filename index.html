@@ -361,8 +361,8 @@ body.selecting .list-wrap{padding-bottom:90px}
 .tl-h{padding:12px 16px 4px;font-size:13px;font-weight:700;color:var(--pink);position:sticky;top:0;background:var(--white);z-index:2}
 
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
-<style>html,body,button,input,select,textarea{font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Kosugi Maru','Hiragino Sans',sans-serif!important}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+<style>html,body,button,input,select,textarea{font-family:'Hachi Maru Pop','Hiragino Maru Gothic ProN','Kosugi Maru','Hiragino Sans',sans-serif!important}</style>
 </head>
 <body>
 
@@ -1154,12 +1154,12 @@ function renderKind(){
 const w=document.getElementById('kindWrap'),t=document.getElementById('kindTabs'),hd=document.getElementById('kindHead');if(!w)return;
 if(_kindFor!==currentGenre+'|'+currentSubgenre){currentKind='すべて';_kindFor=currentGenre+'|'+currentSubgenre;}
 if(currentGenre==='すべて'||!isOG(currentGenre)){w.style.display='none';const k0=document.getElementById('kindSel');if(currentSide!=='og'){currentKind='すべて';if(k0)k0.style.display='none';return;}
-if(k0){const ks=ogKinds();k0.innerHTML='<option value="すべて">ジャンル</option>'+ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('');k0.value=ks.includes(currentKind)?currentKind:'すべて';k0.style.display='';k0.onchange=()=>{currentKind=k0.value;renderList();};}return;}
+if(k0){const ks=ogKinds();k0.innerHTML='<option value="すべて">ジャンル</option><option value="__none">未設定</option>'+ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('');k0.value=(ks.includes(currentKind)||currentKind==='__none')?currentKind:'すべて';k0.style.display='';k0.onchange=()=>{currentKind=k0.value;renderList();};}return;}
 const ks=ogKinds();
 const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
 w.style.display='none';
 const ksel=document.getElementById('kindSel');
-const opts=['<option value="すべて">ジャンル</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+(cnt[k]?' '+cnt[k]:'')+'</option>'));
+const opts=['<option value="すべて">ジャンル</option>','<option value="__none">未設定</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+(cnt[k]?' '+cnt[k]:'')+'</option>'));
 if(isAdmin)opts.push('<option value="__assign">＋ 種別を付ける</option><option value="__add">＋ 種別を追加</option><option value="__del">－ 種別を削除</option>');
 ksel.innerHTML=opts.join('');ksel.value=currentKind;ksel.style.display='';
 ksel.onchange=()=>{const v=ksel.value;
@@ -1212,11 +1212,12 @@ try{const _a=JSON.parse(item.tracks||'[]');return(Array.isArray(_a)?_a:[]).map(t
 }
 function matchItem(item){try{return matchItem0(item);}catch(e){return false;}}
 function matchItem0(item){
+if(currentGenre==='すべて'&&currentSide==='og'&&currentKind!=='すべて'){const g0=parseGenres(item.genres||item.genre||'');if(currentKind==='__none'?g0.some(g=>g.genre===OGK):!g0.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;}
 if(currentGenre==='すべて'){const gs=parseGenres(item.genres||item.genre||'');const og=gs.some(g=>isOG(g.genre));const st=gs.some(g=>!isOG(g.genre)&&g.genre!==OGK);if(currentSide==='og'?!og:(og&&!st))return false;}
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
 if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
-if(currentKind!=='すべて'&&(isOG(currentGenre)||currentSide==='og')&&!gs.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;
+if(currentKind==='__none'){if((isOG(currentGenre)||currentSide==='og')&&gs.some(g=>g.genre===OGK))return false;}else if(currentKind!=='すべて'&&(isOG(currentGenre)||currentSide==='og')&&!gs.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;
 }
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
 if(F.genres.size){
@@ -3786,7 +3787,7 @@ document.getElementById('stBody').innerHTML=bars('ジャンル別',sr(G))+bars('
 st.classList.add('on');st.scrollTop=0;}
 document.getElementById('stBack').addEventListener('click',function(){st.classList.remove('on');});
 var mb=document.getElementById('cmBtn');
-if(mb)mb.addEventListener('click',function(){setTimeout(function(){var l=document.getElementById('cmList');if(!l||document.getElementById('cmStat'))return;var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmStat';d.innerHTML='<span>統計</span><span>›</span>';d.addEventListener('click',function(){document.getElementById('cmBg').classList.remove('on');openSt();});l.insertBefore(d,l.querySelector('.cm-sec')||null);},0);});
+if(mb)mb.addEventListener('click',function(){setTimeout(function(){var l=document.getElementById('cmList');if(!l||!isAdmin||document.getElementById('cmStat'))return;var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmStat';d.innerHTML='<span>統計</span><span>›</span>';d.addEventListener('click',function(){document.getElementById('cmBg').classList.remove('on');openSt();});l.insertBefore(d,l.querySelector('.cm-sec')||null);},0);});
 /* 求めリスト連動 */
 var wb=document.createElement('div');wb.className='cm-bg';wb.innerHTML='<div class="cm-sheet"><div class="cm-title" style="margin-bottom:8px">追加しました</div><div id="wlMsg" style="font-size:13px;color:#4b5563;line-height:1.7;margin-bottom:14px"></div><div style="display:flex;gap:8px"><button type="button" id="wlYes" style="flex:1;border:1px solid #f4c9d9;background:#fff;color:#c95a88;font:inherit;font-weight:700;padding:11px;border-radius:6px">消す</button><button type="button" id="wlNo" style="flex:1;border:1px solid #e8e8ec;background:#fff;color:#8b8f99;font:inherit;font-weight:700;padding:11px;border-radius:6px">残す</button></div></div>';document.body.appendChild(wb);
 var wm=null;
