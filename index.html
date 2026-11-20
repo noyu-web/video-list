@@ -401,7 +401,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <button class="btn" id="fixObjBtn" style="display:none;background:var(--pink);color:#fff;border:1.5px solid var(--pink)">崩れた題名を直す</button>
 <button class="btn" id="titleRepBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">題名置換</button>
 <button class="btn" id="trashBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">ごみ箱</button>
-<button class="btn" id="dateOnlyBulkBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">日付だけを放送日へ</button>
+<button class="btn" id="dateOnlyBulkBtn" style="background:var(--pink-pale);color:var(--pink-dark);border:1.5px solid var(--pink-light)">日付だけを発売日へ</button>
 </div>
 
 <div class="active-bar" id="activeBar"></div>
@@ -837,12 +837,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 </div>
 </div></div>
 
-<div class="sec" data-sec="dates"><button type="button" class="sec-h"><span class="sec-t">配信,放送日</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
+<div class="sec" data-sec="dates"><button type="button" class="sec-h"><span class="sec-t">配信,発売日</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
 <div class="dates-section" style="margin-top:6px">
 <div id="dateGroupsWrap"></div>
 <button class="btn-add-small" id="addDateGroupBtn">＋ 日付を追加</button>
-<button class="btn-add-small" id="moveAllDatesBtn" type="button">放送日をすべて収録内容へ移す</button>
+<button class="btn-add-small" id="moveAllDatesBtn" type="button">発売日をすべて収録内容へ移す</button>
 </div>
 </div>
 </div></div>
@@ -850,7 +850,7 @@ body.selecting .list-wrap{padding-bottom:90px}
 <div class="form-group">
 <div id="tracksWrap" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
 <button class="btn-add-small" id="addTrackBtn">＋ 収録内容,詳細を追加</button>
-<button class="btn-add-small" id="moveDateOnlyBtn" type="button">日付だけの収録内容を放送日へ移す</button>
+<button class="btn-add-small" id="moveDateOnlyBtn" type="button">日付だけの収録内容を発売日へ移す</button>
 <button class="btn-add-small" id="sortTracksBtn" type="button">日付順に並べる</button>
 <button class="btn-add-small" id="pasteTracksBtn" type="button" style="margin-left:6px">まとめて貼り付け</button>
 <button class="btn-add-small" id="fileAddBtn" type="button" style="margin-left:6px">ファイルから自動追加</button><button class="btn-add-small" id="ocrBtn" type="button" style="margin-left:6px">スクショから読み取り</button><input type="file" id="ocrInput" accept="image/*" multiple style="display:none"><input type="file" id="fileAddInput" multiple accept="image/*,video/*,audio/*,.mp4,.mkv,.mov,.m4v,.ts,.avi,.wmv,.mp3,.m4a,.flac,.wav" style="display:none">
@@ -1714,7 +1714,7 @@ const schedules=schedUnion(item);
 const schDiv=document.getElementById('detailSchedules');
 let _trDates=new Set();try{(item.tracks?JSON.parse(item.tracks||'[]'):[]).forEach(t=>{if(t&&t.date)_trDates.add(t.date);});}catch{}
 if(schedules.length){
-schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">配信,放送日</div>'+
+schDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:#b8486f;margin:4px 0 8px">配信,発売日</div>'+
 '<div style="background:#fffafc;border:1.5px solid #f3d3df;border-radius:12px;padding:2px 14px;margin-bottom:14px">'+
 schedules.map((s,si)=>`<div style="padding:10px 0;border-bottom:1px solid #f3e1ea">
 <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font-size:16px;font-weight:800;color:#e0558f;letter-spacing:.02em">${fmtDJ(s.date)}</span>${s.times&&s.times.length?`<span style="font-size:13px;font-weight:600;color:#dc7fa0;letter-spacing:.03em">${s.times.map(t=>esc(t)).join(' / ')}</span>`:''}</div>
@@ -2098,7 +2098,7 @@ if(has)ob.style.display='none';else w.classList.add('tf-hide');
 ob.onclick=()=>{w.classList.remove('tf-hide');ob.style.display='none';};}
 div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
-div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':n===0?'同じ日付の収録内容がすでにあるので、放送日からだけ外しました':'収録内容の一番下に追加しました（ピンクの枠）');});
+div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':n===0?'同じ日付の収録内容がすでにあるので、発売日からだけ外しました':'収録内容の一番下に追加しました（ピンクの枠）');});
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
 tr.innerHTML=`<input class="form-input" type="time" style="width:110px"><button class="btn-remove tr-remove" type="button">✕</button>`;
@@ -2309,7 +2309,7 @@ let g=gs.find(x=>x.querySelector('.dg-date').value.trim()===date);
 if(!g){addDateGroup(date,tm?[tm]:[],{});}
 else if(tm){const ex=[...g.querySelectorAll('.dg-times .time-row input')].map(i=>i.value.trim());if(!ex.includes(tm)){g.querySelector('.dg-add-time').click();const ins=g.querySelectorAll('.dg-times .time-row input');ins[ins.length-1].value=tm;}}
 row.remove();n++;});
-toastMsg(n?n+'件を放送日へ移しました':'移せる日付だけの項目はありません');
+toastMsg(n?n+'件を発売日へ移しました':'移せる日付だけの項目はありません');
 });
 const nzG=x=>String(x).replace(/[\s　]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[一－―‐—–−]/g,'ー').replace(/[＆&]/g,'＆');
 function matchNamesG(str){
@@ -2425,7 +2425,7 @@ if(f){trackRows.push({title:rest.replace(/\s+/g,' ').trim(),date:f.date});return
 keep.push(l0);});
 if(!trackRows.length&&orderedB.length&&keep.length===orderedB.length){keep.splice(0).forEach((k,i)=>{trackRows.push({title:k.replace(/^[^\u3040-\u9fffA-Za-z]+/,'').trim(),date:orderedB[i]});});}
 if(orderedB.length&&trackRows.length===orderedB.length)trackRows.forEach((r,i)=>{const x=orderedB[i];let dd=0;for(let k=0;k<10;k++)if(x[k]!==r.date[k])dd++;if(dd<=2||!r.date)r.date=x;});
-text=keep.filter(l=>!/^(配信[,，、]?放送日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
+text=keep.filter(l=>!/^(配信[,，、]?(?:放送|発売)日|収録内容[,，、]?詳細)$/.test(cp(l))).join('\n');
 dateObjs.sort((a,b)=>a.date<b.date?-1:1);
 
 {const rs=trackRows,D=864e5,ts=s=>Date.parse(s),iso=v=>new Date(v).toISOString().slice(0,10);
@@ -3050,9 +3050,9 @@ toastMsg(fail?('完了 '+ok+'件 / 失敗 '+fail+'件'):(ok+'件を直しまし�
 });
 document.getElementById('moveAllDatesBtn').addEventListener('click',()=>{
 const gs=[...document.querySelectorAll('#dateGroupsWrap .date-group')].filter(g=>g.querySelector('.dg-date').value.trim());
-if(!gs.length){toastMsg('移せる放送日がありません');return;}
+if(!gs.length){toastMsg('移せる発売日がありません');return;}
 let made=0;gs.forEach(g=>{const k=moveDgToTracks(g);if(k>0)made+=k;});
-toastMsg(made?('収録内容の一番下に'+made+'行を追加しました（ピンクの枠）'):'同じ日付の収録内容がすでにあるので、放送日からだけ外しました');
+toastMsg(made?('収録内容の一番下に'+made+'行を追加しました（ピンクの枠）'):'同じ日付の収録内容がすでにあるので、発売日からだけ外しました');
 });
 /* ===== 複製・日付順・題名置換 ===== */
 document.getElementById('editDupBtn').addEventListener('click',()=>{
@@ -3157,7 +3157,7 @@ let d=null;try{d=await gasWrite({action:'getVideoHistory',list:CHECK_LIST,id:edi
 if(gasOld(d)){document.getElementById('histModal').classList.add('hidden');return;}
 if(!d||!d.ok){box.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:20px 0">読み込めませんでした</div>';return;}
 _hist=d.items||[];
-box.innerHTML=_hist.length?_hist.map((h,i)=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--pink-dark)">${esc(fmtJ(h.ts))}</div><div style="font-size:14px;margin-top:3px;word-break:break-all">${esc(h.title||'')}</div><div style="font-size:11px;color:var(--gray);margin-top:3px">収録内容 ${h.tracks||0}件　放送日 ${h.dates||0}件${h.note?'　メモ「'+esc(h.note)+'」':''}</div><button type="button" class="btn-save" data-hr="${i}" style="width:100%;padding:8px;margin-top:8px">この状態に戻す</button></div>`).join(''):'<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px 0">履歴はまだありません</div>';
+box.innerHTML=_hist.length?_hist.map((h,i)=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:12px;font-weight:700;color:var(--pink-dark)">${esc(fmtJ(h.ts))}</div><div style="font-size:14px;margin-top:3px;word-break:break-all">${esc(h.title||'')}</div><div style="font-size:11px;color:var(--gray);margin-top:3px">収録内容 ${h.tracks||0}件　発売日 ${h.dates||0}件${h.note?'　メモ「'+esc(h.note)+'」':''}</div><button type="button" class="btn-save" data-hr="${i}" style="width:100%;padding:8px;margin-top:8px">この状態に戻す</button></div>`).join(''):'<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px 0">履歴はまだありません</div>';
 }
 document.getElementById('editHistBtn').addEventListener('click',openHist);
 document.getElementById('histCloseBtn').addEventListener('click',()=>document.getElementById('histModal').classList.add('hidden'));
@@ -3191,7 +3191,7 @@ const data=await loadVideos();
 const plans=data.map(dateOnlyPlan).filter(Boolean);
 if(!plans.length){toastMsg('移せる日付だけの項目はありません');return;}
 const total=plans.reduce((a,p)=>a+p.n,0);
-if(!confirm(plans.length+'件の動画、'+total+'個の日付だけの収録内容を放送日へ移し、収録内容から削除します。実行しますか？'))return;
+if(!confirm(plans.length+'件の動画、'+total+'個の日付だけの収録内容を発売日へ移し、収録内容から削除します。実行しますか？'))return;
 let ok=0,fail=0;
 for(const p of plans){let r=false;try{r=await writeVideo(p.video,false);}catch{}if(r)ok++;else fail++;toastMsg('移行中 '+(ok+fail)+' / '+plans.length);}
 cachedVideos=null;await loadVideos(true);renderList();
@@ -3790,7 +3790,7 @@ var bar=document.createElement('div');bar.id='tlBar';bar.style.display='none';
 var lw=document.querySelector('.list-wrap');if(lw)lw.parentNode.insertBefore(bar,lw);
 bar.addEventListener('click',function(){var m=Array.from(F.members)[0];if(m)openTl(m);});
 var _rl=renderList;
-renderList=async function(){var r=await _rl.apply(this,arguments);try{if(F.members.size===1){var m=Array.from(F.members)[0];bar.innerHTML='<button type="button">'+esc(m)+' の年表で見る</button>';bar.style.display='';}else bar.style.display='none';}catch(e){}return r;};
+renderList=async function(){var r=await _rl.apply(this,arguments);try{if(F.members.size===1){var m=Array.from(F.members)[0];bar.style.display='none';}else bar.style.display='none';}catch(e){}return r;};
 /* 統計 */
 var st=document.getElementById('stOv');
 function bars(t,rows){var mx=Math.max.apply(null,rows.map(function(r){return r[1];}).concat([1]));return '<div class="ov-y">'+t+'</div>'+rows.map(function(r){return '<div class="st-b"><div><span>'+esc(r[0])+'</span><span>'+r[1]+'</span></div><div><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></div></div>';}).join('');}
@@ -3836,11 +3836,11 @@ function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 /* 推しメンバー */
 var OK='vl_oshi';
 function oshi(){try{return localStorage.getItem(OK)||'';}catch(e){return '';}}
-function applyOshi(){var o=oshi();document.querySelectorAll('#cardList .tag,#detailMembers .tag,#trkBox .tag').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');if(!o)return;if(t.closest('.trk-row')&&!t.dataset.xs)return;var x=(t.dataset.xs||t.textContent||'').trim();if(!x||/交換|区分/.test(x)||t.classList.contains('exchange-badge'))return;if(x===o)t.classList.add('tag-oshi');else if((cfg.members||[]).indexOf(x)>=0||x==='SixTONES')t.classList.add('tag-dim');});}
+function applyOshi(){var o=oshi();document.querySelectorAll('#cardList .tag,#detailMembers .tag,#trkBox .tag').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');if(!o)return;if(t.closest('.trk-row')&&!t.dataset.xs)return;var x=(t.dataset.xs||t.textContent||'').trim();if(!x||/交換|区分/.test(x)||t.classList.contains('exchange-badge'))return;if(x===o)t.classList.add('tag-oshi');else if((cfg.members||[]).indexOf(x)>=0||x==='SixTONES'||Object.keys(cfg.otherMembers||{}).some(function(g){return (cfg.otherMembers[g]||[]).indexOf(x)>=0;}))t.classList.add('tag-dim');});}
 var _rl2=renderList;renderList=async function(){var r=await _rl2.apply(this,arguments);try{applyOshi();}catch(e){}return r;};
 var _od2=openDetailModal;openDetailModal=function(it){_od2.apply(this,arguments);try{applyOshi();}catch(e){}try{rec(it);}catch(e){}};
 var ds=document.getElementById('dsList');
-function addRow(){if(!ds||document.getElementById('dsOshi'))return;var o=oshi();var d=document.createElement('div');d.className='ds-row';d.id='dsOshi';d.innerHTML='<span>推しメンバー</span><select><option value="">なし</option>'+(cfg.members||[]).map(function(m){return '<option value="'+esc(m)+'"'+(m===o?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</select>';d.querySelector('select').addEventListener('change',function(){try{localStorage.setItem(OK,this.value);}catch(e){}applyOshi();});ds.appendChild(d);}
+function addRow(){if(!ds||document.getElementById('dsOshi'))return;var o=oshi();var d=document.createElement('div');d.className='ds-row';d.id='dsOshi';d.innerHTML='<span>推しメンバー</span><select><option value="">なし</option><optgroup label="SixTONES">'+(cfg.members||[]).map(function(m){return '<option value="'+esc(m)+'"'+(m===o?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</optgroup>'+Object.keys(cfg.otherMembers||{}).filter(function(g){return (cfg.otherMembers[g]||[]).length;}).map(function(g){return '<optgroup label="'+esc(g)+'">'+cfg.otherMembers[g].map(function(m){return '<option value="'+esc(m)+'"'+(m===o?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</optgroup>';}).join('')+'</select>';d.querySelector('select').addEventListener('change',function(){try{localStorage.setItem(OK,this.value);}catch(e){}applyOshi();});ds.appendChild(d);}
 if(ds)new MutationObserver(addRow).observe(ds,{childList:true});
 /* 最近開いた動画 */
 var RK='vl_recent_'+location.pathname;
@@ -3909,6 +3909,7 @@ function h(t){var d=document.createElement('div');d.className='cm-sec2';d.textCo
 var a=l.querySelector('a.cm-link');if(a)l.insertBefore(h('ページ'),a);
 var sec=l.querySelector('.cm-sec');var f=null;var k=l.children;for(var i=0;i<k.length;i++){if(k[i].classList.contains('cm-act')){f=k[i];break;}if(k[i].classList.contains('cm-sec'))break;}
 if(f){var hd=h('機能');l.insertBefore(hd,f);var fb=document.getElementById('favOnlyBtn');if(fb){var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmFav';var on=false;try{on=F.fav.has('yes');}catch(e){}d.innerHTML='<span>お気に入り</span><span>'+(on?'表示中':'›')+'</span>';d.addEventListener('click',function(){var bg=document.getElementById('cmBg');if(bg)bg.classList.remove('on');setTimeout(function(){fb.click();},60);});l.insertBefore(d,f);}}
+var ph=l.querySelector('.cm-sec2'),as=[].slice.call(l.querySelectorAll(':scope>a.cm-link')),sc=l.querySelector('.cm-sec');var mv=[];if(ph)mv.push(ph);as.forEach(function(x){mv.push(x);});mv.forEach(function(x){if(sc)l.insertBefore(x,sc);else l.appendChild(x);});
 },200);},true);
 </script>
 </body>
