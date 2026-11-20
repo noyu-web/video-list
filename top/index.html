@@ -296,6 +296,23 @@ body.admin .prof-edit{display:block}
 #linkList .slim::before{content:"›";order:2;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#ec8fae;color:#fff;font-size:18px;line-height:1;padding-bottom:2px}
 #linkList .slim .slim-name{order:1}
 </style>
+<style>
+.guide-toggle{background:none!important;border:none!important;border-top:1.5px solid #ee8bab!important;border-bottom:1px solid #f0d9e3!important;border-radius:0!important;margin:8px 0 0!important}
+.guide-head{padding:15px 4px!important}
+.guide-title{font-size:16px!important;font-weight:700!important;color:#5a4852!important;letter-spacing:0}
+.guide-toggle .chev{color:#e07a9e!important;font-size:20px!important;opacity:1!important}
+#linkList .slim{padding:15px 4px!important;min-height:0!important}
+#linkList .slim-name{font-size:16px!important;font-weight:700!important;color:#5a4852!important;letter-spacing:0!important}
+.login-btn{border-radius:6px!important;padding:6px 14px!important}
+.toggle-head{padding:15px 4px!important}
+.toggle.hl{border-radius:6px!important}
+#linkList .slim{border-radius:0!important;background:transparent!important;border:none!important;border-bottom:1px solid #f0d9e3!important;margin-bottom:0!important;min-height:54px!important;padding:10px 4px!important}
+#linkList .slim::before{width:auto!important;height:auto!important;border-radius:0!important;background:none!important;color:#e07a9e!important;font-size:22px!important;padding:0!important}
+#mustreadList,#mustreadList .toggle,#linkList{border-radius:0!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>html,body,button,input,select,textarea{font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Kosugi Maru','Hiragino Sans',sans-serif!important}</style>
+
 </head>
 <body>
 
@@ -315,7 +332,6 @@ body.admin .prof-edit{display:block}
   <button class="drawer-item" data-act="go" data-target="#secLink"><span>LINK</span><span class="chev">›</span></button>
   <button class="drawer-item admin-only" data-act="menu-ng"><span>取引NGリスト</span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="menu-nlog"><span>お知らせ履歴</span><span class="chev">›</span></button>
-  <button class="drawer-item admin-only" data-act="menu-import"><span>自動取り込み</span><span class="chev">›</span></button>
   <button class="drawer-item" data-act="menu-rules"><span>免責事項</span><span class="chev">›</span></button>
 </nav>
 
@@ -356,30 +372,32 @@ body.admin .prof-edit{display:block}
         <div class="vg-track" id="vgTrack">
 
 <section class="vg-slide">
-  <div class="vg-ico">📂</div>
-  <h2>ジャンルタブで切り替え</h2>
-  <p>画面上部のタブでジャンルを切り替えられます。ジャンルによっては、その下に小ジャンルのタブも出ます。</p>
-  <div class="vg-mock"><div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">テレビ番組</span><span class="vg-m-tab">ドラマ・映画</span><span class="vg-m-tab">Radio</span><span class="vg-m-tab">FC・FCweb</span><span class="vg-m-tab">SixTONES以外</span></div><div class="vg-m-tabs" style="margin-top:6px"><span class="vg-m-tab vg-on">すべて</span><span class="vg-m-tab">ISLAND TV</span><span class="vg-m-tab">ガムシャラ</span></div></div>
+  <div class="vg-ico"></div>
+  <h2>SixTONESとそれ以外を切り替え</h2>
+  <p>画面上部で「SixTONES」と「SixTONES以外」を切り替えます。その下のタブでジャンルを選ぶと、ジャンルによっては小ジャンルも出ます。SixTONES以外では、グループ名の一覧と、種別のプルダウンで絞り込めます。</p>
+  <div class="vg-mock">
+    <div class="vg-m-row" style="justify-content:space-around;border-bottom:1px solid #f3dbe5;padding-bottom:6px;margin-bottom:6px"><b style="color:#e8749a">SixTONES</b><span style="border-left:1px solid #f3dbe5;height:16px"></span><span style="color:#9aa0aa;font-weight:700">SixTONES以外</span></div>
+    <div class="vg-m-tabs"><span class="vg-m-tab vg-on">配信関連</span><span class="vg-m-tab">円盤</span><span class="vg-m-tab">テレビ番組</span><span class="vg-m-tab">ドラマ・映画</span><span class="vg-m-tab">Radio</span></div>
+    <div class="vg-m-tabs" style="margin-top:6px"><span class="vg-m-tab vg-on">すべて</span><span class="vg-m-tab">ISLAND TV</span><span class="vg-m-tab">ガムシャラ</span></div>
+  </div>
 </section>
 
 <section class="vg-slide">
-  <div class="vg-ico">🗂️</div>
-  <h2>カードの見方</h2>
-  <p>1件ずつのカードには、タイトル・出演者タグ・交換の可否が表示されます。カードをタップすると詳細（収録内容など）が見られます。右のハートはお気に入りです。</p>
+  <div class="vg-ico"></div>
+  <h2>カードと詳細の見方</h2>
+  <p>1件ずつのカードには、タイトル・SixTONESの出演者タグ・交換の可否が表示されます。カードをタップすると詳細ページが開き、「戻る」で一覧に戻れます。右のハートはお気に入りです。</p>
   <div class="vg-mock">
       <div class="vg-m-card" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div>こっから<br><span class="vg-m-tag">SixTONES</span></div><span class="vg-m-ex">交換可</span></div>
-      <div class="vg-m-arrow">▼ タップすると、詳細が開きます</div>
+      <div class="vg-m-arrow">▼ タップすると、詳細ページが開きます</div>
       <div class="vg-m-detail">
-        <div class="vg-m-dt">こっから</div>
+        <div class="vg-m-dt">‹ 戻る　こっから</div>
         <div><span class="vg-m-tag">SixTONES</span></div>
         <div style="margin-top:5px"><span class="vg-m-ex">交換可</span></div>
         <div class="vg-m-dl">収録内容,詳細</div>
-        <div class="vg-m-dbox">
-          <div class="vg-m-sec">音源</div>
-          <div class="vg-m-trk">こっから</div>
-          <div class="vg-m-trk">雨</div>
-          <div class="vg-m-trk" style="border-bottom:none">FIREWORKS</div>
-        </div>
+        <div class="vg-m-sec" style="border-bottom:1px solid #f3dbe5;background:none;padding-left:0">音源</div>
+        <div class="vg-m-trk">こっから</div>
+        <div class="vg-m-trk">雨</div>
+        <div class="vg-m-trk" style="border-bottom:none">FIREWORKS</div>
       </div>
     </div>
 </section>
@@ -387,12 +405,11 @@ body.admin .prof-edit{display:block}
 <section class="vg-slide">
   <div class="vg-ico"></div>
   <h2>収録内容の見方</h2>
-  <p>収録内容は1行ずつ、日付と出演者が並びます。同じ日でも時間が違うものは、別の行になっています。</p>
+  <p>収録内容は1行ずつ、日付が上、タイトルが下に並び、出演者がいればタグが付きます。「音源」「映像」などの区分ごとに見出しで分かれます。件数の多い作品は、年ごとにたたまれていて、年をタップすると開きます。</p>
   <div class="vg-mock">
-    <div class="vg-m-dbox">
-      <div class="vg-m-trk"><b>2020年4月11日</b><span class="vg-m-tag" style="margin-left:6px">ジェシー</span></div>
-      <div class="vg-m-trk" style="border-bottom:none"><b>2020年4月18日</b><span class="vg-m-tag" style="margin-left:6px">田中樹</span><span class="vg-m-tag" style="margin-left:4px">京本大我</span></div>
-    </div>
+    <div class="vg-m-sec" style="border-bottom:1px solid #f3dbe5;background:none;padding-left:0">映像</div>
+    <div class="vg-m-trk"><span style="font-size:11px;font-weight:700;color:#c97a98">2020年4月11日(土)</span><br>第1回「究極のシャンプー」<span class="vg-m-tag" style="margin-left:6px">ジェシー</span></div>
+    <div class="vg-m-trk" style="border-bottom:none"><span style="font-size:11px;font-weight:700;color:#c97a98">2020年4月18日(土)</span><br>第2回「グルメリポート」</div>
   </div>
 </section>
 
@@ -409,29 +426,29 @@ body.admin .prof-edit{display:block}
 </section>
 
 <section class="vg-slide">
-  <div class="vg-ico">👤</div>
-  <h2>出演者タグでまたぎ表示</h2>
-  <p>出演者タグをタップすると、その人が出演している作品をジャンルをまたいで一覧表示できます。</p>
+  <div class="vg-ico"></div>
+  <h2>出演者タグで検索</h2>
+  <p>出演者やグループのタグをタップすると、その人の出演作品だけに絞り込まれます。詳細ページのタグ（SixTONES以外の人やグループも）からも使えます。もう一方の所持リストにも作品があるときは、一覧の下に「所持リスト②にもあります」と表示されます。</p>
   <div class="vg-mock">
-    <div class="vg-m-lbl" style="margin-bottom:6px">京本大我 の出演作品</div>
-    <div class="vg-m-sec" style="margin-top:0px">配信関連 / Instagram Live</div><div class="vg-m-line">きょもじゅりインライ</div>
-    <div class="vg-m-sec" style="margin-top:7px">円盤 / ART-PUT</div><div class="vg-m-line">𝐏𝐑𝐎𝐓.𝟑𝟎</div>
-    <div class="vg-m-sec" style="margin-top:7px">テレビ番組 / バラエティー</div><div class="vg-m-line">14/06/06 徹子の部屋</div>
-    <div class="vg-m-sec" style="margin-top:7px">ドラマ・映画</div><div class="vg-m-line" style="border-bottom:none">お迎え渋谷くん</div>
+    <span class="vg-m-chip vg-on">京本大我 ✕</span>
+    <div class="vg-m-line" style="margin-top:6px">お迎え渋谷くん</div>
+    <div class="vg-m-line">14/06/06 徹子の部屋</div>
+    <div class="vg-m-sec" style="margin-top:8px">所持リスト②にもあります（2件）</div>
+    <div class="vg-m-line" style="border-bottom:none">きょもじゅりインライ</div>
   </div>
 </section>
 
 <section class="vg-slide">
-  <div class="vg-ico">🔍</div>
+  <div class="vg-ico"></div>
   <h2>検索ボタンで絞り込み</h2>
   <p>画面右上の「検索」ボタンを押すと、絞り込みの画面が開きます。条件を選ぶと、後ろの一覧がその場で変わります。</p>
   <div class="vg-mock">
-    <div class="vg-m-row"><span class="vg-m-note" style="margin:0">タブのジャンルとあわせて使えます</span><span class="vg-m-btn">🔍 検索</span></div>
+    <div class="vg-m-row"><span class="vg-m-note" style="margin:0">タブのジャンルとあわせて使えます</span><span class="vg-m-btn">検索</span></div>
   </div>
 </section>
 
 <section class="vg-slide">
-  <div class="vg-ico">✅</div>
+  <div class="vg-ico"></div>
   <h2>5つの条件を選べます</h2>
   <p>それぞれ複数選べて、選ばない項目は絞り込みません。</p>
   <div class="vg-mock">
@@ -444,7 +461,7 @@ body.admin .prof-edit{display:block}
 </section>
 
 <section class="vg-slide">
-  <div class="vg-ico">🧩</div>
+  <div class="vg-ico"></div>
   <h2>組み合わせのルール</h2>
   <p>同じ項目の中は「どれか1つでも当てはまる」、別の項目どうしは「すべて当てはまる」作品が出ます。</p>
   <div class="vg-mock vg-m-eq">
@@ -456,7 +473,7 @@ body.admin .prof-edit{display:block}
 </section>
 
 <section class="vg-slide">
-  <div class="vg-ico">↩️</div>
+  <div class="vg-ico"></div>
   <h2>条件を解除する</h2>
   <p>選んだ条件は一覧の上に表示されます。タップで1つずつ外せます。絞り込み画面の「リセット」で、まとめて解除できます。</p>
   <div class="vg-mock">
@@ -467,9 +484,9 @@ body.admin .prof-edit{display:block}
 <section class="vg-slide">
   <div class="vg-ico"></div>
   <h2>並び替えとお気に入り</h2>
-  <p>「並び替え」で、登録順・日付順・タイトル順・交換可優先・収録日タイムラインを選べます。収録日タイムラインは、年月ごとに区切って並びます。ハートを押した作品は、「お気に入りだけ」でまとめて見られます。</p>
+  <p>「デフォルト」は並べ替え済みの順で、まだ並べていない作品は新しい順に先頭へ出ます。ほかに、50音順・登録順・公演日順・交換可優先・収録日タイムラインを選べます。収録日タイムラインは、収録内容の日付も含めて、年月ごとに区切って並びます。ハートを押した作品は「お気に入り」でまとめて見られます。</p>
   <div class="vg-mock">
-    <div class="vg-m-row"><span class="vg-m-chip vg-on" style="margin:0">登録（新しい順）</span><span class="vg-m-chip" style="margin:0">お気に入りだけ</span></div>
+    <div class="vg-m-row"><span class="vg-m-chip vg-on" style="margin:0">デフォルト</span><span class="vg-m-chip" style="margin:0">お気に入り</span></div>
   </div>
 </section>
 
@@ -624,13 +641,12 @@ const DEF={
     {name:'所持リスト②',url:'https://noyu-web.github.io/video-list/videolist2/'}
   ],
   mustread:[
-    {title:'画質・編集・番組内容について',text:'・動画のサイズ圧縮をしているものや、出演部分のみにカットしているものがあります。\n・画質や編集にこだわりがある方は、**必ずお取引確定前**にご確認をお願いします。\n・レギュラー番組等は、リストにお名前の記載があっても「お休み」や「名前が出たのみ」の場合がございます。\n・**確定後に気づいた画質・編集・内容へのご不満は、自己都合の変更の対象外とさせていただきます。**'},
-    {title:'ご自身でお調べ頂けること',text:'・「何話に誰が出ているか」「番組の放送時間」など、ご自身で調べられる内容へのお問い合わせはご遠慮ください。\n※DVD等、確認が難しいものはもちろん対応いたします！'},
-    {title:'禁止事項',text:'・交換した動画の**二次転載、販売、配布は絶対に禁止**です。\n・二次交換（他の方との再交換）は、お互いの同意がある場合のみ検討します。\n・**お取引確定後、および交換後のクレーム・返品等はお受けできません。**\n・**確定後の自己都合によるキャンセルも、お受けできません。**'},
-    {title:'条件・比率について',text:'・基本は動画の長さ（尺）だけでなく、**【出回り数】を考慮したお取引**を希望しています。\n・希少同士 ＝ 同率（1:1〜）\n・それ以外、または「音声×動画」の交換 ＝ 比率違いとなります。\n・**内容・比率は、お互いに合意して【確定】した時点で成立となります。確定後の自己都合による内容・比率の変更は受け付けておりません。**\n※お互いの意見を尊重しつつ、確定前にお話し合いで決められれば幸いです。'},
+    {title:'画質・編集・番組内容について',text:'・動画のサイズ圧縮をしているものや、出演部分のみにカットしているものがあります。\n・画質や編集にこだわりがある方は、**必ずお取引確定前**にご確認をお願いします。\n・レギュラー番組等は、リストにお名前の記載があっても「お休み」や「名前が出たのみ」の場合がございます。\n・「何話に誰が出ているか」「番組の放送時間」など、ご自身で調べられる内容へのお問い合わせはご遠慮ください。\n※DVD等、確認が難しいものはもちろん対応いたします！'},
+    {title:'禁止事項',text:'・交換した動画の**二次転載、販売、配布は絶対に禁止**です。\n・二次交換（他の方との再交換）は、お互いの同意がある場合のみ検討します。\n・**お取引確定後、および交換後のクレーム・返品等はお受けできません。**'},
+    {title:'条件・比率について',text:'・基本は動画の長さ（尺）だけでなく、**【出回り数】を考慮したお取引**を希望しています。\n・希少同士 ＝ 同率（1:1〜）\n・それ以外、または「音声×動画」の交換 ＝ 比率違いとなります。\n・**内容・比率は、お互いに合意して【確定】した時点で成立となります。確定後の自己都合による内容・比率の変更・キャンセルは受け付けておりません。**\n※お互いの意見を尊重しつつ、確定前にお話し合いで決められれば幸いです。'},
     {title:'ご連絡・日数について',text:'・基本は**同日内のスムーズなやり取り**を希望しております。\n・ご連絡なしで**3日間音沙汰がない場合は【白紙】**とさせていただきます。\n・当日〜7日以内にお取引を完了させる見込みがない方は、恐れ入りますがまたの機会にお声掛けください。'},
-    {title:'お渡し方法について',text:'・発送やお渡し方法の指定（こちらへの強要）は受け付けておりません。\n・ギガファイル便、ギガわた、Googleフォトを使用できない方、ご自身で使い方が調べられない方はお取引をご遠慮ください。\n・私が受け取る際はどの方法でも可能ですが、**動画ファイルのみを直接トークに送るのはNG**でお願いします。'},
-    {title:'最後に',hl:true,text:'ここまで読んでいただきありがとうございました！\n**内容・比率の確定後の自己都合による変更は受け付けておりませんので、ご了承ください。**\n同意いただける方は、メッセージの際に「必読を読んだ旨」をお書き添えください。\nあわせて、ページ下部の免責事項もご確認いただけますと幸いです。'}
+    {title:'お渡し方法について',text:'・発送やお渡し方法の指定（こちらへの強要）は受け付けておりません。\n・ギガファイル便、ギガわた、Googleフォトを使用できない方はお取引をご遠慮ください。\n・私が受け取る際はどの方法でも可能ですが、**動画ファイルのみを直接トークに送るのはNG**でお願いします。'},
+    {title:'最後に',hl:true,text:'同意いただける方は、メッセージの際に「必読を読んだ旨」をお書き添えください。\nあわせて、ページ下部の免責事項もご確認いただけますと幸いです。'}
   ],
   rules:[
     {title:'禁止・注意事項',text:'・交換した動画のSNSへの投稿、加工、販売は固くお断りします。\n・二次配布（他の人への転送・別OCへの持ち出しなど）はトラブル防止のため【要相談】となります。希望される場合は必ず事前にご相談ください。'},
@@ -641,7 +657,7 @@ const DEF={
 };
 
 const clone=o=>JSON.parse(JSON.stringify(o));
-const MUST_VER='v2';
+const MUST_VER='v3';
 let contents=clone(DEF);   // links / mustread / rules
 contents.notice={text:'',date:''};
 contents.noticeLog=[];
@@ -714,7 +730,7 @@ function renderRules(){
 function renderLinks(){
   $('#linkList').innerHTML=contents.links.map(l=>`
     <a class="slim" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
-      <span class="slim-name">${esc(l.name)}</span><span class="slim-tag">LINK</span>
+      <span class="slim-name">${esc(l.name).replace(/①/,'<b class="no1">①</b>').replace(/②/,'<b class="no2">②</b>')}</span><span class="slim-tag">LINK</span>
     </a>`).join('');
   const n=contents.links.length;
   $('#linkEditList').innerHTML=contents.links.map((l,i)=>`
@@ -1059,7 +1075,6 @@ document.addEventListener('click',async e=>{
     if(!confirm('この過去のお知らせを削除しますか？'))return;
     (contents.noticeLog||[]).splice(parseInt(el.dataset.i),1);render();await saveContents();return;
   }
-  if(act==='menu-import'){location.href='https://noyu-web.github.io/video-list/folderimport/';return;}
   if(act==='menu-fbview'){closeMenu();fbRenderList();openModal('fbModal');fbLoad();return;}
   if(act==='fb-read'){const id=el.dataset.id;const it=fbItems.find(x=>x.id===id);if(it)it.read=true;fbRenderList();fbBadge();try{await jsonp({action:'markFeedbackRead',id,token});}catch{}return;}
   if(act==='fb-del'){if(!confirm('このご意見を削除しますか？'))return;const id=el.dataset.id;fbItems=fbItems.filter(x=>x.id!==id);fbRenderList();fbBadge();try{await jsonp({action:'deleteFeedback',id,token});}catch{}return;}
@@ -1170,7 +1185,7 @@ $('#codeInput').addEventListener('keydown',e=>{if(e.key==='Enter')verifyCode();}
 })();
 
 /* ---------- ハンバーガーメニュー・料金表 ---------- */
-const PRICE_HTML="<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>料金表<\/title><style>:root{--pink:#f58aae;--deep:#d94f78;--light:#fff4f7;--text:#5d3b48;--line:#f7c7d5;--white:#fff}*{box-sizing:border-box}body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,\"Hiragino Kaku Gothic ProN\",\"Yu Gothic\",Meiryo,sans-serif;background:linear-gradient(135deg,#fff7fa 0%,#ffe8f0 50%,#fff 100%);line-height:1.75}.wrap{max-width:1080px;margin:auto;padding:32px 18px 60px}.hero{text-align:center;padding:42px 20px 32px;position:relative}.eyebrow{color:var(--deep);font-size:13px;letter-spacing:.2em;font-weight:bold}.hero h1{margin:8px 0;color:var(--deep);font-size:clamp(30px,6vw,52px);letter-spacing:.08em}.hero p{margin:0;color:#9c6878}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}.card{background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:20px;padding:22px 23px;box-shadow:0 8px 24px rgba(217,79,120,.1);transition:transform .2s,box-shadow .2s}.card:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(217,79,120,.16)}.card.wide{grid-column:span 2}@media(max-width:650px){.card.wide{grid-column:span 1}}h2{display:flex;align-items:center;gap:9px;margin:0 0 15px;color:var(--deep);font-size:20px;border-bottom:2px dashed #f5cad6;padding-bottom:10px}.row{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px dotted #edc5d0}.row:last-child{border-bottom:0}.label{font-weight:500}.price{color:var(--deep);font-weight:bold;white-space:nowrap;text-align:right}.note{margin:12px 0 0;padding:10px 12px;background:var(--light);border-radius:10px;color:#8c596b;font-size:13px}.sub{margin:16px 0 7px;color:#b04f70;font-weight:bold;font-size:14px}.footer{margin-top:26px;padding:18px;text-align:center;background:#fff0f5;border-radius:16px;color:#9c6878;font-size:13px}.badge{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:20px;background:#ffe0ea;color:var(--deep);font-size:11px}@media(max-width:500px){.wrap{padding:15px 12px 40px}.hero{padding:32px 8px 25px}.card{padding:18px}.row{font-size:14px}}<\/style><\/head><body><main class=\"wrap\"><header class=\"hero\"><div class=\"eyebrow\">PRICE LIST<\/div><\/header><section class=\"grid\"><article class=\"card\"><h2>テレビバラエティ<\/h2><div class=\"row\"><span class=\"label\">〜2020年<\/span><span class=\"price\">300円〜<\/span><\/div><div class=\"note\">画質により100円〜<\/div><div class=\"row\"><span class=\"label\">2020年〜2022年<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">2023年以降<\/span><span class=\"price\">50円〜<\/span><\/div><\/article><article class=\"card\"><h2>配信<\/h2><div class=\"row\"><span class=\"label\">無料配信<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">有料配信<\/span><span class=\"price\">150円〜<\/span><\/div><div class=\"note\">有料配信はお問い合わせください。<br>※サブスクの場合は「その他」をご覧ください。<\/div><\/article><article class=\"card\"><h2>CD円盤<\/h2><div class=\"row\"><span class=\"label\">1曲<\/span><span class=\"price\">30円<\/span><\/div><div class=\"row\"><span class=\"label\">シングル1枚（1形態）<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">アルバム1枚（1形態）<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像のみ<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">全てセット（シングル）<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">全てセット（アルバム）<\/span><span class=\"price\">800円<\/span><\/div><\/article><article class=\"card\"><h2>DVD円盤<\/h2><div class=\"row\"><span class=\"label\">1形態<\/span><span class=\"price\">300円<\/span><\/div><div class=\"row\"><span class=\"label\">2形態セット<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">1つの動画<\/span><span class=\"price\">200円<\/span><\/div><\/article><article class=\"card\"><h2>ドラマ円盤<\/h2><div class=\"row\"><span class=\"label\">1話ごと<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">全話まとめて<\/span><span class=\"price\">300円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像付<\/span><span class=\"price\">500円〜<\/span><\/div><\/article><article class=\"card\"><h2>映画円盤<\/h2><div class=\"row\"><span class=\"label\">本編のみ<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像付き<\/span><span class=\"price\">500円〜<\/span><\/div><\/article><article class=\"card\"><h2>FC等<\/h2><div class=\"row\"><span class=\"label\">情報局<\/span><span class=\"price\">150円<\/span><\/div><div class=\"row\"><span class=\"label\">2022年以前<\/span><span class=\"price\">120円<\/span><\/div><div class=\"row\"><span class=\"label\">2023年以降<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">誕生日動画7点セット<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">ストカレ1年セット<\/span><span class=\"price\">600円<\/span><\/div><\/article><article class=\"card\"><h2>RADIO<\/h2><div class=\"row\"><span class=\"label\">サタスペ回以外（1放送）<\/span><span class=\"price\">80円<\/span><\/div><div class=\"row\"><span class=\"label\">通常回（1放送）<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">通常回（1ヶ月分）<\/span><span class=\"price\">50円×放送回−50円<\/span><\/div><div class=\"note\">例：4回放送の場合 150円<\/div><\/article><article class=\"card\"><h2>その他<\/h2><div class=\"row\"><span class=\"label\">有償サイト1つ<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">無償サイト1つ<\/span><span class=\"price\">50円〜<\/span><\/div><\/article><article class=\"card\"><h2>保存代行<\/h2><div class=\"row\"><span class=\"label\">無償サイト（アーカイブあり）<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">無償サイト（アーカイブなし）<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">有償サイト<\/span><span class=\"price\">500円<\/span><\/div><\/article><article class=\"card wide\"><h2>お渡し方法<\/h2><div class=\"note\"><strong>指定の場合プラス＠<\/strong><br>期限切れ再リンクの場合、数（容量）に応じて100円〜<\/div><div class=\"sub\">指定変更<\/div><div class=\"row\"><span class=\"label\">ギガファイル便<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">ギガわた<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">Googleフォト<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">楽天ドライブ<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">mega<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">その他<\/span><span class=\"price\">100円〜<\/span><\/div><\/article><article class=\"card wide\"><h2>支払い方法<\/h2><div class=\"row\"><span class=\"label\">PayPay<\/span><span class=\"price\">追加料金なし<\/span><\/div><div class=\"note\">マネーライトはご確認をお願いします。<\/div><div class=\"row\"><span class=\"label\">メルカリ等<\/span><span class=\"price\">100円＋手数料10％<\/span><\/div><div class=\"note\"><strong>購入者様の先送りのみ<\/strong><\/div><\/article><\/section><div class=\"footer\">各種OCルールに則って販売でのお譲りはできないことがあります。<\/div><\/main><\/body><\/html>";
+const PRICE_HTML="<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>料金表<\/title><link href='https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap' rel='stylesheet'><style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#5a4852;font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Kosugi Maru','Hiragino Sans',sans-serif;line-height:1.7}.wrap{max-width:560px;margin:auto;padding:20px 18px 48px}.hero{padding:0 0 18px}.eyebrow{color:#c24d77;font-size:12px;letter-spacing:.2em;font-weight:700}.grid{display:block}.card,.card.wide{background:none;border:none;border-radius:0;box-shadow:none;padding:0;margin:0 0 30px}h2{margin:0;padding:0 0 8px;font-size:16px;font-weight:700;color:#c24d77;border-bottom:1px solid #ecc9d8}.row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid #f6e6ed;font-size:14.5px}.label{font-weight:500}.price{font-weight:700;white-space:nowrap;text-align:right}.note{margin:0;padding:8px 0;background:none;border-radius:0;color:#9a8590;font-size:12.5px}.note strong{color:#5a4852}.sub{margin:14px 0 0;color:#c24d77;font-weight:700;font-size:13px}.footer{margin-top:8px;padding:16px 0 0;text-align:left;background:none;border-radius:0;border-top:1px solid #ecc9d8;color:#9a8590;font-size:12.5px}<\/style><\/head><body><main class=\"wrap\"><header class=\"hero\"><div class=\"eyebrow\">PRICE LIST<\/div><\/header><section class=\"grid\"><article class=\"card\"><h2>テレビバラエティ<\/h2><div class=\"row\"><span class=\"label\">〜2020年<\/span><span class=\"price\">300円〜<\/span><\/div><div class=\"note\">画質により100円〜<\/div><div class=\"row\"><span class=\"label\">2020年〜2022年<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">2023年以降<\/span><span class=\"price\">50円〜<\/span><\/div><\/article><article class=\"card\"><h2>配信<\/h2><div class=\"row\"><span class=\"label\">無料配信<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">有料配信<\/span><span class=\"price\">150円〜<\/span><\/div><div class=\"note\">有料配信はお問い合わせください。<br>※サブスクの場合は「その他」をご覧ください。<\/div><\/article><article class=\"card\"><h2>CD円盤<\/h2><div class=\"row\"><span class=\"label\">1曲<\/span><span class=\"price\">30円<\/span><\/div><div class=\"row\"><span class=\"label\">シングル1枚（1形態）<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">アルバム1枚（1形態）<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像のみ<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">全てセット（シングル）<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">全てセット（アルバム）<\/span><span class=\"price\">800円<\/span><\/div><\/article><article class=\"card\"><h2>DVD円盤<\/h2><div class=\"row\"><span class=\"label\">1形態<\/span><span class=\"price\">300円<\/span><\/div><div class=\"row\"><span class=\"label\">2形態セット<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">1つの動画<\/span><span class=\"price\">200円<\/span><\/div><\/article><article class=\"card\"><h2>ドラマ円盤<\/h2><div class=\"row\"><span class=\"label\">1話ごと<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">全話まとめて<\/span><span class=\"price\">300円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像付<\/span><span class=\"price\">500円〜<\/span><\/div><\/article><article class=\"card\"><h2>映画円盤<\/h2><div class=\"row\"><span class=\"label\">本編のみ<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">特典映像付き<\/span><span class=\"price\">500円〜<\/span><\/div><\/article><article class=\"card\"><h2>FC等<\/h2><div class=\"row\"><span class=\"label\">情報局<\/span><span class=\"price\">150円<\/span><\/div><div class=\"row\"><span class=\"label\">2022年以前<\/span><span class=\"price\">120円<\/span><\/div><div class=\"row\"><span class=\"label\">2023年以降<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">誕生日動画7点セット<\/span><span class=\"price\">500円<\/span><\/div><div class=\"row\"><span class=\"label\">ストカレ1年セット<\/span><span class=\"price\">600円<\/span><\/div><\/article><article class=\"card\"><h2>RADIO<\/h2><div class=\"row\"><span class=\"label\">サタスペ回以外（1放送）<\/span><span class=\"price\">80円<\/span><\/div><div class=\"row\"><span class=\"label\">通常回（1放送）<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">通常回（1ヶ月分）<\/span><span class=\"price\">50円×放送回−50円<\/span><\/div><div class=\"note\">例：4回放送の場合 150円<\/div><\/article><article class=\"card\"><h2>その他<\/h2><div class=\"row\"><span class=\"label\">有償サイト1つ<\/span><span class=\"price\">100円〜<\/span><\/div><div class=\"row\"><span class=\"label\">無償サイト1つ<\/span><span class=\"price\">50円〜<\/span><\/div><\/article><article class=\"card\"><h2>保存代行<\/h2><div class=\"row\"><span class=\"label\">無償サイト（アーカイブあり）<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">無償サイト（アーカイブなし）<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">有償サイト<\/span><span class=\"price\">500円<\/span><\/div><\/article><article class=\"card wide\"><h2>お渡し方法<\/h2><div class=\"note\"><strong>指定の場合プラス＠<\/strong><br>期限切れ再リンクの場合、数（容量）に応じて100円〜<\/div><div class=\"sub\">指定変更<\/div><div class=\"row\"><span class=\"label\">ギガファイル便<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">ギガわた<\/span><span class=\"price\">50円<\/span><\/div><div class=\"row\"><span class=\"label\">Googleフォト<\/span><span class=\"price\">100円<\/span><\/div><div class=\"row\"><span class=\"label\">楽天ドライブ<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">mega<\/span><span class=\"price\">200円<\/span><\/div><div class=\"row\"><span class=\"label\">その他<\/span><span class=\"price\">100円〜<\/span><\/div><\/article><article class=\"card wide\"><h2>支払い方法<\/h2><div class=\"row\"><span class=\"label\">PayPay<\/span><span class=\"price\">追加料金なし<\/span><\/div><div class=\"note\">マネーライトはご確認をお願いします。<\/div><div class=\"row\"><span class=\"label\">メルカリ等<\/span><span class=\"price\">100円＋手数料10％<\/span><\/div><div class=\"note\"><strong>購入者様の先送りのみ<\/strong><\/div><\/article><\/section><div class=\"footer\">各種OCルールに則って販売でのお譲りはできないことがあります。<\/div><\/main><\/body><\/html>";
 function openMenu(){$('#drawer').classList.add('open');$('#drawerOv').classList.add('open');document.body.style.overflow='hidden';}
 function closeMenu(){
   $('#drawer').classList.remove('open');$('#drawerOv').classList.remove('open');
