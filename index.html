@@ -3796,5 +3796,93 @@ document.getElementById('wlYes').addEventListener('click',async function(){wb.cl
 })();
 </script>
 
+<style>
+.tag.tag-oshi{background:#e0558f!important;color:#fff!important;border-color:#e0558f!important}
+.tag.tag-dim{opacity:.5}
+#dsOshi select{border:1px solid #f4c9d9;border-radius:6px;background:#fff;color:#c95a88;font:inherit;font-size:13px;font-weight:700;padding:6px 8px;max-width:55%}
+.rs-in{width:100%;box-sizing:border-box;border:1px solid #f4c9d9;border-radius:6px;padding:10px 12px;font:inherit;font-size:14px;color:#c95a88;font-weight:700;background:#fff;outline:none}
+.rs-in::placeholder{color:#d7b9c6;font-weight:600}
+.ov-s mark{background:#fde8f0;color:#c95a88;font-weight:800;padding:0 2px}
+.ov-r{display:flex;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #f1e3ea;background:#fff;font-size:14px;font-weight:600;color:#4b5563;cursor:pointer}
+.ov-r span:last-child{font-size:11px;color:#8b8f99;white-space:nowrap;align-self:center}
+</style>
+<div class="ov" id="rcOv"><div class="ov-h"><button type="button" id="rcBack">‹ 戻る</button><b>最近開いた動画</b></div><div id="rcBody"></div></div>
+<div class="ov" id="rsOv"><div class="ov-h"><button type="button" id="rsBack">‹ 戻る</button><b>収録内容から探す</b></div><div style="padding:12px 14px;background:#fff;border-bottom:1px solid #f4c9d9"><input class="rs-in" id="rsIn" type="search" placeholder="曲名・コーナー名" autocomplete="off"></div><div id="rsCnt" class="ov-s" style="padding:10px 16px"></div><div id="rsBody"></div></div>
+<script>
+(function(){
+function nz(s){return String(s||'').normalize('NFKC').toLowerCase();}
+function vids(){return Array.isArray(cachedVideos)?cachedVideos:[];}
+function lg(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')||d;}catch(e){return d;}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+/* 推しメンバー */
+var OK='vl_oshi';
+function oshi(){try{return localStorage.getItem(OK)||'';}catch(e){return '';}}
+function applyOshi(){var o=oshi();document.querySelectorAll('#cardList .tag,#detailMembers .tag,#trkBox .tag').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');if(!o)return;if(t.closest('.trk-row')&&!t.dataset.xs)return;var x=(t.dataset.xs||t.textContent||'').trim();if(!x||/交換|区分/.test(x)||t.classList.contains('exchange-badge'))return;if(x===o)t.classList.add('tag-oshi');else if((cfg.members||[]).indexOf(x)>=0||x==='SixTONES')t.classList.add('tag-dim');});}
+var _rl2=renderList;renderList=async function(){var r=await _rl2.apply(this,arguments);try{applyOshi();}catch(e){}return r;};
+var _od2=openDetailModal;openDetailModal=function(it){_od2.apply(this,arguments);try{applyOshi();}catch(e){}try{rec(it);}catch(e){}};
+var ds=document.getElementById('dsList');
+function addRow(){if(!ds||document.getElementById('dsOshi'))return;var o=oshi();var d=document.createElement('div');d.className='ds-row';d.id='dsOshi';d.innerHTML='<span>推しメンバー</span><select><option value="">なし</option>'+(cfg.members||[]).map(function(m){return '<option value="'+esc(m)+'"'+(m===o?' selected':'')+'>'+esc(m)+'</option>';}).join('')+'</select>';d.querySelector('select').addEventListener('change',function(){try{localStorage.setItem(OK,this.value);}catch(e){}applyOshi();});ds.appendChild(d);}
+if(ds)new MutationObserver(addRow).observe(ds,{childList:true});
+/* 最近開いた動画 */
+var RK='vl_recent_'+location.pathname;
+function rec(it){if(!it||it.id==null)return;var a=lg(RK,[]).filter(function(x){return String(x.id)!==String(it.id);});a.unshift({id:String(it.id),t:Date.now()});sv(RK,a.slice(0,10));}
+function ago(t){var m=Math.floor((Date.now()-t)/60000);if(m<1)return 'たった今';if(m<60)return m+'分前';var h=Math.floor(m/60);if(h<24)return h+'時間前';var d=Math.floor(h/24);return d===1?'昨日':d+'日前';}
+var rc=document.getElementById('rcOv');
+function openRc(){var L=lg(RK,[]),map={};vids().forEach(function(v){map[String(v.id)]=v;});window._rcMap=map;
+document.getElementById('rcBody').innerHTML=L.filter(function(x){return map[x.id];}).map(function(x){return '<div class="ov-r" data-rc="'+esc(x.id)+'"><span>'+esc(map[x.id].title)+'</span><span>'+ago(x.t)+'</span></div>';}).join('')||'<div class="ov-s" style="padding:24px">まだありません</div>';
+rc.classList.add('on');rc.scrollTop=0;}
+document.getElementById('rcBack').addEventListener('click',function(){rc.classList.remove('on');});
+document.getElementById('rcBody').addEventListener('click',function(e){var c=e.target.closest('[data-rc]');if(!c)return;rc.classList.remove('on');openDetailModal(window._rcMap[c.dataset.rc]);});
+/* 収録内容から探す */
+var rs=document.getElementById('rsOv'),rin=document.getElementById('rsIn');
+function hl(s,q){var n=nz(s),i=n.indexOf(q);if(i<0||n.length!==String(s).length)return esc(s);return esc(s.slice(0,i))+'<mark>'+esc(s.slice(i,i+q.length))+'</mark>'+esc(s.slice(i+q.length));}
+function runRs(){var q=nz(rin.value).trim(),out=[];window._rsMap={};
+if(q)vids().forEach(function(it){var hits=[];try{parseTracks(it).forEach(function(t){if(nz(t.title).indexOf(q)>=0)hits.push(t);});}catch(e){}if(hits.length)out.push({it:it,hits:hits});});
+document.getElementById('rsCnt').textContent=q?out.length+' 件':'';
+document.getElementById('rsBody').innerHTML=out.slice(0,60).map(function(o){window._rsMap[o.it.id]=o.it;return '<div class="ov-c" data-rs="'+esc(String(o.it.id))+'"><div class="ov-t">'+esc(o.it.title)+'</div>'+o.hits.slice(0,3).map(function(t){return '<div class="ov-s">'+esc(t.section||'')+'　'+hl(String(t.title||''),q)+'</div>';}).join('')+(o.hits.length>3?'<div class="ov-s">ほか '+(o.hits.length-3)+' 件</div>':'')+'</div>';}).join('');}
+rin.addEventListener('input',runRs);
+document.getElementById('rsBack').addEventListener('click',function(){rs.classList.remove('on');});
+document.getElementById('rsBody').addEventListener('click',function(e){var c=e.target.closest('[data-rs]');if(!c)return;rs.classList.remove('on');openDetailModal(window._rsMap[c.dataset.rs]);});
+/* メニュー */
+var mb=document.getElementById('cmBtn');
+function item(id,label,fn){var l=document.getElementById('cmList');if(!l||document.getElementById(id))return;var d=document.createElement('div');d.className='cm-link cm-act';d.id=id;d.innerHTML='<span>'+label+'</span><span>›</span>';d.addEventListener('click',function(){document.getElementById('cmBg').classList.remove('on');fn();});l.insertBefore(d,l.querySelector('.cm-sec')||null);}
+if(mb)mb.addEventListener('click',function(){setTimeout(function(){item('cmRs','収録内容から探す',function(){rs.classList.add('on');rin.value='';runRs();setTimeout(function(){rin.focus();},50);});item('cmRc','最近開いた動画',openRc);},0);});
+applyOshi();
+})();
+</script>
+
+<style>
+#trkMf{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+#trkMf button{border:1px solid #f4c9d9;background:#fff;color:#c95a88;font:inherit;font-size:12px;font-weight:700;padding:6px 10px;border-radius:6px;cursor:pointer}
+#trkMf button.on{background:#e0558f;border-color:#e0558f;color:#fff}
+</style>
+<script>
+(function(){
+var _od3=openDetailModal;
+openDetailModal=function(it){_od3.apply(this,arguments);try{build(it);}catch(e){}};
+function build(it){
+var old=document.getElementById('trkMf');if(old)old.remove();
+var tr=[];try{tr=parseTracks(it);}catch(e){}
+if(tr.length<12)return;
+var cnt={};tr.forEach(function(t){(t.members||[]).forEach(function(m){cnt[m]=(cnt[m]||0)+1;});});
+var ms=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
+if(ms.length<2)return;
+var box=document.getElementById('trkBox');if(!box)return;
+var bar=document.createElement('div');bar.id='trkMf';
+bar.innerHTML=['すべて'].concat(ms).map(function(m,i){return '<button type="button" data-m="'+(i?esc(m):'')+'"'+(i?'':' class="on"')+'>'+esc(m)+'</button>';}).join('');
+box.parentNode.insertBefore(bar,box);
+bar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+[].forEach.call(bar.children,function(x){x.classList.toggle('on',x===b);});
+filt(box,b.dataset.m);});
+}
+function filt(box,m){
+var rows=box.querySelectorAll('.trk-row');
+rows.forEach(function(r){var on=!m||[].some.call(r.querySelectorAll('[data-xs]'),function(t){return t.dataset.xs===m;});r.style.display=on?'':'none';});
+box.querySelectorAll('details.trk-year').forEach(function(d){var any=[].some.call(d.querySelectorAll('.trk-row'),function(r){return r.style.display!=='none';});d.style.display=any||!m?'':'none';if(m&&any)d.open=true;});
+box.querySelectorAll('.trk-sec').forEach(function(s){var n=s.nextElementSibling,any=false;while(n&&!n.classList.contains('trk-sec')){if(n.classList.contains('trk-row')&&n.style.display!=='none')any=true;if(n.querySelectorAll){n.querySelectorAll('.trk-row').forEach(function(r){if(r.style.display!=='none')any=true;});}n=n.nextElementSibling;}s.style.display=(!m||any)?'':'none';});
+}
+})();
+</script>
+
 </body>
 </html>
