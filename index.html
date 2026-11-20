@@ -376,6 +376,19 @@ body.selecting .list-wrap{padding-bottom:90px}
 #cmList>a.cm-link.cur{background:#fff0f5}
 </style>
 <style>#detailModal #detailMembers{margin:16px 0 8px!important;padding-top:12px;border-top:1px solid #f0d9e3}#detailModal #detailMembers:empty{display:none}</style>
+<style>
+#dtNav{padding:0 0 env(safe-area-inset-bottom)!important;gap:0!important;background:#fff;border-top:1px solid #f0d9e3!important}
+#dtNav button{display:flex!important;align-items:center;gap:8px;min-height:58px;padding:0 16px!important;font-size:13px!important;font-weight:700;color:#c95a88}
+#dtNav button+button{border-left:1px solid #f0d9e3!important}
+#dtNav button:first-child{justify-content:flex-start;text-align:left}
+#dtNav button:last-child{justify-content:flex-end;text-align:right}
+#dtNav .ar{flex:0 0 auto;font-size:26px;line-height:1;font-weight:400}
+#dtNav .tt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dtNav button:active{background:#fff0f5}
+#dtNav button:disabled{opacity:.35}
+#detailModal .modal{padding-bottom:84px!important}
+</style>
+<style>#detailModal .dt-bar #dtFav{flex:0 0 auto;margin-left:auto;padding:4px 2px 4px 8px!important}#detailModal .dt-bar #dtFav svg{width:28px!important;height:28px!important}</style>
 </head>
 <body>
 
@@ -3768,7 +3781,7 @@ var nav=document.createElement('div');nav.id='dtNav';nav.innerHTML='<button type
 function upd(){var L=window._shown||[],i=cur?L.findIndex(function(x){return String(x.id)===String(cur.id);}):-1;
 if(i<0){nav.style.display='none';return;}nav.style.display='flex';
 var p=L[i-1],n=L[i+1],bp=document.getElementById('dtPrev'),bn=document.getElementById('dtNext');
-bp.disabled=!p;bn.disabled=!n;bp.textContent=p?'‹ '+p.title:'';bn.textContent=n?n.title+' ›':'';bp._it=p;bn._it=n;}
+bp.disabled=!p;bn.disabled=!n;bp.innerHTML=p?'<span class="ar">‹</span><span class="tt">'+esc(p.title)+'</span>':'<span class="ar">‹</span>';bn.innerHTML=n?'<span class="tt">'+esc(n.title)+'</span><span class="ar">›</span>':'<span class="ar">›</span>';bp._it=p;bn._it=n;}
 var _od=openDetailModal;
 openDetailModal=function(it){cur=it;_od.apply(this,arguments);upd();try{detail.scrollTop=0;var b=detail.querySelector('.detail-body,.modal');if(b)b.scrollTop=0;}catch(e){}};
 ['dtPrev','dtNext'].forEach(function(id){document.getElementById(id).addEventListener('click',function(){if(this._it)openDetailModal(this._it);});});
@@ -3837,7 +3850,9 @@ function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 /* 推しメンバー */
 var OK='vl_oshi';
 function oshi(){try{var v=localStorage.getItem(OK)||'';if(!v)return '';var ok=(cfg.members||[]).indexOf(v)>=0||Object.keys(cfg.otherMembers||{}).some(function(g){return (cfg.otherMembers[g]||[]).indexOf(v)>=0;});if(!ok){localStorage.removeItem(OK);return '';}return v;}catch(e){return '';}}
-function applyOshi(){var o=oshi();document.querySelectorAll('#cardList .tag,#detailMembers .tag,#trkBox .tag').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');if(!o)return;if(t.closest('.trk-row')&&!t.dataset.xs)return;var x=(t.dataset.xs||t.textContent||'').trim();if(!x||/交換|区分/.test(x)||t.classList.contains('exchange-badge'))return;if(x===o)t.classList.add('tag-oshi');else if((cfg.members||[]).indexOf(x)>=0||x==='SixTONES'||Object.keys(cfg.otherMembers||{}).some(function(g){return (cfg.otherMembers[g]||[]).indexOf(x)>=0;}))t.classList.add('tag-dim');});}
+function applyOshi(){var o=oshi();document.querySelectorAll('.tag-oshi,.tag-dim').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');});document.querySelectorAll('#cardList .tag,#detailMembers .tag,#trkBox .tag').forEach(function(t){t.classList.remove('tag-oshi','tag-dim');if(!o)return;if(t.closest('.trk-row')&&!t.dataset.xs)return;var x=(t.dataset.xs||t.textContent||'').trim();if(!x||/交換|区分/.test(x)||t.classList.contains('exchange-badge'))return;if(x===o)t.classList.add('tag-oshi');else if((cfg.members||[]).indexOf(x)>=0||x==='SixTONES'||Object.keys(cfg.otherMembers||{}).some(function(g){return (cfg.otherMembers[g]||[]).indexOf(x)>=0;}))t.classList.add('tag-dim');});}
+var _oT=0;try{new MutationObserver(function(){clearTimeout(_oT);_oT=setTimeout(function(){try{applyOshi();}catch(e){}},60);}).observe(document.body,{childList:true,subtree:true});}catch(e){}
+window.addEventListener('storage',function(e){if(e.key===OK)try{applyOshi();}catch(x){}});
 var _rl2=renderList;renderList=async function(){var r=await _rl2.apply(this,arguments);try{applyOshi();}catch(e){}return r;};
 var _od2=openDetailModal;openDetailModal=function(it){_od2.apply(this,arguments);try{applyOshi();}catch(e){}try{rec(it);}catch(e){}};
 var ds=document.getElementById('dsList');
@@ -3912,6 +3927,13 @@ var sec=l.querySelector('.cm-sec');var f=null;var k=l.children;for(var i=0;i<k.l
 if(f){var hd=h('機能');l.insertBefore(hd,f);var fb=document.getElementById('favOnlyBtn');if(fb){var d=document.createElement('div');d.className='cm-link cm-act';d.id='cmFav';var on=false;try{on=F.fav.has('yes');}catch(e){}d.innerHTML='<span>お気に入り</span><span>'+(on?'表示中':'›')+'</span>';d.addEventListener('click',function(){var bg=document.getElementById('cmBg');if(bg)bg.classList.remove('on');setTimeout(function(){fb.click();},60);});l.insertBefore(d,f);}}
 var ph=l.querySelector('.cm-sec2'),as=[].slice.call(l.querySelectorAll(':scope>a.cm-link')),sc=l.querySelector('.cm-sec');var mv=[];if(ph)mv.push(ph);as.forEach(function(x){mv.push(x);});mv.forEach(function(x){if(sc)l.insertBefore(x,sc);else l.appendChild(x);});
 },200);},true);
+</script>
+<script>
+(function(){var bar=document.querySelector('#detailModal .dt-bar');if(!bar)return;var b=document.createElement('button');b.type='button';b.id='dtFav';b.className='fav-btn';b.setAttribute('aria-label','お気に入り');b.innerHTML=HEART_SVG;bar.appendChild(b);var curId=null;
+function sync(){b.classList.toggle('on',curId!=null&&favSet.has(String(curId)));}
+b.addEventListener('click',function(e){e.stopPropagation();if(curId==null)return;toggleFav(String(curId),b);document.querySelectorAll('#cardList [data-fav]').forEach(function(x){if(x.dataset.fav===String(curId))x.classList.toggle('on',favSet.has(String(curId)));});});
+var _o=openDetailModal;openDetailModal=function(it){curId=it&&it.id;try{return _o.apply(this,arguments);}finally{sync();}};
+})();
 </script>
 </body>
 </html>
