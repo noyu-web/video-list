@@ -2128,6 +2128,7 @@ if(has)ob.style.display='none';else w.classList.add('tf-hide');
 ob.onclick=()=>{w.classList.remove('tf-hide');ob.style.display='none';};}
 div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
+{const _di=div.querySelector('.dg-date');const _cl=()=>{delete div.dataset.rawdate;};_di.addEventListener('input',_cl);_di.addEventListener('change',_cl);}
 div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':n===0?'同じ日付の収録内容がすでにあるので、発売日からだけ外しました':'収録内容の一番下に追加しました（ピンクの枠）');});
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
