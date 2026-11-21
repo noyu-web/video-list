@@ -190,6 +190,32 @@ header{border-bottom:2px solid var(--pink-light);padding:10px 16px;}
 .toast{background:var(--pink-dark);}
 .new-badge{background:var(--pink);}
 </style>
+<style>
+/* 見やすさ改善：フラット行 */
+.page{padding:0 16px!important}
+.list-count{padding:12px 0 6px!important;font-size:12px!important}
+#cardList{border-top:1px solid #f0d9e3}
+.card,.card.done{border-width:0 0 1px 0!important;border-style:solid!important;border-color:#f0d9e3!important;border-radius:0!important;background:transparent!important;padding:15px 2px!important;margin:0!important;box-shadow:none!important}
+.card-title{font-size:16px!important;font-weight:700!important;line-height:1.5!important;color:#4a3b43!important}
+.card.done .card-title{color:#aaa0a5!important}
+.card-date{font-size:12.5px!important;font-weight:600!important;color:#8b7f85!important;margin-top:5px!important}
+.card-meta{margin-top:8px!important;gap:6px!important}
+.tag{border-radius:0!important;font-size:12px!important;padding:2px 8px!important;background:#fff0f5!important;border:none!important;color:#b8486f!important;font-weight:600!important}
+.tag-trading{background:#fff!important;border:1.5px solid #ec8aaa!important}
+.tag-got{background:#f3eef0!important;color:#9b8a91!important}
+.prio{border-radius:0!important;font-size:12px!important;padding:2px 9px!important}
+.prio-high{background:#ec8aaa!important;color:#fff!important}
+.prio-mid{background:#f8dbe7!important;color:#b8486f!important}
+.prio-low{background:#fff!important;color:#a8939d!important;border:1px solid #f0d9e3!important}
+.card-note{background:none!important;border-radius:0!important;padding:0!important;margin-top:8px!important;font-size:13px!important;color:#7d727a!important;border-left:none!important}
+.btn-sm{border-radius:0!important;background:#fff0f5!important}
+.new-badge{border-radius:0!important}
+.card.sel{outline:none!important;background:#fff0f5!important}
+.sel-box{border-radius:0!important}
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;500;700&display=swap" rel="stylesheet">
+<style>html,body,button,input,select,textarea{font-family:'Kaisei Decol','Hiragino Maru Gothic ProN','Kosugi Maru','Hiragino Sans',sans-serif!important}</style>
 </head>
 <body>
 
@@ -299,7 +325,7 @@ header{border-bottom:2px solid var(--pink-light);padding:10px 16px;}
       <select class="form-select" id="own-ex"><option value="consult">要相談</option><option value="ok">可</option><option value="partial">一部交換可</option><option value="ng">不可</option></select></div>
     <div class="form-group"><label class="form-label">出演者（カンマ区切り）</label><input class="form-input" id="own-members" placeholder="例: 田中樹, ジェシー"></div>
     <div class="form-group"><label class="form-label">ジャンル・小ジャンル（複数選択可）</label><div id="own-genres"></div></div>
-    <div class="form-group"><label class="form-label">配信・放送日</label><input class="form-input" id="own-date" type="date"></div>
+    <div class="form-group"><label class="form-label">配信・発売日</label><input class="form-input" id="own-date" type="date"></div>
     <div class="form-group"><label class="form-label">メモ</label><textarea class="form-textarea" id="own-note"></textarea></div>
     <div class="modal-btns"><button class="btn-cancel" id="ownSkip">スキップ</button><button class="btn-save" id="ownAdd">追加</button></div>
   </div>
@@ -1168,7 +1194,7 @@ function bindTabEditor(){
 <script>
 (function(){
 var B='https://noyu-web.github.io/video-list/';
-var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/'],['自動取り込み',B+'folderimport/','/video-list/folderimport/',1]];
+var L=[['HP',B+'top/','/video-list/top/'],['所持リスト①',B,'/video-list/'],['所持リスト②',B+'videolist2/','/video-list/videolist2/'],['求めリスト',B+'wishlist-app/','/video-list/wishlist-app/']];
 function adm(){try{var t=JSON.parse(localStorage.getItem('top_admin_token')||'null');return !!(t&&t.token&&(!t.expires||t.expires>Date.now()));}catch(e){return false;}}
 function here(){var p=location.pathname.replace(/index\.html$/,'');if(p.slice(-1)!=='/')p+='/';return p;}
 var bg=document.getElementById('cmBg');
