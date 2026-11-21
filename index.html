@@ -3919,11 +3919,21 @@ var ms=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
 if(ms.length<2)return;
 var box=document.getElementById('trkBox');if(!box)return;
 var wrap=document.createElement('div');wrap.id='trkMf';
-wrap.innerHTML='<span class="mf-lb">絞込み</span><select><option value="">出演者：すべて</option>'+(function(){var used={},out='';function opt(m){return '<option value="'+esc(m)+'">'+esc(m)+'（'+cnt[m]+'）</option>';}
-function nz(x){return String(x).replace(/[\s\u3000]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺');}
-function grp(label,list){var l=[];list.forEach(function(n){ms.forEach(function(m){if(!used[m]&&nz(m)===nz(n)&&l.indexOf(m)<0)l.push(m);});});if(!l.length)return;l.forEach(function(m){used[m]=1;});out+='<optgroup label="'+esc(label)+'">'+l.map(opt).join('')+'</optgroup>';}
-try{var cf=loadConfig();grp('SixTONES',cf.members||[]);var om=cf.otherMembers||{};Object.keys(om).forEach(function(g){grp(g,om[g]||[]);});}catch(e){}
-grp('その他',ms);return out;})()+'</select>';
+var _opts='';
+try{
+var used={};function nz(x){return String(x).replace(/[\s\u3000]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺');}
+function opt(m){return '<option value="'+esc(m)+'">'+esc(m)+'（'+cnt[m]+'）</option>';}
+function grp(label,list){if(!Array.isArray(list))return;var l=[];list.forEach(function(n){ms.forEach(function(m){if(!used[m]&&nz(m)===nz(n)&&l.indexOf(m)<0)l.push(m);});});if(!l.length)return;l.forEach(function(m){used[m]=1;});_opts+='<optgroup label="'+esc(label)+'">'+l.map(opt).join('')+'</optgroup>';}
+var cf={};try{cf=loadConfig()||{};}catch(e0){cf={};}
+if(!Array.isArray(cf.members)||!cf.members.length)cf.members=Array.isArray(cfg&&cfg.members)?cfg.members:[];
+var om=cf.otherMembers||(cfg&&cfg.otherMembers)||{};
+grp('SixTONES',cf.members);Object.keys(om).forEach(function(g){grp(g,om[g]);});
+var rest=ms.filter(function(m){return !used[m];});if(rest.length)_opts+='<optgroup label="その他">'+rest.map(opt).join('')+'</optgroup>';
+}catch(e1){_opts='';}
+if(!_opts)_opts=ms.map(opt).join('');
+wrap.innerHTML='<span class="mf-lb">絞込み</span><select><option value="">出演者：すべて</option>'+_opts+'</select>';
+var bar=wrap.querySelector('select');
+bar.addEventListener('change',function(){filt(box,bar.value);wrap.classList.toggle('on',!!bar.value);});
 box.parentNode.insertBefore(wrap,box);box.classList.add('trk-nomem');
 var bar=wrap.querySelector('select');
 bar.addEventListener('change',function(){filt(box,bar.value);wrap.classList.toggle('on',!!bar.value);});
