@@ -2215,10 +2215,10 @@ renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?schedUnion(item):[];
-window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
+window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.filter(s=>isoDate(s.date)).forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-window._trkInit=true;{const trf=parseMeta(item).tr||[];mergeDateRows(tracks).forEach(({t,ti})=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();if(!document.querySelector('#dateGroupsWrap .date-group'))addDateGroup();
+window._trkInit=true;{const trf=parseMeta(item).tr||[];mergeDateRows(tracks).forEach(({t,ti})=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -2242,7 +2242,7 @@ let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;let j=0;while(j<a.length-i
 let x=a.slice(i,a.length-j),y=b.slice(i,b.length-j);if(!x||x.length>12||y.length>12)return;
 if(x.length<2){const l=a.slice(Math.max(0,i-1),i),r1=a.slice(a.length-j,a.length-j+1),r2=b.slice(b.length-j,b.length-j+1);x=l+x+r1;y=l+y+r2;}
 const d=fixLoad();d[x]=y;try{localStorage.setItem(FIXK,JSON.stringify(d));}catch{}}
-function isoDate(v){v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const m=/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D*$/.exec(v);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):'';}
+function isoDate(v){v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(v)){const d=new Date(v);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}{const m0=/^(\d{4}-\d{2}-\d{2})[T ]/.exec(v);if(m0)return m0[1];}const m=/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D*$/.exec(v);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):'';}
 function addTrackRow(val='',dist='none',date='',members=[],section='',file={},time=''){
 const _rawDate=String(date||'');date=isoDate(_rawDate);members=Array.isArray(members)?members:[];
 cfg=loadConfig();
