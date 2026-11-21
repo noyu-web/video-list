@@ -3919,7 +3919,10 @@ var ms=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
 if(ms.length<2)return;
 var box=document.getElementById('trkBox');if(!box)return;
 var wrap=document.createElement('div');wrap.id='trkMf';
-wrap.innerHTML='<span class="mf-lb">絞込み</span><select><option value="">出演者：すべて</option>'+ms.map(function(m){return '<option value="'+esc(m)+'">'+esc(m)+'（'+cnt[m]+'）</option>';}).join('')+'</select>';
+wrap.innerHTML='<span class="mf-lb">絞込み</span><select><option value="">出演者：すべて</option>'+(function(){var used={},out='';function opt(m){return '<option value="'+esc(m)+'">'+esc(m)+'（'+cnt[m]+'）</option>';}
+function grp(label,list){var l=list.filter(function(m){return cnt[m]&&!used[m];});if(!l.length)return;l.forEach(function(m){used[m]=1;});out+='<optgroup label="'+esc(label)+'">'+l.map(opt).join('')+'</optgroup>';}
+try{grp('SixTONES',cfg.members||[]);var om=cfg.otherMembers||{};Object.keys(om).forEach(function(g){grp(g,om[g]||[]);});}catch(e){}
+grp('その他',ms);return out;})()+'</select>';
 box.parentNode.insertBefore(wrap,box);box.classList.add('trk-nomem');
 var bar=wrap.querySelector('select');
 bar.addEventListener('change',function(){filt(box,bar.value);wrap.classList.toggle('on',!!bar.value);});
