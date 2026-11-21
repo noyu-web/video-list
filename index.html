@@ -1200,7 +1200,7 @@ const ks=ogKinds();
 const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
 w.style.display='none';
 const ksel=document.getElementById('kindSel');
-const opts=['<option value="すべて">ジャンル</option>','<option value="__none">未設定</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+(cnt[k]?' '+cnt[k]:'')+'</option>'));
+const opts=['<option value="すべて">ジャンル</option>','<option value="__none">未設定</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>'));
 if(isAdmin)opts.push('<option value="__assign">＋ 種別を付ける</option><option value="__add">＋ 種別を追加</option><option value="__del">－ 種別を削除</option>');
 ksel.innerHTML=opts.join('');ksel.value=currentKind;ksel.style.display='';
 ksel.onchange=()=>{const v=ksel.value;
