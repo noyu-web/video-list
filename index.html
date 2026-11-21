@@ -2071,7 +2071,8 @@ if(more.length)info.more=more;
 const hasInfo=Object.keys(info).length>0;
 const exist=[...document.querySelectorAll('#tracksWrap .track-date')].filter(e=>e.value.trim()===date).map(e=>{const r=e.closest('div[style*="pink-pale"]')||e.parentElement;return((r.querySelector('.track-time')||{}).value||'').trim();});
 let n=0;
-if(!times.length){if(!exist.length||hasInfo){addTrackRow('','none',date,[],'',hasInfo?info:{},'');n++;}}
+const _att=(tm)=>{if(hasInfo)return false;const w=document.getElementById('tracksWrap'),r=w&&w.lastElementChild;if(!r)return false;const ti=r.querySelector('.track-input'),td=r.querySelector('.track-date'),tt=r.querySelector('.track-time');if(!ti||!td||!ti.value.trim()||td.value.trim())return false;td.value=date;if(tt&&tm&&!tt.value.trim())tt.value=tm;r.dispatchEvent(new Event('input'));return true;};
+if(!times.length){if(!exist.length||hasInfo){if(!_att('')){addTrackRow('','none',date,[],'',hasInfo?info:{},'');}n++;}}
 else times.forEach((t,i)=>{if(exist.includes(t)&&!(i===0&&hasInfo))return;addTrackRow('','none',date,[],'',i===0&&hasInfo?info:{},t);n++;});
 (window._movedDates||(window._movedDates=[])).push(date);
 dg.remove();
@@ -2201,7 +2202,7 @@ const schedules=item?schedUnion(item):[];
 window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-window._trkInit=true;{const trf=parseMeta(item).tr||[];tracks.forEach((t,ti)=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();if(!document.querySelector('#dateGroupsWrap .date-group'))addDateGroup();
+window._trkInit=true;{const trf=parseMeta(item).tr||[];mergeDateRows(tracks).forEach(({t,ti})=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();if(!document.querySelector('#dateGroupsWrap .date-group'))addDateGroup();
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -3333,8 +3334,13 @@ if(secList().includes(h)&&line.length<=h.length+4){sec=h;return;}
 if(strip)line=line.replace(/^(?:[#＃]?\s*[0-9０-９]{1,3}\s*[.．、)）:：\-－]\s*|[0-9０-９]{1,3}\s+|[・•●○]\s*)/,'');
 line=line.trim();
 if(!line)return;
-const di=lineDateInfo(line);
-if(di){out.push({title:di.title,section:sec,date:di.date,time:di.time,members:di.members});return;}
+const di=lineDateInfo(line);const pv=out[out.length-1];
+if(di){if(!di.title&&pv&&pv.title&&!pv.date&&(pv.section||'')===(sec||'')){pv.date=di.date;pv.time=di.time||pv.time||'';pv.members=[...new Set([...(pv.members||[]),...(di.members||[])])];return;}
+out.push({title:di.title,section:sec,date:di.date,time:di.time,members:di.members});return;}
+{const _c=s=>String(s).replace(/[\s\u3000]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[＆&]/g,'＆').replace(/[・,、，\/／＆]/g,'');const ms0=matchNamesG(line);const ms=ms0.filter(m=>!ms0.some(o=>o!==m&&_c(o).includes(_c(m))));
+if(ms.length&&pv&&pv.title){let r=_c(line);ms.forEach(m=>{r=r.split(_c(m)).join('');});
+const toks=line.split(/[&＆、,，・\/／\s\u3000]+/).filter(Boolean);
+if(!r||(toks.length&&toks.every(t=>matchNamesG(t).length>0))){pv.members=[...new Set([...(pv.members||[]),...ms])];return;}}}
 out.push({title:line,section:sec});
 });
 return out;
