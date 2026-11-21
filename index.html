@@ -398,6 +398,12 @@ body.selecting .list-wrap{padding-bottom:90px}
 #trkMf.on .mf-lb{background:#e0558f}
 #trkMf select{flex:1 1 auto;min-width:0;width:auto!important;margin:0!important;border:1px solid #f4c9d9;border-left:none;border-radius:0;background:#fff;color:#c95a88;font:inherit;font-size:14px;font-weight:700;padding:8px 28px 8px 10px!important}</style>
 <style>#detailModal #trkBox.trk-nomem .trk-row span[data-xs]{display:none!important}</style>
+<style>#trkMf{position:relative}#trkMf select{display:none!important}
+#trkMf .mf-btn{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:space-between;border:1px solid #f4c9d9;border-left:none;border-radius:0;background:#fff;color:#c95a88;font:inherit;font-size:14px;font-weight:700;padding:8px 10px;text-align:left;cursor:pointer}
+#trkMf .mf-pn{position:absolute;left:0;right:0;top:100%;max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;border:1px solid #f4c9d9;z-index:60}
+#trkMf .mf-pn[hidden]{display:none}
+#trkMf .mf-it{padding:12px 14px;font-size:14px;color:#444;border-bottom:1px solid #f6dde7;cursor:pointer}
+#trkMf .mf-gh{padding:8px 14px;font-size:12px;font-weight:700;color:#c95a88;background:#fdeef4;border-bottom:1px solid #f6dde7}</style>
 </head>
 <body>
 
@@ -3931,12 +3937,16 @@ grp('SixTONES',cf.members);Object.keys(om).forEach(function(g){grp(g,om[g]);});
 var rest=ms.filter(function(m){return !used[m];});if(rest.length)_opts+='<optgroup label="その他">'+rest.map(opt).join('')+'</optgroup>';
 }catch(e1){_opts='';}
 if(!_opts)_opts=ms.map(opt).join('');
-wrap.innerHTML='<span class="mf-lb">絞込み</span><select><option value="">出演者：すべて</option>'+_opts+'</select>';
-var bar=wrap.querySelector('select');
-bar.addEventListener('change',function(){filt(box,bar.value);wrap.classList.toggle('on',!!bar.value);});
+wrap.innerHTML='<span class="mf-lb">絞込み</span><select hidden><option value="">出演者：すべて</option>'+_opts+'</select><button type="button" class="mf-btn"><span class="mf-cur">出演者：すべて</span><span class="mf-ar">▾</span></button><div class="mf-pn" hidden></div>';
+var bar=wrap.querySelector('select'),btn=wrap.querySelector('.mf-btn'),cur=wrap.querySelector('.mf-cur'),pn=wrap.querySelector('.mf-pn');
+function pick(v,label){bar.value=v;cur.textContent=label;pn.hidden=true;filt(box,v);wrap.classList.toggle('on',!!v);}
+var ph='<div class="mf-it" data-v="">出演者：すべて</div>';
+[].forEach.call(bar.children,function(o){if(o.tagName==='OPTGROUP'){ph+='<div class="mf-gh">'+o.label+'</div>';[].forEach.call(o.children,function(p){ph+='<div class="mf-it" data-v="'+p.value.replace(/"/g,'&quot;')+'">'+p.textContent+'</div>';});}});
+pn.innerHTML=ph;
+pn.addEventListener('click',function(e){var t=e.target.closest('.mf-it');if(!t)return;pick(t.getAttribute('data-v'),t.textContent);});
+btn.addEventListener('click',function(e){e.stopPropagation();pn.hidden=!pn.hidden;});
+document.addEventListener('click',function(e){if(!wrap.contains(e.target))pn.hidden=true;});
 box.parentNode.insertBefore(wrap,box);box.classList.add('trk-nomem');
-var bar=wrap.querySelector('select');
-bar.addEventListener('change',function(){filt(box,bar.value);wrap.classList.toggle('on',!!bar.value);});
 }
 function filt(box,m){
 var rows=box.querySelectorAll('.trk-row');
