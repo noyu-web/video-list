@@ -389,21 +389,6 @@ body.selecting .list-wrap{padding-bottom:90px}
 #detailModal .modal{padding-bottom:84px!important}
 </style>
 <style>#detailModal .dt-bar #dtFav{flex:0 0 auto;margin-left:auto;padding:4px 2px 4px 8px!important}#detailModal .dt-bar #dtFav svg{width:28px!important;height:28px!important}</style>
-<style>#trkMf{flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:5px!important;margin:0 -16px 8px!important;padding:0 16px}
-#trkMf::-webkit-scrollbar{display:none}
-#trkMf button{flex:0 0 auto;white-space:nowrap;font-size:11.5px!important;padding:4px 9px!important;border-radius:0!important}</style>
-<style>select#trkMf{display:block;flex:none;width:auto;max-width:100%;overflow:visible;margin:2px 0 10px!important;padding:6px 28px 6px 10px!important;border:1px solid #f4c9d9;border-radius:0;background:#fff;color:#c95a88;font:inherit;font-size:13px;font-weight:700}</style>
-<style>#trkMf{display:flex!important;align-items:stretch;gap:0;margin:2px 0 10px!important;padding:0!important;flex-wrap:nowrap!important;overflow:visible!important}
-#trkMf .mf-lb{flex:0 0 auto;display:flex;align-items:center;background:#c95a88;color:#fff;font-size:13px;font-weight:700;padding:0 12px}
-#trkMf.on .mf-lb{background:#e0558f}
-#trkMf select{flex:1 1 auto;min-width:0;width:auto!important;margin:0!important;border:1px solid #f4c9d9;border-left:none;border-radius:0;background:#fff;color:#c95a88;font:inherit;font-size:14px;font-weight:700;padding:8px 28px 8px 10px!important}</style>
-<style>#detailModal #trkBox.trk-nomem .trk-row span[data-xs]{display:none!important}</style>
-<style>#trkMf{position:relative}#trkMf select{display:none!important}
-#trkMf .mf-btn{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:space-between;border:1px solid #f4c9d9;border-left:none;border-radius:0;background:#fff;color:#c95a88;font:inherit;font-size:14px;font-weight:700;padding:8px 10px;text-align:left;cursor:pointer}
-#trkMf .mf-pn{position:absolute;left:0;right:0;top:100%;max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;border:1px solid #f4c9d9;z-index:60}
-#trkMf .mf-pn[hidden]{display:none}
-#trkMf .mf-it{padding:12px 14px;font-size:14px;color:#444;border-bottom:1px solid #f6dde7;cursor:pointer}
-#trkMf .mf-gh{padding:8px 14px;font-size:12px;font-weight:700;color:#c95a88;background:#fdeef4;border-bottom:1px solid #f6dde7}</style>
 </head>
 <body>
 
@@ -1200,7 +1185,7 @@ const ks=ogKinds();
 const cnt={};(cachedVideos||[]).forEach(v=>{const gs=parseGenres(v.genres||v.genre||'');if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return;const seen={};gs.forEach(g=>{if(g.genre===OGK&&!seen[g.subgenre]){seen[g.subgenre]=1;cnt[g.subgenre]=(cnt[g.subgenre]||0)+1;}});});
 w.style.display='none';
 const ksel=document.getElementById('kindSel');
-const opts=['<option value="すべて">ジャンル</option>','<option value="__none">未設定</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>'));
+const opts=['<option value="すべて">ジャンル</option>','<option value="__none">未設定</option>'].concat(ks.map(k=>'<option value="'+esc(k)+'">'+esc(k)+(cnt[k]?' '+cnt[k]:'')+'</option>'));
 if(isAdmin)opts.push('<option value="__assign">＋ 種別を付ける</option><option value="__add">＋ 種別を追加</option><option value="__del">－ 種別を削除</option>');
 ksel.innerHTML=opts.join('');ksel.value=currentKind;ksel.style.display='';
 ksel.onchange=()=>{const v=ksel.value;
@@ -1251,18 +1236,13 @@ return ys;
 function trackTitles(item){
 try{const _a=JSON.parse(item.tracks||'[]');return(Array.isArray(_a)?_a:[]).map(t=>typeof t==='string'?t:(t&&t.title)||'').join(' ');}catch{return'';}
 }
-function memGrpHit(item,genre,sub){try{const c=loadConfig();const nz=x=>String(x||'').replace(/[\s\u3000]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺');
-const ms=[].concat(item.members||[]).map(nz);if(!ms.length)return false;
-let grps;if(genre&&sub&&sub!=='すべて')grps=[sub];else if(genre)grps=((c.subgenres&&c.subgenres[genre])||[]);else grps=ogGroups(c);
-if(genre&&!isOG(genre))return false;if(!grps.length)grps=Object.keys(c.otherMembers||{});
-return grps.some(g=>((c.otherMembers&&c.otherMembers[g])||[]).some(n=>ms.includes(nz(n))));}catch{return false;}}
 function matchItem(item){try{return matchItem0(item);}catch(e){return false;}}
 function matchItem0(item){
 if(currentGenre==='すべて'&&currentSide==='og'&&currentKind!=='すべて'){const g0=parseGenres(item.genres||item.genre||'');if(currentKind==='__none'?g0.some(g=>g.genre===OGK):!g0.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;}
-if(currentGenre==='すべて'){const gs=parseGenres(item.genres||item.genre||'');const og=gs.some(g=>isOG(g.genre))||memGrpHit(item,null,'すべて');const st=gs.some(g=>!isOG(g.genre)&&g.genre!==OGK);if(currentSide==='og'?!og:(og&&!st))return false;}
+if(currentGenre==='すべて'){const gs=parseGenres(item.genres||item.genre||'');const og=gs.some(g=>isOG(g.genre));const st=gs.some(g=>!isOG(g.genre)&&g.genre!==OGK);if(currentSide==='og'?!og:(og&&!st))return false;}
 if(currentGenre!=='すべて'){
 const gs=parseGenres(item.genres||item.genre||'');
-if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre))&&!memGrpHit(item,currentGenre,currentSubgenre))return false;
+if(!gs.some(g=>g.genre===currentGenre&&(currentSubgenre==='すべて'||g.subgenre===currentSubgenre)))return false;
 if(currentKind==='__none'){if((isOG(currentGenre)||currentSide==='og')&&gs.some(g=>g.genre===OGK))return false;}else if(currentKind!=='すべて'&&(isOG(currentGenre)||currentSide==='og')&&!gs.some(g=>g.genre===OGK&&g.subgenre===currentKind))return false;
 }
 if(F.ex.size&&!F.ex.has(item.exchange))return false;
@@ -2133,7 +2113,6 @@ if(has)ob.style.display='none';else w.classList.add('tf-hide');
 ob.onclick=()=>{w.classList.remove('tf-hide');ob.style.display='none';};}
 div.querySelector('.dg-add-more').onclick=()=>_addDgMore();
 div.querySelector('.dg-remove').addEventListener('click',()=>div.remove());
-{const _di=div.querySelector('.dg-date');const _cl=()=>{delete div.dataset.rawdate;};_di.addEventListener('input',_cl);_di.addEventListener('change',_cl);}
 div.querySelector('.dg-to-track').addEventListener('click',()=>{const n=moveDgToTracks(div);toastMsg(n<0?'日付を入れてください':n===0?'同じ日付の収録内容がすでにあるので、発売日からだけ外しました':'収録内容の一番下に追加しました（ピンクの枠）');});
 div.querySelector('.dg-add-time').addEventListener('click',()=>{
 const tr=document.createElement('div');tr.className='time-row';
@@ -2220,10 +2199,10 @@ renderMemberChips(true);
 document.querySelectorAll('#genreSections .chip').forEach(c=>c.addEventListener('click',()=>setTimeout(()=>renderMemberChips(false),50)));
 document.getElementById('dateGroupsWrap').innerHTML='';
 const schedules=item?schedUnion(item):[];
-window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.filter(s=>isoDate(s.date)).forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
+window._openDates=schedules.map(s=>s.date);window._movedDates=[];schedules.forEach(s=>addDateGroup(s.date,s.times||[],s.info||{}));
 document.getElementById('tracksWrap').innerHTML='';
 const tracks=item&&item.tracks?JSON.parse(item.tracks||'[]'):[];
-window._trkInit=true;{const trf=parseMeta(item).tr||[];mergeDateRows(tracks).forEach(({t,ti})=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();
+window._trkInit=true;{const trf=parseMeta(item).tr||[];mergeDateRows(tracks).forEach(({t,ti})=>typeof t==='string'?addTrackRow(t,'none','',[],'',trf[ti]||{}):addTrackRow(String(t.title||''),t.dist||'none',t.date||'',t.members||[],t.section||'',trf[ti]||{},t.time||''));}window._trkInit=false;if(!document.querySelector('#tracksWrap .track-input'))addTrackRow();if(!document.querySelector('#dateGroupsWrap .date-group'))addDateGroup();
 document.getElementById('editModal').classList.remove('hidden');
 setTimeout(()=>document.getElementById('editTitle').focus(),50);
 }
@@ -2247,7 +2226,7 @@ let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;let j=0;while(j<a.length-i
 let x=a.slice(i,a.length-j),y=b.slice(i,b.length-j);if(!x||x.length>12||y.length>12)return;
 if(x.length<2){const l=a.slice(Math.max(0,i-1),i),r1=a.slice(a.length-j,a.length-j+1),r2=b.slice(b.length-j,b.length-j+1);x=l+x+r1;y=l+y+r2;}
 const d=fixLoad();d[x]=y;try{localStorage.setItem(FIXK,JSON.stringify(d));}catch{}}
-function isoDate(v){v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;if(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/.test(v)){const d=new Date(v);if(!isNaN(d))return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}{const m0=/^(\d{4}-\d{2}-\d{2})[T ]/.exec(v);if(m0)return m0[1];}const m=/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D*$/.exec(v);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):'';}
+function isoDate(v){v=String(v||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const m=/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})\D*$/.exec(v);return m?m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'):'';}
 function addTrackRow(val='',dist='none',date='',members=[],section='',file={},time=''){
 const _rawDate=String(date||'');date=isoDate(_rawDate);members=Array.isArray(members)?members:[];
 cfg=loadConfig();
@@ -3355,13 +3334,8 @@ if(secList().includes(h)&&line.length<=h.length+4){sec=h;return;}
 if(strip)line=line.replace(/^(?:[#＃]?\s*[0-9０-９]{1,3}\s*[.．、)）:：\-－]\s*|[0-9０-９]{1,3}\s+|[・•●○]\s*)/,'');
 line=line.trim();
 if(!line)return;
-const di=lineDateInfo(line);const pv=out[out.length-1];
-if(di){if(!di.title&&pv&&pv.title&&!pv.date&&(pv.section||'')===(sec||'')){pv.date=di.date;pv.time=di.time||pv.time||'';pv.members=[...new Set([...(pv.members||[]),...(di.members||[])])];return;}
-out.push({title:di.title,section:sec,date:di.date,time:di.time,members:di.members});return;}
-{const _c=s=>String(s).replace(/[\s\u3000]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺').replace(/[＆&]/g,'＆').replace(/[・,、，\/／＆]/g,'');const ms0=matchNamesG(line);const ms=ms0.filter(m=>!ms0.some(o=>o!==m&&_c(o).includes(_c(m))));
-if(ms.length&&pv&&pv.title){let r=_c(line);ms.forEach(m=>{r=r.split(_c(m)).join('');});
-const toks=line.split(/[&＆、,，・\/／\s\u3000]+/).filter(Boolean);
-if(!r||(toks.length&&toks.every(t=>matchNamesG(t).length>0))){pv.members=[...new Set([...(pv.members||[]),...ms])];return;}}}
+const di=lineDateInfo(line);
+if(di){out.push({title:di.title,section:sec,date:di.date,time:di.time,members:di.members});return;}
 out.push({title:line,section:sec});
 });
 return out;
@@ -3923,36 +3897,19 @@ applyOshi();
 var _od3=openDetailModal;
 openDetailModal=function(it){_od3.apply(this,arguments);try{build(it);}catch(e){}};
 function build(it){
-var old=document.getElementById('trkMf');if(old)old.remove();{var _b0=document.getElementById('trkBox');if(_b0)_b0.classList.remove('trk-nomem');}
+var old=document.getElementById('trkMf');if(old)old.remove();
 var tr=[];try{tr=parseTracks(it);}catch(e){}
 if(tr.length<12)return;
 var cnt={};tr.forEach(function(t){(t.members||[]).forEach(function(m){cnt[m]=(cnt[m]||0)+1;});});
 var ms=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];});
 if(ms.length<2)return;
 var box=document.getElementById('trkBox');if(!box)return;
-var wrap=document.createElement('div');wrap.id='trkMf';
-var _opts='';
-try{
-var used={};function nz(x){return String(x).replace(/[\s\u3000]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/濱/g,'浜').replace(/邊|邉/g,'辺');}
-function opt(m){return '<option value="'+esc(m)+'">'+esc(m)+'（'+cnt[m]+'）</option>';}
-function grp(label,list){if(!Array.isArray(list))return;var l=[];list.forEach(function(n){ms.forEach(function(m){if(!used[m]&&nz(m)===nz(n)&&l.indexOf(m)<0)l.push(m);});});if(!l.length)return;l.forEach(function(m){used[m]=1;});_opts+='<optgroup label="'+esc(label)+'">'+l.map(opt).join('')+'</optgroup>';}
-var cf={};try{cf=loadConfig()||{};}catch(e0){cf={};}
-if(!Array.isArray(cf.members)||!cf.members.length)cf.members=Array.isArray(cfg&&cfg.members)?cfg.members:[];
-var om=cf.otherMembers||(cfg&&cfg.otherMembers)||{};
-grp('SixTONES',cf.members);Object.keys(om).forEach(function(g){grp(g,om[g]);});
-var rest=ms.filter(function(m){return !used[m];});if(rest.length)_opts+='<optgroup label="その他">'+rest.map(opt).join('')+'</optgroup>';
-}catch(e1){_opts='';}
-if(!_opts)_opts=ms.map(opt).join('');
-wrap.innerHTML='<span class="mf-lb">出演者</span><select hidden><option value="">すべて</option>'+_opts+'</select><button type="button" class="mf-btn"><span class="mf-cur">すべて</span><span class="mf-ar">▾</span></button><div class="mf-pn" hidden></div>';
-var bar=wrap.querySelector('select'),btn=wrap.querySelector('.mf-btn'),cur=wrap.querySelector('.mf-cur'),pn=wrap.querySelector('.mf-pn');
-function pick(v,label){bar.value=v;cur.textContent=label;pn.hidden=true;filt(box,v);wrap.classList.toggle('on',!!v);}
-var ph='<div class="mf-it" data-v="">すべて</div>';
-[].forEach.call(bar.children,function(o){if(o.tagName==='OPTGROUP'){ph+='<div class="mf-gh">'+o.label+'</div>';[].forEach.call(o.children,function(p){ph+='<div class="mf-it" data-v="'+p.value.replace(/"/g,'&quot;')+'">'+p.textContent+'</div>';});}});
-pn.innerHTML=ph;
-pn.addEventListener('click',function(e){var t=e.target.closest('.mf-it');if(!t)return;pick(t.getAttribute('data-v'),t.textContent);});
-btn.addEventListener('click',function(e){e.stopPropagation();pn.hidden=!pn.hidden;});
-document.addEventListener('click',function(e){if(!wrap.contains(e.target))pn.hidden=true;});
-box.parentNode.insertBefore(wrap,box);if(/ガムシャラ/.test(String(it&&it.title||'')))box.classList.add('trk-nomem');
+var bar=document.createElement('div');bar.id='trkMf';
+bar.innerHTML=['すべて'].concat(ms).map(function(m,i){return '<button type="button" data-m="'+(i?esc(m):'')+'"'+(i?'':' class="on"')+'>'+esc(m)+'</button>';}).join('');
+box.parentNode.insertBefore(bar,box);
+bar.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+[].forEach.call(bar.children,function(x){x.classList.toggle('on',x===b);});
+filt(box,b.dataset.m);});
 }
 function filt(box,m){
 var rows=box.querySelectorAll('.trk-row');
