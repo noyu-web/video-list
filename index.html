@@ -1140,11 +1140,18 @@ const RECENT_KEY='recent_edit_v1_'+CHECK_LIST;
 const CFG_GET_ACTION='getFullConfig';
 async function verifyRename(oldName,newName){
 let cfgOk=null,left=null;
+for(let t=0;t<4;t++){
+try{await cfgSaveQ;}catch{}
+let d=null;try{d=await gasGet({action:CFG_GET_ACTION});}catch{}
+if(d&&Array.isArray(d.genres)){if(d.genres.includes(newName)&&!d.genres.includes(oldName))break;if(d.rev)cfgRev=d.rev;saveConfig(cfg);}
+else await new Promise(z=>setTimeout(z,800));
+}
+try{await cfgSaveQ;}catch{}
 try{const d=await gasGet({action:CFG_GET_ACTION});if(d&&Array.isArray(d.genres))cfgOk=d.genres.includes(newName)&&!d.genres.includes(oldName);}catch{}
 try{const all=await loadVideos(true);if(Array.isArray(all))left=all.filter(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===oldName)).length;}catch{}
 const bad=[];if(cfgOk===false)bad.push('タブ名がサーバーに反映されていません');if(cfgOk===null)bad.push('タブ名の反映を確認できませんでした');
 if(left>0)bad.push('動画'+left+'件が元の名前のままです');if(left===null)bad.push('動画の反映を確認できませんでした');
-alert(bad.length?'変更の結果：\n'+bad.join('\n'):'「'+newName+'」への変更が、サーバーに反映されたことを確認しました。');
+if(bad.length)alert('変更の結果：\n'+bad.join('\n'));else toastMsg('「'+newName+'」に変更しました');
 }
 async function renameGenreData(oldName,newName){
 let keep=null;try{keep=localStorage.getItem(RECENT_KEY);}catch{}
@@ -1152,7 +1159,7 @@ let all=[];try{all=await loadVideos(true);}catch{}
 const list=Array.isArray(all)?all:[];
 const q=list.filter(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===oldName));
 const total=q.length;let ok=0,ng=0;
-async function w(){while(q.length){const it=q.shift();const gs=parseGenres(it.genres||it.genre||'').map(g=>g.genre===oldName?{...g,genre:newName}:g);const v={...it,genres:JSON.stringify(gs)};let r=false;try{r=await writeVideo(v,false);}catch{}if(r){it.genres=v.genres;ok++;}else ng++;}}
+async function w(){while(q.length){const it=q.shift();const gs=parseGenres(it.genres||it.genre||'').map(g=>g.genre===oldName?{...g,genre:newName}:g);const v={...it,genres:JSON.stringify(gs)};let r=false;for(let t=0;t<4&&!r;t++){try{r=await writeVideo(v,false);}catch{}if(!r)await new Promise(z=>setTimeout(z,600*(t+1)));}if(r){it.genres=v.genres;ok++;}else ng++;}}
 await Promise.all([w(),w(),w(),w()]);
 try{if(keep===null)localStorage.removeItem(RECENT_KEY);else localStorage.setItem(RECENT_KEY,keep);}catch{}
 return{ok:ok,ng:ng,total:total};
