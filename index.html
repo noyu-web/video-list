@@ -1137,6 +1137,15 @@ if(d&&d.ok)recentMark(video.id);
 return !!(d&&d.ok);
 }
 const RECENT_KEY='recent_edit_v1_'+CHECK_LIST;
+const CFG_GET_ACTION='getFullConfig';
+async function verifyRename(oldName,newName){
+let cfgOk=null,left=null;
+try{const d=await gasGet({action:CFG_GET_ACTION});if(d&&Array.isArray(d.genres))cfgOk=d.genres.includes(newName)&&!d.genres.includes(oldName);}catch{}
+try{const all=await loadVideos(true);if(Array.isArray(all))left=all.filter(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===oldName)).length;}catch{}
+const bad=[];if(cfgOk===false)bad.push('タブ名がサーバーに反映されていません');if(cfgOk===null)bad.push('タブ名の反映を確認できませんでした');
+if(left>0)bad.push('動画'+left+'件が元の名前のままです');if(left===null)bad.push('動画の反映を確認できませんでした');
+alert(bad.length?'変更の結果：\n'+bad.join('\n'):'「'+newName+'」への変更が、サーバーに反映されたことを確認しました。');
+}
 async function renameGenreData(oldName,newName){
 let keep=null;try{keep=localStorage.getItem(RECENT_KEY);}catch{}
 let all=[];try{all=await loadVideos(true);}catch{}
@@ -1878,7 +1887,7 @@ if(F.genres.has(oldName)){F.genres.delete(oldName);F.genres.add(newName);}
 saveConfig(cfg);
 {toastMsg('動画の分類を書き換えています');const _rr=await renameGenreData(oldName,newName);if(_rr.ng&&isAdmin)failMsg('一部の動画('+_rr.ng+'件)の分類の変更');}
 cachedVideos=null;await loadVideos(true);
-openSettingsModal();renderTabs();renderSubtabs();renderList();
+openSettingsModal();renderTabs();renderSubtabs();renderList();await verifyRename(oldName,newName);
 }));
 document.getElementById('genreManageList').querySelectorAll('[data-gup]').forEach(b=>b.addEventListener('click',()=>{
 const i=parseInt(b.dataset.gup);if(i<=1)return;
@@ -1955,7 +1964,7 @@ if(F.genres.has(oldName)){F.genres.delete(oldName);F.genres.add(nm);}
 if(saveConfig(cfg)===false)return;
 {toastMsg('動画の分類を書き換えています');const _rr=await renameGenreData(oldName,nm);if(_rr.ng&&isAdmin)failMsg('一部の動画('+_rr.ng+'件)の分類の変更');}
 cachedVideos=null;await loadVideos(true);
-reopen();renderList();toastMsg('「'+nm+'」に変更しました');
+reopen();renderList();await verifyRename(oldName,nm);
 }));
 box.querySelectorAll('[data-ogo]').forEach(b=>b.addEventListener('click',()=>{
 const k=b.dataset.k,og2=ogGenres(cfg),i=og2.indexOf(k),j=b.dataset.ogo==='up'?i-1:i+1;
