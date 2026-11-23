@@ -1137,6 +1137,17 @@ if(d&&d.ok)recentMark(video.id);
 return !!(d&&d.ok);
 }
 const RECENT_KEY='recent_edit_v1_'+CHECK_LIST;
+async function renameGenreData(oldName,newName){
+let keep=null;try{keep=localStorage.getItem(RECENT_KEY);}catch{}
+let all=[];try{all=await loadVideos(true);}catch{}
+const list=Array.isArray(all)?all:[];
+const q=list.filter(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===oldName));
+const total=q.length;let ok=0,ng=0;
+async function w(){while(q.length){const it=q.shift();const gs=parseGenres(it.genres||it.genre||'').map(g=>g.genre===oldName?{...g,genre:newName}:g);const v={...it,genres:JSON.stringify(gs)};let r=false;try{r=await writeVideo(v,false);}catch{}if(r){it.genres=v.genres;ok++;}else ng++;}}
+await Promise.all([w(),w(),w(),w()]);
+try{if(keep===null)localStorage.removeItem(RECENT_KEY);else localStorage.setItem(RECENT_KEY,keep);}catch{}
+return{ok:ok,ng:ng,total:total};
+}
 function recentMap(){try{const o=JSON.parse(localStorage.getItem(RECENT_KEY)||'{}');return o&&typeof o==='object'?o:{};}catch{return{};}}
 function recentMark(id){try{const o=recentMap();o[String(id)]=Date.now();const ks=Object.keys(o);if(ks.length>300){ks.sort((a,b)=>o[a]-o[b]).slice(0,ks.length-300).forEach(k=>delete o[k]);}localStorage.setItem(RECENT_KEY,JSON.stringify(o));}catch{}}
 async function gasWrite(params){
@@ -1865,7 +1876,7 @@ cfg.genres[idx]=newName;
 if(currentGenre===oldName)currentGenre=newName;
 if(F.genres.has(oldName)){F.genres.delete(oldName);F.genres.add(newName);}
 saveConfig(cfg);
-{let okk=false;try{const d=await gasWrite({action:'renameGenre',from:oldName,to:newName});okk=!!(d&&d.ok);}catch{}if(!okk&&isAdmin)failMsg('ジャンル名の変更');}
+{toastMsg('動画の分類を書き換えています');const _rr=await renameGenreData(oldName,newName);if(_rr.ng&&isAdmin)failMsg('一部の動画('+_rr.ng+'件)の分類の変更');}
 cachedVideos=null;await loadVideos(true);
 openSettingsModal();renderTabs();renderSubtabs();renderList();
 }));
@@ -1942,7 +1953,7 @@ cfg.subgenres[nm]=cfg.subgenres[oldName]||[];delete cfg.subgenres[oldName];cfg.g
 if(currentGenre===oldName)currentGenre=nm;
 if(F.genres.has(oldName)){F.genres.delete(oldName);F.genres.add(nm);}
 if(saveConfig(cfg)===false)return;
-{let okk=false;try{const d=await gasWrite({action:'renameGenre',from:oldName,to:nm});okk=!!(d&&d.ok);}catch{}if(!okk&&isAdmin)failMsg('ジャンル名の変更');}
+{toastMsg('動画の分類を書き換えています');const _rr=await renameGenreData(oldName,nm);if(_rr.ng&&isAdmin)failMsg('一部の動画('+_rr.ng+'件)の分類の変更');}
 cachedVideos=null;await loadVideos(true);
 reopen();renderList();toastMsg('「'+nm+'」に変更しました');
 }));
@@ -4120,4 +4131,3 @@ window._openEx=openEx;
 </script>
 </body>
 </html>
-
