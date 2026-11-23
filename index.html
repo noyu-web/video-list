@@ -836,6 +836,10 @@ body.selecting .list-wrap{padding-bottom:90px}
 <input class="form-input" type="text" id="editTitle" placeholder="タイトルを入力" list="titleSug" autocomplete="off">
 <datalist id="titleSug"></datalist>
 </div>
+<div class="form-group">
+<label class="form-label">略称・別名（、で区切る）</label>
+<input class="form-input" type="text" id="editAlias" placeholder="例：ガム、ガムシャラ" autocomplete="off">
+</div>
 <div style="border-top:2px solid var(--pink-light);margin:16px 0"></div>
 <div class="sec" data-sec="members"><button type="button" class="sec-h"><span class="sec-t">出演者</span><span class="sec-s"></span><span class="sec-c"></span></button><div class="sec-b">
 <div class="form-group">
@@ -1278,7 +1282,7 @@ if(qMode==='and')ok=[...F.years].every(y=>ys.has(y));else F.years.forEach(y=>{if
 if(!ok)return false;
 }
 if(F.q){
-const hay=[item.title,[].concat(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item)].join(' ');
+const hay=[item.title,[].concat(item.members||[]).join(' '),item.note||'',parseGenres(item.genres||item.genre||'').map(g=>g.genre+' '+(g.subgenre||'')).join(' '),trackTitles(item),metaText(item),String(parseMeta(item).al||'')].join(' ');
 const hayF=fold(hay);
 const segs=fold(F.q).split(/[|｜]/).map(x=>x.split(/\s+/).filter(Boolean)).filter(a=>a.length);
 if(segs.length&&!segs.some(terms=>terms.every(t=>hayF.includes(t))))return false;
@@ -2165,7 +2169,7 @@ cfg=loadConfig();editingId=id;window._movedDates=[];
 const data=await loadVideos();
 const item=id?data.find(d=>d.id===id):null;
 document.getElementById('editModalTitle').innerHTML=(item?'動画を編集':'動画を追加')+'';
-document.getElementById('editTitle').value=item?item.title:'';
+document.getElementById('editTitle').value=item?item.title:'';{const _ea=document.getElementById('editAlias');if(_ea)_ea.value=item?(parseMeta(item).al||''):'';}
 {const st=new Set();data.forEach(v=>{if(v.title)st.add(v.title);try{parseTracks(v).forEach(t=>{const x=typeof t==='string'?t:(t&&t.title);if(x)st.add(x);});}catch{}});document.getElementById('titleSug').innerHTML=[...st].slice(0,2000).map(x=>'<option value="'+esc(x)+'">').join('');}
 document.getElementById('editExchange').value=item?item.exchange:'ok';
 document.getElementById('editNote').value=item?(item.note||''):'';
@@ -2561,7 +2565,7 @@ let _sdel=[];
 raw.forEach((x,i)=>{const inf=gi[i]||{};const e=mp.get(x.date);if(!e){const n={s:{date:x.date,times:x.times.slice()},i:inf};mp.set(x.date,n);arr.push(n);}else{x.times.forEach(t=>{if(!e.s.times.includes(t))e.s.times.push(t);});if(!Object.keys(e.i).length)e.i=inf;}});
 schedules=arr.map(z=>z.s);schInfo=arr.map(z=>z.i);}
 const metaObj={};
-{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;else if(!tracks.length&&Array.isArray(om.tr)&&om.tr.some(o=>o&&Object.keys(o).some(k=>k==='more'?(o.more||[]).length:o[k])))metaObj.tr=om.tr;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;}
+{const om=parseMeta(editingId?(cachedVideos||[]).find(x=>x.id===editingId):null);if(_trackFiles.some(o=>Object.keys(o).length))metaObj.tr=_trackFiles;else if(!tracks.length&&Array.isArray(om.tr)&&om.tr.some(o=>o&&Object.keys(o).some(k=>k==='more'?(o.more||[]).length:o[k])))metaObj.tr=om.tr;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;if(_sdel.length)metaObj.sdel=_sdel;{const _ea=document.getElementById('editAlias');const _av=_ea?_ea.value.trim():'';if(_av)metaObj.al=_av;}}
 const video={id:editingId||Date.now().toString(),title,exchange,note,members,genres:JSON.stringify(genres),dates:JSON.stringify(schedules),tracks:JSON.stringify(tracks),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 document.getElementById('editModal').classList.add('hidden');
 {const _isNew=!editingId;const _l=Array.isArray(cachedVideos)?cachedVideos:[];
@@ -2747,7 +2751,7 @@ its.forEach((x,k)=>{const fx=JSON.stringify(itr[k]||{});const sx=JSON.stringify(
 if(it.note&&!notes.includes(it.note))notes.push(it.note);
 }
 const schInfo=sched.map(x=>x._i||{});sched.forEach(x=>{delete x._i;});
-const metaObj={};if(tr.some(o=>o&&Object.keys(o).length))metaObj.tr=tr;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;
+const metaObj={};try{const _al=parseMeta(base).al;if(_al)metaObj.al=_al;}catch{}if(tr.some(o=>o&&Object.keys(o).length))metaObj.tr=tr;if(schInfo.some(o=>Object.keys(o).length))metaObj.sch=schInfo;
 const video={...base,members,genres:JSON.stringify(genres),dates:JSON.stringify(sched),tracks:JSON.stringify(tracks),note:notes.join('\n'),meta:Object.keys(metaObj).length?JSON.stringify(metaObj):''};
 let ok=await writeVideo(video,false);
 if(!ok){toastMsg('結合の保存に失敗しました');return;}
