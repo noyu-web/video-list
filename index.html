@@ -1157,6 +1157,8 @@ async function renameGenreData(oldName,newName){
 let keep=null;try{keep=localStorage.getItem(RECENT_KEY);}catch{}
 let all=[];try{all=await loadVideos(true);}catch{}
 const list=Array.isArray(all)?all:[];
+{let br=null;try{br=await gasWrite({action:'renameGenreBulk',from:oldName,to:newName,list:CHECK_LIST});}catch{}
+if(br&&br.ok){try{if(keep===null)localStorage.removeItem(RECENT_KEY);else localStorage.setItem(RECENT_KEY,keep);}catch{}return{ok:br.updated||0,ng:0,total:br.updated||0};}}
 const q=list.filter(it=>parseGenres(it.genres||it.genre||'').some(g=>g.genre===oldName));
 const total=q.length;let ok=0,ng=0;
 async function w(){while(q.length){const it=q.shift();const gs=parseGenres(it.genres||it.genre||'').map(g=>g.genre===oldName?{...g,genre:newName}:g);const v={...it,genres:JSON.stringify(gs)};let r=false;for(let t=0;t<4&&!r;t++){try{r=await writeVideo(v,false);}catch{}if(!r)await new Promise(z=>setTimeout(z,600*(t+1)));}if(r){it.genres=v.genres;ok++;}else ng++;}}
