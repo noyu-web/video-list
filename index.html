@@ -1127,15 +1127,56 @@ if(d&&d.error==='unauthorized'){clearToken();updateAdminUI();alert('ログイン
 return d;
 }
 async function writeVideo(video,isNew){
-let d;
+let d,net=false;
 try{d=await gasPost({action:'saveVideo'},{video,isNew});}
 catch(e){
-if(isNew)return false;
-try{d=await gasWrite({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew})),id:''});}catch{return false;}
+net=true;
+if(!isNew){try{d=await gasWrite({action:'saveVideo',data:encodeURIComponent(JSON.stringify({video,isNew})),id:''});net=false;}catch{net=true;}}
 }
+if(net&&(navigator.onLine===false||!isNew))return queueWrite(video,isNew);
+if(net)return false;
 if(d&&d.ok)recentMark(video.id);
 return !!(d&&d.ok);
 }
+function pendList(){try{const a=JSON.parse(localStorage.getItem(PEND_KEY)||'[]');return Array.isArray(a)?a:[];}catch{return[];}}
+function pendSave(a){try{localStorage.setItem(PEND_KEY,JSON.stringify(a));}catch{}pendBar();}
+function queueWrite(video,isNew){
+const a=pendList();const k=a.findIndex(x=>String(x.video.id)===String(video.id));
+if(k>=0){a[k]={video,isNew:a[k].isNew||isNew,ts:Date.now()};}else a.push({video,isNew:!!isNew,ts:Date.now()});
+pendSave(a);
+try{const id=String(video.id);if(Array.isArray(cachedVideos)){const n=cachedVideos.findIndex(x=>String(x.id)===id);if(n>=0)cachedVideos[n]={...cachedVideos[n],...video};else cachedVideos.push({...video});try{localStorage.setItem('videos_ls_cache',JSON.stringify(cachedVideos));}catch{}}}catch{}
+toastMsg('通信できないため仮保存しました。通信が戻ると自動で保存します');
+return true;
+}
+function pendBar(){
+let b=document.getElementById('pendBar');const n=pendList().length;
+if(!n){if(b)b.style.display='none';return;}
+if(!b){b=document.createElement('div');b.id='pendBar';b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#fff0f5;border-top:1px solid #f4b6cc;color:#b03a6a;font-size:13px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));text-align:center;cursor:pointer';b.addEventListener('click',()=>flushPending(true));document.body.appendChild(b);}
+b.style.display='block';b.textContent='未保存 '+n+'件（通信が戻ると自動で保存します。タップで今すぐ送信）';
+}
+let _flushing=false;
+async function flushPending(manual){
+if(_flushing)return;let a=pendList();if(!a.length){pendBar();return;}
+if(navigator.onLine===false){if(manual)toastMsg('まだ通信できません');return;}
+_flushing=true;let done=0;
+try{
+let ids=null;
+if(a.some(x=>x.isNew)){try{const sv=await gasGet({action:'getVideos',token});if(Array.isArray(sv))ids=new Set(sv.map(x=>String(x.id)));}catch{}if(!ids)return;}
+for(const e of a.slice()){
+const isNew=e.isNew&&!(ids&&ids.has(String(e.video.id)));
+let d=null;try{d=await gasPost({action:'saveVideo'},{video:e.video,isNew});}catch{}
+if(d&&d.ok){done++;pendSave(pendList().filter(x=>String(x.video.id)!==String(e.video.id)||x.ts>e.ts));}
+else break;
+}
+}finally{_flushing=false;}
+pendBar();
+if(done){toastMsg('仮保存した'+done+'件を保存しました');try{cachedVideos=null;await loadVideos(true);renderList();}catch{}}
+}
+window.addEventListener('online',()=>setTimeout(()=>flushPending(false),800));
+setInterval(()=>flushPending(false),30000);
+setTimeout(()=>{pendBar();flushPending(false);},3000);
+try{if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});}catch{}
+const PEND_KEY='pending_writes_v1_'+CHECK_LIST;
 const RECENT_KEY='recent_edit_v1_'+CHECK_LIST;
 const CFG_GET_ACTION='getFullConfig';
 async function verifyRename(oldName,newName){
@@ -3905,12 +3946,12 @@ renderList=async function(){var r=await _rl.apply(this,arguments);try{if(F.membe
 /* 統計 */
 var st=document.getElementById('stOv');
 function bars(t,rows){var mx=Math.max.apply(null,rows.map(function(r){return r[1];}).concat([1]));return '<div class="ov-y">'+t+'</div>'+rows.map(function(r){return '<div class="st-b"><div><span>'+esc(r[0])+'</span><span>'+r[1]+'</span></div><div><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></div></div>';}).join('');}
-function openSt(){var L=vids(),G={},M={},Y={};
-L.forEach(function(it){gl(it).forEach(function(x){G[x]=(G[x]||0)+1;});(it.members||[]).forEach(function(x){M[x]=(M[x]||0)+1;});var d=first(it);var y=d?d.slice(0,4)+'年':'日付なし';Y[y]=(Y[y]||0)+1;});
+function openSt(){var L=vids(),G={},M={},Y={},X={},Mo={};
+L.forEach(function(it){gl(it).forEach(function(x){G[x]=(G[x]||0)+1;});(it.members||[]).forEach(function(x){M[x]=(M[x]||0)+1;});var xl=exchangeLabel(it.exchange);X[xl]=(X[xl]||0)+1;var d=first(it);if(d&&/^\d{4}-\d{2}/.test(d)){var mk=parseInt(d.slice(5,7),10)+'月';Mo[mk]=(Mo[mk]||0)+1;}var y=d?d.slice(0,4)+'年':'日付なし';Y[y]=(Y[y]||0)+1;});
 var sr=function(o,n){return Object.keys(o).map(function(k){return [k,o[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,n||99);};
 var yr=Object.keys(Y).filter(function(k){return k!=='日付なし';}).sort().map(function(k){return [k,Y[k]];});if(Y['日付なし'])yr.push(['日付なし',Y['日付なし']]);
 document.getElementById('stTitle').textContent='統計　全体 '+L.length+'本';
-document.getElementById('stBody').innerHTML=bars('ジャンル別',sr(G))+bars('出演者別（上位10）',sr(M,10))+bars('年別',yr)+'<div style="height:30px"></div>';
+document.getElementById('stBody').innerHTML=bars('ジャンル別',sr(G))+bars('交換の可否',sr(X))+bars('出演者別（上位30）',sr(M,30))+bars('年別',yr)+bars('月別（発売日・全年合計）',Array.from({length:12},function(_,i){return [(i+1)+'月',Mo[(i+1)+'月']||0];}))+'<div style="height:30px"></div>';
 st.classList.add('on');st.scrollTop=0;}
 document.getElementById('stBack').addEventListener('click',function(){st.classList.remove('on');});
 var mb=document.getElementById('cmBtn');
@@ -4149,4 +4190,3 @@ window._openEx=openEx;
 </script>
 </body>
 </html>
-
