@@ -1571,11 +1571,40 @@ box.innerHTML='<div style="margin:14px 0 6px;padding:10px 12px;background:#fff0f
 }
 
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-xs]');if(t){e.stopPropagation();crossSearch(t.dataset.xs);}});
+let _curDet=null;const _xsStack=[];
+const _odm0=openDetailModal;openDetailModal=function(item){_curDet=item;return _odm0.apply(this,arguments);};
+function xsSnap(){const det=document.getElementById('detailModal');const open=!!(det&&!det.classList.contains('hidden'));
+const S={};['genres','members','years','ex','fresh','gaps','chk','fav'].forEach(k=>{S[k]=[...F[k]];});
+return{F:S,q:F.q,g:currentGenre,sg:currentSubgenre,side:currentSide,y:window.scrollY,det:open&&_curDet?String(_curDet.id):null,dec:(typeof currentDecade!=='undefined'?currentDecade:undefined),kind:(typeof currentKind!=='undefined'?currentKind:undefined)};}
+function xsBar(){
+let b=document.getElementById('xsBar');
+if(!_xsStack.length){if(b)b.style.display='none';return;}
+if(!b){b=document.createElement('div');b.id='xsBar';b.style.cssText='position:fixed;left:12px;bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:9998;display:flex;gap:0;background:#e8789f;color:#fff;font-size:14px;font-weight:700;box-shadow:none;border-radius:0';
+b.innerHTML='<button type="button" id="xsBack" style="background:none;border:0;color:#fff;font:inherit;padding:12px 16px;cursor:pointer">‹ 元の画面に戻る</button><button type="button" id="xsX" style="background:#d9638c;border:0;color:#fff;font:inherit;padding:12px 14px;cursor:pointer">×</button>';
+document.body.appendChild(b);
+document.getElementById('xsBack').addEventListener('click',xsRestore);
+document.getElementById('xsX').addEventListener('click',()=>{_xsStack.length=0;xsBar();});}
+b.style.display='flex';
+}
+function xsRestore(){
+const S=_xsStack.pop();xsBar();if(!S)return;
+Object.keys(S.F).forEach(k=>{F[k].clear();S.F[k].forEach(v=>F[k].add(v));});F.q=S.q||'';
+currentGenre=S.g;currentSubgenre=S.sg;currentSide=S.side;
+if(S.dec!==undefined)currentDecade=S.dec;if(S.kind!==undefined)currentKind=S.kind;
+try{renderTabs();renderSubtabs();}catch{}
+try{renderFilterSheet();}catch{}
+try{syncFilterSheet();}catch{}
+const done=()=>{try{window.scrollTo(0,S.y);}catch{}};
+Promise.resolve(renderList()).then(()=>{done();setTimeout(done,150);setTimeout(done,500);
+if(S.det){const it=(cachedVideos||[]).find(x=>String(x.id)===S.det);if(it)openDetailModal(it);}});
+}
 function crossSearch(member){
+_xsStack.push(xsSnap());if(_xsStack.length>20)_xsStack.shift();
 F.members.clear();F.members.add(member);currentGenre='すべて';currentSubgenre='すべて';try{renderTabs();renderSubtabs();}catch{}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.classList.add('hidden'));
 renderFilterSheet();renderList();
 try{window.scrollTo({top:0,behavior:'smooth'});}catch{}
+xsBar();
 }
 
 const MANK='__manual';
