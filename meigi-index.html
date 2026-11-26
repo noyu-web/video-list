@@ -170,3 +170,4 @@ $('bCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('bOut').v
 $('bLoad').onclick=()=>{try{const x=JSON.parse($('bIn').value);if(!x||!Array.isArray(x.m)||!Array.isArray(x.a))throw 0;if(!confirm('今のデータが置き換わります。よろしいですか？'))return;D=x;save();$('ovB').classList.add('hidden');renderAlerts();show('S');}catch{alert('読み込めませんでした。書き出した文字をそのまま貼り付けてください');}};
 renderAlerts();renderM();
 </script></body></html>
+
